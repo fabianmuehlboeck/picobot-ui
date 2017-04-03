@@ -1,0 +1,36 @@
+﻿body {
+    font-family: 'Segoe UI', sans-serif;
+}
+
+span {
+    font-style: italic;
+}
+
+.actiondiv {
+    float:left;
+    padding-right:5px;
+}
+
+canvas {
+    margin:8px;
+}
+
+.statediv {
+    height:95vh;
+    float:left;
+    overflow-y:scroll;
+}
+
+.hidden {
+    display:none;
+}
+
+.statelist {
+    height:90vh;
+    display:block;
+    width:100px;
+}
+
+.newButton {
+    width:100px;
+}
