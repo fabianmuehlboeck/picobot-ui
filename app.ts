@@ -635,9 +635,60 @@ class Pico {
         cell = row.insertCell();
         cell.appendChild(listdiv);
     }
-
+    
     init(): void {
-        this.getState("State 0");
+        var initup = this.getState("initup");
+        var initleft = this.getState("initleft");
+        var down = this.getState("down");
+        var up = this.getState("up");
+        for (var i = 1; i < this.statediv.childElementCount; i++) {
+            this.statediv.children.item(i).classList.add("hidden");
+        }
+        this.statelist.selectedIndex = 0;
+        initup.rules[0].worldState.north = FieldState.Empty;
+        initup.rules[0].actionSelector.north.click();
+        initup.rules[0].worldState.draw();
+        var initupstop = new Rule(initup);
+        initup.rules.push(initupstop);
+        initupstop.worldState.north = FieldState.Wall;
+        initupstop.stateSelector.selector.selectedIndex = 1;
+        initupstop.stateSelector.selectedState = initleft;
+        initupstop.worldState.draw();
+
+        initleft.rules[0].worldState.west = FieldState.Empty;
+        initleft.rules[0].actionSelector.west.click();
+        initleft.rules[0].worldState.draw();
+        var leftstop = new Rule(initleft);
+        initleft.rules.push(leftstop);
+        leftstop.worldState.west = FieldState.Wall;
+        leftstop.stateSelector.selector.selectedIndex = 2;
+        leftstop.stateSelector.selectedState = down;
+        leftstop.worldState.draw();
+
+        down.rules[0].worldState.south = FieldState.Empty;
+        down.rules[0].actionSelector.south.click();
+        down.rules[0].worldState.draw();
+        var downstop = new Rule(down);
+        down.rules.push(downstop);
+        downstop.actionSelector.east.click();
+        downstop.worldState.south = FieldState.Wall;
+        downstop.stateSelector.selector.selectedIndex = 3;
+        downstop.stateSelector.selectedState = up;
+        downstop.worldState.draw();
+
+        up.rules[0].worldState.north = FieldState.Empty;
+        up.rules[0].actionSelector.north.click();
+        up.rules[0].worldState.draw();
+        var upstop = new Rule(up);
+        up.rules.push(upstop);
+        upstop.actionSelector.east.click();
+        upstop.worldState.north = FieldState.Wall;
+        upstop.stateSelector.selector.selectedIndex = 2;
+        upstop.stateSelector.selectedState = down;
+        upstop.worldState.draw();
+
+        document.getElementById("rules").textContent = Pico.Instance.toCode().join("\n");
+        document.getElementById("enterrulesbutton").click();
     }
 
     getState(name: string): State {
