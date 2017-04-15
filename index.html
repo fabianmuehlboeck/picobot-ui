@@ -13,7 +13,7 @@
         <script type="text/javascript" src="./picobotmaps.js"></script>
 
         <!-- create the new drawing canvas  -->
-        <table border="0">
+        <table border="0" style="text-align:center;margin: 0 auto;">
 
             <tbody>
                 <tr>
@@ -135,7 +135,12 @@
                     </td>
                     <td>
                         <div id="picodiv"></div>
-                        <div id="oldpicodiv" style="display:none">
+                    </td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td>
+                        <div id="oldpicodiv" style="">
                             <!-- right-hand side -->
                             <form name="calc" method="post" action="./picouploader.py">
                                 <table border="0">
@@ -215,7 +220,7 @@
                 </tr>
             </tbody>
             <tfoot>
-                <tr><td colspan="2" style="text-align:center">This is a prototype of a slightly adapted version of the <a href="http://www.cs.hmc.edu/picobot">original Picobot</a>, created by <a href="http://www.cs.hmc.edu/~dodds">Zach Dodds</a>.</td></tr>
+                <tr><td colspan="2" style="text-align:center">This is a slightly adapted version of the <a href="http://www.cs.hmc.edu/picobot">original Picobot</a>, created by <a href="http://www.cs.hmc.edu/~dodds">Zach Dodds</a>.</td></tr>
             </tfoot>
         </table>
 
@@ -398,6 +403,13 @@ var SURR_TEXT = ["xxxx", "Nxxx", "xExx", "NExx", "xxxS", "NxxS",
 				 "xxxx", "Nxxx", "xExx", "NExx", "xxxS", "NxxS",
                  "xExS", "NExS", "xxWx", "NxWx", "xEWx", "NEWx",
 				 "xxWS", "NxWS", "xEWS", "NEWS"]
+
+<!--var SURR_TEXT = ["xxxx", "Uxxx", "xDxx", "UDxx", "xxxR", "UxxR",
+                 "xExS", "NExS", "xxWx", "NxWx", "xDLx", "UDLx",
+				 "xxWS", "NxWS", "xEWS", "NEWS",
+				 "xxxx", "Nxxx", "xExx", "NExx", "xxxS", "NxxS",
+                 "xExS", "NExS", "xxWx", "NxWx", "xEWx", "NEWx",
+				 "xxWS", "NxWS", "xEWS", "NEWS"]-->
 
 MOVE_X = 0 // don't move at all - better change state!
 MOVE_N = 1
