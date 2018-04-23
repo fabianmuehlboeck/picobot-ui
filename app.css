@@ -1,5 +1,30 @@
-﻿body {
-    font-family: 'Segoe UI', sans-serif;
+﻿#header {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    background-color: transparent;
+    height: 50px;
+    width: 600px;
+    z-index: 100;
+}
+
+#footer {
+    position: fixed;
+    left: 0px;
+    top: 100%;
+    margin-top: -48px;
+    background-color: #B31B1B;
+    height: 48px;
+    width: 100%;
+    z-index: 100;
+    color: #ffffff;
+    padding: 10px;
+    padding-left: 20px;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif !important;
+    margin: 0px;
 }
 
 span {
@@ -7,30 +32,578 @@ span {
 }
 
 .actiondiv {
-    float:left;
-    padding-right:5px;
+    float: left;
+    padding-right: 5px;
 }
 
 canvas {
-    margin:8px;
+    margin: 8px;
 }
 
-.statediv {
-    height:95vh;
-    float:left;
-    overflow-y:scroll;
+.programdiv {
+    padding-top: 48px;
+}
+
+.ui-tabs-nav {
+    position: fixed;
+    width: 100%;
+    padding: 2px !important;
+    padding-left: 642px !important;
+    padding-bottom: 0px !important;
+}
+
+.ui-tabs-panel {
+    padding-top: 48px !important;
+    padding-left: 620px !important;
+    /*margin-top: 48px;*/
+}
+
+    .ui-tabs-panel > div {
+        border: 5px #b31b1b solid !important;
+    }
+
+.ui-corner-all {
+    border-radius: unset;
+}
+
+#maintabs .ui-state-active a {
+    color: #ffffff;
+}
+
+#maintabs .ui-state-active {
+    background: linear-gradient(to bottom, #b20000 0%,#7f0000 48%,#700000 51%,#b31b1b 100%);
+}
+
+.ui-tabs {
+    position: unset;
+    border: none;
+}
+
+.ui-tabs-tab {
+    height: 42px;
 }
 
 .hidden {
-    display:none;
-}
-
-.statelist {
-    height:90vh;
-    display:block;
-    width:100px;
+    display: none;
 }
 
 .newButton {
-    width:100px;
+    width: 100px;
 }
+
+.activeactionlink {
+    display: inline-block;
+    float: left;
+    width: 48px;
+    height: 48px;
+    text-decoration: none;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 20px;
+    background: #00aa00;
+    text-align: left;
+}
+
+.actionlink {
+    display: inline-block;
+    float: left;
+    width: 48px;
+    height: 48px;
+    text-decoration: none;
+    color: #000000;
+    font-weight: bold;
+    font-size: 20px;
+    text-align: left;
+}
+
+a.actionlink:active {
+}
+
+a.activeactionlink:active {
+}
+
+
+a.actionlink:hover {
+    background: #4cff00;
+}
+
+a.activeactionlink:hover {
+    background: #4cff00;
+}
+
+.actionlink img {
+    vertical-align: middle;
+}
+
+.activeactionlink img {
+    vertical-align: middle;
+}
+
+button.upbutton {
+    border: none;
+    background-image: url(up.png);
+    display: inline-block;
+    background-color: transparent;
+    width: 48px;
+    height: 48px;
+}
+
+button.downbutton {
+    border: none;
+    background-color: transparent;
+    background-image: url(down.png);
+    display: inline-block;
+    width: 48px;
+    height: 48px;
+}
+
+button.deletebutton {
+    border: none;
+    background-color: transparent;
+    background-image: url(delete.png);
+    display: inline-block;
+    width: 48px;
+    height: 48px;
+}
+
+button.upbutton:hover:not(:disabled) {
+    background-color: #4cff00;
+}
+
+button.upbutton:active:not(:disabled) {
+    background-position: 1px 1px;
+    background-color: #3cef00;
+}
+
+button.downbutton:hover:not(:disabled) {
+    background-color: #4cff00;
+}
+
+button.downbutton:active:not(:disabled) {
+    background-position: 1px 1px;
+    background-color: #3cef00;
+}
+
+button.deletebutton:hover:not(:disabled) {
+    background-color: #ff0000;
+}
+
+button.deletebutton:active:not(:disabled) {
+    background-position: 1px 1px;
+    background-color: #aa0000;
+}
+
+#map {
+    position: fixed;
+    left: 0px;
+    top: 48px;
+    width: 600px;
+    padding: 0px;
+    z-index: 100;
+}
+
+#mapcanvas {
+    width: 600px;
+    height: 600px;
+    margin: 0px;
+}
+
+    #mapcanvas canvas {
+        margin: 0px;
+    }
+
+#main {
+    position: absolute;
+    left: 0px;
+    top: 48px;
+    padding-left: 640px;
+}
+
+#maintabs {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    padding: 0px;
+    width: 100%;
+    border: none;
+}
+
+    #maintabs > div {
+        margin-bottom: 48px;
+    }
+
+#gui {
+    padding: 0px;
+}
+
+    #gui .editormenu {
+        background: #B31B1B;
+        position: fixed;
+        width: 100%;
+        height: 40px;
+    }
+
+        #gui .editormenu button {
+            background: #B31B1B;
+            color: #ffffff;
+            height: 36px;
+            margin: 2px;
+        }
+
+#code {
+    padding: 0px;
+}
+
+#help {
+    padding: 0px;
+}
+
+#about {
+    padding: 0px;
+}
+
+#states {
+}
+
+.stateheader {
+    background-color: #A2998B;
+    border-top: 2px #b31b1b solid;
+}
+
+    .stateheader input {
+        background-color: #D8D2C9;
+        border: none;
+        font-size: 1.5em;
+        vertical-align: middle;
+        font-weight: bold;
+        width: 550px;
+    }
+
+button.expander:hover {
+    background-color: red;
+}
+
+button.expander {
+    vertical-align: middle;
+    border: none;
+    width: 48px;
+    height: 48px;
+    background: url("minus.png");
+}
+
+.collapsed button.expander {
+    background: url("plus.png");
+}
+
+.collapsed .statebody {
+    display: none;
+}
+
+.statebody > ul {
+    padding-left: 20px;
+}
+
+.statebody > button {
+    background-color: #A2998B;
+    font-weight: bold;
+    margin-left: 20px;
+    margin-bottom: 10px;
+    width: 200px;
+    height: 48px;
+}
+
+li.rule {
+    /*list-style: square inside url(updown.png);*/
+    list-style: none;
+    width: 1000px;
+    background-color: #A2998B;
+    margin-bottom: 5px;
+    vertical-align: middle;
+    border-style: ridge;
+    padding: 5px;
+}
+
+    li.rule a.grabimg {
+        cursor: grab;
+        padding: 12px;
+    }
+
+        li.rule a.grabimg img {
+            vertical-align: middle;
+        }
+
+    li.rule div {
+        display: inline-block;
+        vertical-align: middle;
+        height: 48px;
+    }
+
+    li.rule .ruleworldstate {
+        margin-right: 8px;
+        margin-left: 8px;
+    }
+
+    li.rule .ruleactiondiv {
+        background-color: #D8D2C9;
+        margin-right: 8px;
+        margin-left: 8px;
+    }
+
+    li.rule .rulestatediv {
+        background-color: #D8D2C9;
+        margin-right: 8px;
+        margin-left: 8px;
+    }
+
+    li.rule .ruleenddiv {
+        background-color: #D8D2C9;
+        margin-left: 8px;
+    }
+
+    li.rule canvas {
+        margin: 0px;
+    }
+
+.stateless li.rule {
+    width:480px;
+}
+
+.stateless .stateSelector {
+    display:none;
+}
+
+.stateless .stateheader {
+    display:none;
+}
+
+.stateless .editormenu {
+    display:none;
+}
+
+.stateless .programdiv {
+    padding-top:10px;
+}
+
+.ui-menu {
+    z-index: 50;
+}
+
+.stateSelector {
+    vertical-align: middle;
+    font-size: 1.2em;
+    font-weight: bold;
+    font-style: normal;
+    width: 520px;
+}
+
+div.stateSelector span {
+    vertical-align: middle;
+    display: inline-block;
+    width: 420px;
+    cursor: default;
+    margin-left: 4px;
+}
+
+.stateSelector .changebutton {
+    height: 48px;
+    width: 48px;
+    border: none;
+    background: url("change.png");
+    vertical-align: middle;
+}
+
+.stateSelector .gotobutton {
+    height: 48px;
+    width: 48px;
+    border: none;
+    background: url("goto.png");
+    vertical-align: middle;
+}
+
+#mapdata {
+    width: 100%;
+    height: 300px;
+    position: absolute;
+    left: 0px;
+    top: 600px;
+}
+
+.controlteleportdiv {
+    height: 150px;
+    width: 150px;
+    display: inline-block;
+}
+
+    .controlteleportdiv > a {
+        display: block;
+        width: 48px;
+        height: 48px;
+        position: absolute;
+    }
+
+        .controlteleportdiv > a:hover {
+            cursor: pointer;
+        }
+
+    .controlteleportdiv > div {
+        display: block;
+        width: 48px;
+        height: 36px;
+        position: absolute;
+        left: 51px;
+        top: 51px;
+        text-align: center;
+        font-weight: bold;
+        padding-top: 12px;
+    }
+
+.controlupbutton {
+    left: 51px;
+    top: 1px;
+    background-image: url(north.png);
+}
+
+a.controlupbutton:hover {
+    background: url(north.png),#D7D7D7;
+}
+
+.controlrightbutton {
+    left: 101px;
+    top: 51px;
+    background-image: url(east.png);
+}
+
+a.controlrightbutton:hover {
+    background: url(east.png),#D7D7D7;
+}
+
+.controldownbutton {
+    top: 101px;
+    left: 51px;
+    background-image: url(south.png);
+}
+
+a.controldownbutton:hover {
+    background: url(south.png),#D7D7D7;
+}
+
+.controlleftbutton {
+    left: 1px;
+    top: 51px;
+    background-image: url(west.png);
+}
+
+a.controlleftbutton:hover {
+    background: url(west.png),#D7D7D7;
+}
+
+.worldstatediv {
+    width: 150px;
+    height: 150px;
+    display: inline-block;
+    text-align: center;
+    font-weight: bold;
+}
+
+    .worldstatediv div {
+        text-align: center;
+    }
+
+    .worldstatediv canvas {
+        width: 100px;
+        height: 100px;
+        border: 1px #000000 solid;
+    }
+
+.runprogramdiv {
+    width: 280px;
+    height: 150px;
+    display: inline-block;
+    vertical-align: top;
+}
+
+    .runprogramdiv > div {
+        display: inline-block;
+        width: 140px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .runprogramdiv button {
+        display: block;
+        width: 100%;
+    }
+
+.worldstatecanvas {
+    background-color: #ffffff;
+}
+
+.controlrobotstatediv {
+    text-align: center;
+}
+
+    .controlrobotstatediv > div {
+        display: inline-block;
+        text-align: left;
+        background-color: #D8D2C9;
+    }
+
+.stateSelector span {
+    font-style: normal;
+}
+
+.runningbutton {
+    background-color: #00ff00;
+}
+
+div.scenariocontrol {
+    width: 100%;
+}
+
+.scenariocontrol button {
+    display: inline-block;
+    width: 50%;
+}
+
+.scenariocontrol label {
+    display: block;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    color: #000000;
+}
+
+#header {
+    text-align: center;
+}
+
+    #header button {
+        width: 48px;
+        height: 48px;
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+        #header button.mapleft {
+            background-image: url(west.png);
+        }
+
+        #header button.mapright {
+            background-image: url(east.png);
+        }
+
+        #header button.mapselect {
+            background-image: url(change.png);
+        }
+
+    #header > div {
+        display: inline-block;
+    }
+
+    #header span {
+        vertical-align: middle;
+        width: 300px;
+        display: inline-block;
+        font-weight:bold;
+        font-style:normal;
+        font-size:2em;
+    }
