@@ -82,7 +82,9 @@
     notify(s: State, se: StateEvent): void {
         switch (se) {
             case StateEvent.NameChange:
-                this.statespan.innerText = s.name;
+                if (this.value == s) {
+                    this.statespan.innerText = s.name;
+                }
                 break;
             case StateEvent.Removed:
                 if (this.value == s) {

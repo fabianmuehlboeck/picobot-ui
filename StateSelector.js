@@ -68,7 +68,9 @@ var StateSelector = /** @class */ (function () {
     StateSelector.prototype.notify = function (s, se) {
         switch (se) {
             case StateEvent.NameChange:
-                this.statespan.innerText = s.name;
+                if (this.value == s) {
+                    this.statespan.innerText = s.name;
+                }
                 break;
             case StateEvent.Removed:
                 if (this.value == s) {
