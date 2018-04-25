@@ -1,25 +1,20 @@
 ﻿class StateSelector implements StateEventListener {
     div: HTMLDivElement;
-    defaultState: State;
     value: State;
     robot: Robot;
     statespan: HTMLSpanElement;
     changebutton: HTMLButtonElement;
     gotobutton: HTMLButtonElement;
 
-    constructor(robot: Robot, state: State, defaultState?: State) {
-        if (!defaultState) {
-            defaultState = state;
-        }
+    constructor(robot: Robot, state: State) {
         var sel = this;
         this.div = document.createElement("div");
         this.robot = robot;
         this.value = state;
-        this.defaultState = defaultState;
         this.div.classList.add("stateSelector");
         this.statespan = document.createElement("span");
         this.statespan.tabIndex = -1;
-        this.statespan.innerText = state.name;
+        this.statespan.innerText = (state==null?"[CHOOSE STATE]":state.name);
         this.statespan.addEventListener("blur", function () {
             sel.robot.statemenu.parentNode.removeChild(sel.robot.statemenu);
         }
@@ -46,9 +41,6 @@
     }
 
     getState(): State {
-        if (this.value == null) {
-            return this.defaultState;
-        }
         return this.value;
     }
 
@@ -76,7 +68,11 @@
 
     setState(state: State): void {
         this.value = state;
-        this.statespan.innerText = state.name;
+        if (state == null) {
+            this.statespan.innerText = "[CHOOSE STATE]";
+        } else {
+            this.statespan.innerText = state.name;
+        }
     }
 
     notify(s: State, se: StateEvent): void {
@@ -88,10 +84,7 @@
                 break;
             case StateEvent.Removed:
                 if (this.value == s) {
-                    this.value = null;
-                }
-                if (this.defaultState == s) {
-                    this.defaultState = this.robot.state;
+                    this.setState(null);
                 }
         }
     }

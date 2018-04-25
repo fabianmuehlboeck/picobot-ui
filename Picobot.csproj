@@ -32,6 +32,7 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="app.ts" />
+    <TypeScriptCompile Include="Code.ts" />
     <TypeScriptCompile Include="Map.ts" />
     <TypeScriptCompile Include="Robot.ts" />
     <TypeScriptCompile Include="Rule.ts" />

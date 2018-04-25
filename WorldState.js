@@ -84,6 +84,10 @@ var DrawWorldState = /** @class */ (function (_super) {
         _this.draw();
         return _this;
     }
+    DrawWorldState.prototype.copyFrom = function (ws) {
+        _super.prototype.copyFrom.call(this, ws);
+        this.draw();
+    };
     DrawWorldState.prototype.vmatches = function (template, thencont, elsecont) {
         template.vvmatches(this, thencont, elsecont, this.canvas);
     };

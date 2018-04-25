@@ -1,5 +1,6 @@
 var State = /** @class */ (function () {
     function State(name, parent) {
+        var _this = this;
         this.rules = new Array();
         this.parent = parent;
         var s = this;
@@ -47,6 +48,9 @@ var State = /** @class */ (function () {
         this.header.appendChild(namefield);
         var delbutton = document.createElement("button");
         delbutton.appendChild(document.createTextNode("Delete"));
+        delbutton.addEventListener("click", function () {
+            _this.parent.removeState(_this);
+        });
         this.header.appendChild(delbutton);
         //var table = document.createElement("table");
         //var header = table.createTHead();

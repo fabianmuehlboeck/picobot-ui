@@ -52,7 +52,7 @@ var Rule = /** @class */ (function () {
         this.elem.appendChild(actiondiv);
         var statediv = document.createElement("div");
         statediv.classList.add("rulestatediv");
-        this.stateSelector = new StateSelector(state.parent, state, state);
+        this.stateSelector = new StateSelector(state.parent, state);
         statediv.appendChild(this.stateSelector.div);
         this.elem.appendChild(statediv);
         var enddiv = document.createElement("div");

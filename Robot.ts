@@ -52,15 +52,11 @@ class Robot {
         this.states = {};
         this.statenames = [];
         ;
-        this.stateselector = new StateSelector(this, this.addState("Initial State"));
-        this.programdiv.appendChild(this.state.div);
+        this.stateselector = new StateSelector(this, null);
     }
 
     addState(name: string = undefined) : State {
-        if (name) {
-
-        }
-        else {
+        if (!name) {
             var i = 1;
             while (this.statenames.indexOf("State " + String(i)) >= 0) {
                 i++;
@@ -72,6 +68,9 @@ class Robot {
         this.statenames.push(name);
         this.programdiv.appendChild(state.div);
         this.statemenu.appendChild(state.menuItem);
+        if (this.state == null) {
+            this.state = state;
+        }
         return state;
     }
 
@@ -86,6 +85,9 @@ class Robot {
     removeState(s : State): void {
         this.statelisteners.forEach((v, i, a) => { v.notify(s, StateEvent.Removed); });
         delete this.states[s.name];
+        if (s == this.state) {
+            this.state = null;
+        }
         this.statenames.splice(this.statenames.indexOf(s.name), 1);
         this.programdiv.removeChild(s.div);
         this.statemenu.removeChild(s.menuItem);

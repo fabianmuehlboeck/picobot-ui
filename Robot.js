@@ -28,8 +28,7 @@ var Robot = /** @class */ (function () {
         this.states = {};
         this.statenames = [];
         ;
-        this.stateselector = new StateSelector(this, this.addState("Initial State"));
-        this.programdiv.appendChild(this.state.div);
+        this.stateselector = new StateSelector(this, null);
     }
     Robot.prototype.registerStateListener = function (sel) {
         this.statelisteners.push(sel);
@@ -49,9 +48,7 @@ var Robot = /** @class */ (function () {
     ;
     Robot.prototype.addState = function (name) {
         if (name === void 0) { name = undefined; }
-        if (name) {
-        }
-        else {
+        if (!name) {
             var i = 1;
             while (this.statenames.indexOf("State " + String(i)) >= 0) {
                 i++;
@@ -63,6 +60,9 @@ var Robot = /** @class */ (function () {
         this.statenames.push(name);
         this.programdiv.appendChild(state.div);
         this.statemenu.appendChild(state.menuItem);
+        if (this.state == null) {
+            this.state = state;
+        }
         return state;
     };
     Robot.prototype.renameState = function (s, oldName) {
@@ -75,6 +75,9 @@ var Robot = /** @class */ (function () {
     Robot.prototype.removeState = function (s) {
         this.statelisteners.forEach(function (v, i, a) { v.notify(s, StateEvent.Removed); });
         delete this.states[s.name];
+        if (s == this.state) {
+            this.state = null;
+        }
         this.statenames.splice(this.statenames.indexOf(s.name), 1);
         this.programdiv.removeChild(s.div);
         this.statemenu.removeChild(s.menuItem);

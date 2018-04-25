@@ -4,6 +4,7 @@ interface IMap {
     isValidPos(x: number, y: number): boolean;
     draw(): void;
     getRobot(): Robot;
+    setRobot(robot : Robot);
     step(ws: IWorldState, options?: StepOptions): boolean;
     vstep(ws: IWorldState, options: StepOptions, thenCont: () => void, elseCont: () => void): void;
     getCanvas(): HTMLCanvasElement;
@@ -14,6 +15,8 @@ interface IMap {
     showWinningMessage(): void;
     getName(): string;
     isStateless(): boolean;
+    getPicoCodeBox(): HTMLTextAreaElement;
+    getPicoErrorTextBox(): HTMLTextAreaElement;
 }
 
 class StepOptions {
@@ -147,6 +150,12 @@ class MapControls {
             this.robotstatediv.classList.remove("stateless");
         }
 
+        while (this.codeDiv.childNodes.length > 0) {
+            this.codeDiv.removeChild(this.codeDiv.childNodes[0]);
+        }
+        this.codeDiv.appendChild(map.getPicoCodeBox());
+        this.codeDiv.appendChild(map.getPicoErrorTextBox());
+
         this.refresh();
     }
 
@@ -155,7 +164,37 @@ class MapControls {
         this.running = false;
         this.canvasParent = canvasParent;
         this.editorDiv = editorDiv;
-        this.codeDiv = codeDiv;
+        this.codeDiv = document.createElement("div");
+        var codecontroldiv = document.createElement("div");
+        codecontroldiv.classList.add("codecontrol");
+
+        var loadbutton = document.createElement("button");
+        loadbutton.appendChild(document.createTextNode("Load from Editor"));
+        loadbutton.addEventListener("click", () => {
+            var pp: { program: PicoProgram, errors: Error[] } = PicoProgram.fromEditor(this.map.getRobot());
+            this.map.getPicoCodeBox().textContent = pp.program.toText().join("\n");
+            this.map.getPicoErrorTextBox().textContent = pp.errors.map((e, n, a) => e.message).join("\n");
+        });
+        codecontroldiv.appendChild(loadbutton);
+
+        var compilebutton = document.createElement("button");
+        compilebutton.appendChild(document.createTextNode("Compile to Editor"));
+        compilebutton.addEventListener("click", () => {
+            var pp: { program: PicoProgram, errors: Error[] } = PicoProgram.parse(this.map.getPicoCodeBox().textContent.split("\n"));
+            if (pp.errors.length == 0) {
+                var robot = pp.program.toEditor();
+                robot.setPos(this.map.getRobot().getX(), this.map.getRobot().getY());
+                this.map.setRobot(robot);
+                this.setMap(this.map);
+            } else {
+                this.map.getPicoErrorTextBox().textContent = pp.errors.map((e, n, a) => e.message).join("\n");
+            }
+        });
+        codecontroldiv.appendChild(compilebutton);
+
+        codeDiv.appendChild(codecontroldiv);
+        codeDiv.appendChild(this.codeDiv);
+
         this.helpDiv = helpDiv;
         this.controlDiv = document.createElement("div");
         var teleportDiv = document.createElement("div");
@@ -410,11 +449,17 @@ class Map implements IMap {
     height: number;
     robot: Robot;
     canvas: HTMLCanvasElement;
+    picocodebox: HTMLTextAreaElement = document.createElement("textarea");
+    picocodeerrorbox: HTMLTextAreaElement = document.createElement("textarea");
+
 
     constructor(width: number, height: number, canvas: HTMLCanvasElement) {
         this.canvas = canvas;
         this.width = width;
         this.height = height;
+        this.picocodebox.classList.add("picocode");
+        this.picocodeerrorbox.classList.add("picoerrors");
+        this.picocodeerrorbox.readOnly = true;
         this.initRobot();
     }
 
@@ -429,6 +474,14 @@ class Map implements IMap {
     initRobot() {
         var start = this.generateRobotStart();
         this.robot = new Robot(start.x, start.y);
+    }
+
+
+    getPicoCodeBox(): HTMLTextAreaElement {
+        return this.picocodebox;
+    }
+    getPicoErrorTextBox(): HTMLTextAreaElement {
+        return this.picocodeerrorbox;
     }
 
     generateRobotStart(): { x: number, y: number } {
@@ -455,6 +508,10 @@ class Map implements IMap {
 
     getRobot(): Robot {
         return this.robot;
+    }
+
+    setRobot(robot: Robot) {
+        this.robot = robot;
     }
 
     getCanvas(): HTMLCanvasElement {
@@ -649,6 +706,7 @@ class StartMap extends WallMap {
         var winp = document.createElement("p");
         winp.appendChild(document.createTextNode("You reached the goal! Run tests to see if your program can handle some variations of this map, or go on to the next level!"));
         this.winningDialog.appendChild(winp);
+        this.robot.addState("State");
     }
 
     isStateless(): boolean {

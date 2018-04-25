@@ -58,6 +58,9 @@ class State {
 
         var delbutton = document.createElement("button");
         delbutton.appendChild(document.createTextNode("Delete"));
+        delbutton.addEventListener("click", () => {
+            this.parent.removeState(this);
+        })
         this.header.appendChild(delbutton);
        
         //var table = document.createElement("table");

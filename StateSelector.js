@@ -1,17 +1,13 @@
 var StateSelector = /** @class */ (function () {
-    function StateSelector(robot, state, defaultState) {
-        if (!defaultState) {
-            defaultState = state;
-        }
+    function StateSelector(robot, state) {
         var sel = this;
         this.div = document.createElement("div");
         this.robot = robot;
         this.value = state;
-        this.defaultState = defaultState;
         this.div.classList.add("stateSelector");
         this.statespan = document.createElement("span");
         this.statespan.tabIndex = -1;
-        this.statespan.innerText = state.name;
+        this.statespan.innerText = (state == null ? "[CHOOSE STATE]" : state.name);
         this.statespan.addEventListener("blur", function () {
             sel.robot.statemenu.parentNode.removeChild(sel.robot.statemenu);
         });
@@ -34,9 +30,6 @@ var StateSelector = /** @class */ (function () {
         robot.registerStateListener(this);
     }
     StateSelector.prototype.getState = function () {
-        if (this.value == null) {
-            return this.defaultState;
-        }
         return this.value;
     };
     StateSelector.prototype.showMenu = function () {
@@ -63,7 +56,12 @@ var StateSelector = /** @class */ (function () {
     };
     StateSelector.prototype.setState = function (state) {
         this.value = state;
-        this.statespan.innerText = state.name;
+        if (state == null) {
+            this.statespan.innerText = "[CHOOSE STATE]";
+        }
+        else {
+            this.statespan.innerText = state.name;
+        }
     };
     StateSelector.prototype.notify = function (s, se) {
         switch (se) {
@@ -74,10 +72,7 @@ var StateSelector = /** @class */ (function () {
                 break;
             case StateEvent.Removed:
                 if (this.value == s) {
-                    this.value = null;
-                }
-                if (this.defaultState == s) {
-                    this.defaultState = this.robot.state;
+                    this.setState(null);
                 }
         }
     };

@@ -99,6 +99,11 @@ class DrawWorldState extends WorldState {
         this.draw();
     }
 
+    copyFrom(ws: IWorldState) {
+        super.copyFrom(ws);
+        this.draw();
+    }
+
     vmatches(template: IWorldState, thencont: () => void, elsecont: () => void) : void {
         template.vvmatches(this, thencont, elsecont, this.canvas);
     }

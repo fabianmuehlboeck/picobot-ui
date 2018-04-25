@@ -45,7 +45,7 @@ var ActionSelector = /** @class */ (function () {
         };
         actimg = document.createElement("img");
         actimg.src = "north.png";
-        actimg.title = "Up";
+        actimg.title = "North";
         acta.appendChild(actimg);
         //acta.appendChild(document.createTextNode("Up"));
         this.north = acta;
@@ -58,23 +58,10 @@ var ActionSelector = /** @class */ (function () {
         };
         var actimg = document.createElement("img");
         actimg.src = "east.png";
-        actimg.title = "Right";
+        actimg.title = "East";
         acta.appendChild(actimg);
         //acta.appendChild(document.createTextNode("Right"));
         this.east = acta;
-        parent.appendChild(acta);
-        acta = document.createElement("a");
-        acta.className = "actionlink";
-        acta.href = "javascript:void()";
-        acta.onclick = function () {
-            selector.setAction(Action.South);
-        };
-        var actimg = document.createElement("img");
-        actimg.src = "south.png";
-        actimg.title = "Down";
-        acta.appendChild(actimg);
-        //acta.appendChild(document.createTextNode("Down"));
-        this.south = acta;
         parent.appendChild(acta);
         acta = document.createElement("a");
         acta.className = "actionlink";
@@ -84,10 +71,23 @@ var ActionSelector = /** @class */ (function () {
         };
         var actimg = document.createElement("img");
         actimg.src = "west.png";
-        actimg.title = "Left";
+        actimg.title = "West";
         acta.appendChild(actimg);
         //acta.appendChild(document.createTextNode("Left"));
         this.west = acta;
+        parent.appendChild(acta);
+        acta = document.createElement("a");
+        acta.className = "actionlink";
+        acta.href = "javascript:void()";
+        acta.onclick = function () {
+            selector.setAction(Action.South);
+        };
+        var actimg = document.createElement("img");
+        actimg.src = "south.png";
+        actimg.title = "South";
+        acta.appendChild(actimg);
+        //acta.appendChild(document.createTextNode("Down"));
+        this.south = acta;
         parent.appendChild(acta);
         this.setAction(Action.Stay);
         this.stay.click();

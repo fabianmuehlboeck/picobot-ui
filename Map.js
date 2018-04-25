@@ -72,12 +72,40 @@ function drawFinish(ctx, sx, sy, ex, ey) {
 }
 var MapControls = /** @class */ (function () {
     function MapControls(canvasParent, controlParent, editorDiv, codeDiv, helpDiv) {
+        var _this = this;
         this._isrunning = false;
         var mc = this;
         this.running = false;
         this.canvasParent = canvasParent;
         this.editorDiv = editorDiv;
-        this.codeDiv = codeDiv;
+        this.codeDiv = document.createElement("div");
+        var codecontroldiv = document.createElement("div");
+        codecontroldiv.classList.add("codecontrol");
+        var loadbutton = document.createElement("button");
+        loadbutton.appendChild(document.createTextNode("Load from Editor"));
+        loadbutton.addEventListener("click", function () {
+            var pp = PicoProgram.fromEditor(_this.map.getRobot());
+            _this.map.getPicoCodeBox().textContent = pp.program.toText().join("\n");
+            _this.map.getPicoErrorTextBox().textContent = pp.errors.map(function (e, n, a) { return e.message; }).join("\n");
+        });
+        codecontroldiv.appendChild(loadbutton);
+        var compilebutton = document.createElement("button");
+        compilebutton.appendChild(document.createTextNode("Compile to Editor"));
+        compilebutton.addEventListener("click", function () {
+            var pp = PicoProgram.parse(_this.map.getPicoCodeBox().textContent.split("\n"));
+            if (pp.errors.length == 0) {
+                var robot = pp.program.toEditor();
+                robot.setPos(_this.map.getRobot().getX(), _this.map.getRobot().getY());
+                _this.map.setRobot(robot);
+                _this.setMap(_this.map);
+            }
+            else {
+                _this.map.getPicoErrorTextBox().textContent = pp.errors.map(function (e, n, a) { return e.message; }).join("\n");
+            }
+        });
+        codecontroldiv.appendChild(compilebutton);
+        codeDiv.appendChild(codecontroldiv);
+        codeDiv.appendChild(this.codeDiv);
         this.helpDiv = helpDiv;
         this.controlDiv = document.createElement("div");
         var teleportDiv = document.createElement("div");
@@ -288,6 +316,11 @@ var MapControls = /** @class */ (function () {
             this.editorDiv.classList.remove("stateless");
             this.robotstatediv.classList.remove("stateless");
         }
+        while (this.codeDiv.childNodes.length > 0) {
+            this.codeDiv.removeChild(this.codeDiv.childNodes[0]);
+        }
+        this.codeDiv.appendChild(map.getPicoCodeBox());
+        this.codeDiv.appendChild(map.getPicoErrorTextBox());
         this.refresh();
     };
     MapControls.prototype.refresh = function () {
@@ -361,9 +394,14 @@ var StateEvent;
 ;
 var Map = /** @class */ (function () {
     function Map(width, height, canvas) {
+        this.picocodebox = document.createElement("textarea");
+        this.picocodeerrorbox = document.createElement("textarea");
         this.canvas = canvas;
         this.width = width;
         this.height = height;
+        this.picocodebox.classList.add("picocode");
+        this.picocodeerrorbox.classList.add("picoerrors");
+        this.picocodeerrorbox.readOnly = true;
         this.initRobot();
     }
     Map.prototype.isStateless = function () {
@@ -375,6 +413,12 @@ var Map = /** @class */ (function () {
     Map.prototype.initRobot = function () {
         var start = this.generateRobotStart();
         this.robot = new Robot(start.x, start.y);
+    };
+    Map.prototype.getPicoCodeBox = function () {
+        return this.picocodebox;
+    };
+    Map.prototype.getPicoErrorTextBox = function () {
+        return this.picocodeerrorbox;
     };
     Map.prototype.generateRobotStart = function () {
         var rx = Math.floor(Math.random() * (this.width - 2)) + 1;
@@ -397,6 +441,9 @@ var Map = /** @class */ (function () {
     };
     Map.prototype.getRobot = function () {
         return this.robot;
+    };
+    Map.prototype.setRobot = function (robot) {
+        this.robot = robot;
     };
     Map.prototype.getCanvas = function () {
         return this.canvas;
@@ -578,6 +625,7 @@ var StartMap = /** @class */ (function (_super) {
         var winp = document.createElement("p");
         winp.appendChild(document.createTextNode("You reached the goal! Run tests to see if your program can handle some variations of this map, or go on to the next level!"));
         _this.winningDialog.appendChild(winp);
+        _this.robot.addState("State");
         return _this;
     }
     StartMap.prototype.isStateless = function () {
