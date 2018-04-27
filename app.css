@@ -328,6 +328,14 @@ li.rule {
     padding: 5px;
 }
 
+    li.rule .rulemapstodiv {
+        width:38px;
+        height:48px;
+        display:inline-block;
+        background-image:url(rightarrow.png);
+        vertical-align:middle;
+    }
+
     li.rule a.grabimg {
         cursor: grab;
         padding: 12px;

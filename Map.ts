@@ -201,9 +201,10 @@ class MapControls {
         this.refresh();
     }
 
-    setMap(map: IMap) : void {
-        this.map = map;
-        this.updateMapUI();
+    setMap(map: IMap): void {
+        this.stopRun(() => {
+            this.map = map; this.updateMapUI(); });
+       
     }
 
     constructor(pico: Pico, canvasParent: HTMLDivElement, controlParent: HTMLDivElement, editorDiv: HTMLDivElement, codeDiv: HTMLDivElement, helpDiv: HTMLDivElement) {

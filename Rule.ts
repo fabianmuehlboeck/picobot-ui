@@ -59,9 +59,9 @@ class Rule {
         this.worldState = new ControlWorldState(canvas);
         this.elem.appendChild(wsdiv);
 
-        var todiv = document.createElement("div");
+        var todiv = document.createElement("img");
         todiv.classList.add("rulemapstodiv");
-        todiv.appendChild(document.createTextNode("=>"));
+        //todiv.appendChild(document.createTextNode("=>"));
         this.elem.appendChild(todiv);
 
         var actiondiv = document.createElement("div");

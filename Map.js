@@ -326,8 +326,11 @@ var MapControls = /** @class */ (function () {
         this.refresh();
     };
     MapControls.prototype.setMap = function (map) {
-        this.map = map;
-        this.updateMapUI();
+        var _this = this;
+        this.stopRun(function () {
+            _this.map = map;
+            _this.updateMapUI();
+        });
     };
     MapControls.prototype.stepFast = function () {
         var _this = this;
