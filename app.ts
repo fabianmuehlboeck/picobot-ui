@@ -243,10 +243,10 @@ class Pico {
         this.maps = [];
         this.maps.push(new SpiralMap(25, 25, Pico.createCanvas()));
         this.maps.push(new ObstacleMap(15, 15, Pico.createCanvas()));
+        this.maps.push(new DoorMap(25, 25, Pico.createCanvas()));
         this.maps.push(new SquareRoomMap(25, Pico.createCanvas()));
         this.maps.push(new DiamondRoomMap(25, Pico.createCanvas()));
-        this.maps.push(new StartMap(15, 15, Pico.createCanvas()));
-        this.maps.push(new DoorMap(25, 25, Pico.createCanvas()));
+        //this.maps.push(new StartMap(15, 15, Pico.createCanvas()));
         this.maps.push(new MazeMap(25, 25, Pico.createCanvas()));
         var pico = this;
         for (var i = 0; i < this.maps.length; i++) {
