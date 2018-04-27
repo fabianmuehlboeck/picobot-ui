@@ -186,23 +186,23 @@ class MapControls {
         loadbutton.appendChild(document.createTextNode("Load from Editor"));
         loadbutton.addEventListener("click", () => {
             var pp: { program: PicoProgram, errors: Error[] } = PicoProgram.fromEditor(this.map.getRobot());
-            this.map.getPicoCodeBox().textContent = pp.program.toText().join("\n");
-            this.map.getPicoErrorTextBox().textContent = pp.errors.map((e, n, a) => e.message).join("\n");
+            this.map.getPicoCodeBox().value = pp.program.toText().join("\n");
+            this.map.getPicoErrorTextBox().value = pp.errors.map((e, n, a) => e.message).join("\n");
         });
         codecontroldiv.appendChild(loadbutton);
 
         var compilebutton = document.createElement("button");
         compilebutton.appendChild(document.createTextNode("Compile to Editor"));
         compilebutton.addEventListener("click", () => {
-            var pp: { program: PicoProgram, errors: Error[] } = PicoProgram.parse(this.map.getPicoCodeBox().textContent.split("\n"));
+            var pp: { program: PicoProgram, errors: Error[] } = PicoProgram.parse(this.map.getPicoCodeBox().value.split("\n"));
             if (pp.errors.length == 0) {
                 var robot = pp.program.toEditor();
                 robot.setPos(this.map.getRobot().getX(), this.map.getRobot().getY());
                 this.map.setRobot(robot);
                 this.setMap(this.map);
-                this.map.getPicoErrorTextBox().textContent = "Program successfully loaded to the robot.";
+                this.map.getPicoErrorTextBox().value = "Program successfully loaded to the robot.";
             } else {
-                this.map.getPicoErrorTextBox().textContent = "There were errors, so the program has not been loaded to the robot.\n\n" + pp.errors.map((e, n, a) => e.message).join("\n");
+                this.map.getPicoErrorTextBox().value = "There were errors, so the program has not been loaded to the robot.\n\n" + pp.errors.map((e, n, a) => e.message).join("\n");
             }
         });
         codecontroldiv.appendChild(compilebutton);
@@ -387,7 +387,7 @@ class MapControls {
             else {
                 this.running = true;
                 this.runfastbutton.classList.add("runningbutton");
-                this.runinterval = window.setInterval(() => { this.run(); }, 50);
+                this.runinterval = window.setInterval(() => { this.run(); }, 20);
             }
         }
     }
@@ -751,7 +751,7 @@ abstract class Map implements IMap {
                         return;
                     }
                 }
-                if (!this.robot.step(this, ws, options)) {
+                if (!this.step(ws, options)) {
                     window.clearInterval(this.testInterval);
                     this.testing = false;
                     this.testingDone = true;
@@ -948,6 +948,25 @@ abstract class CleanMap extends WallMap {
         this.winningDialog.appendChild(winp);
     }
 
+
+    step(ws: IWorldState, options?: StepOptions): boolean {
+        this.cleanedSquares[this.robot.getX()][this.robot.getY()] = true;
+        var ret: boolean = super.step(ws, options);
+        this.cleanedSquares[this.robot.getX()][this.robot.getY()] = true;
+        return ret;
+    }
+    vstep(ws: IWorldState, options: StepOptions, thenCont: () => void, elseCont: () => void): void {
+        this.cleanedSquares[this.robot.getX()][this.robot.getY()] = true;
+        super.vstep(ws, options,
+            () => {
+            this.cleanedSquares[this.robot.getX()][this.robot.getY()] = true;
+            thenCont();
+            }, () => {
+            this.cleanedSquares[this.robot.getX()][this.robot.getY()] = true;
+            elseCont();
+        });
+    }
+
     allCleaned(): boolean {
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
@@ -956,6 +975,25 @@ abstract class CleanMap extends WallMap {
                 }
             }
         }
+        return true;
+    }
+
+    reset() {
+        super.reset();
+        this.cleanedSquares = emptybools(this.width, this.height);
+    }
+
+    setupTest(): boolean {
+        this.cleanedSquares = emptybools(this.width, this.height);
+        return super.setupTest();
+    }
+
+    handleTestWin(): boolean {
+        if (super.handleTestWin()) {
+            this.cleanedSquares = emptybools(this.width, this.height);
+            return true;
+        }
+        return false;
     }
 
     drawContent(ctx: CanvasRenderingContext2D, cellwidth: number, cellheight: number) {
@@ -1124,10 +1162,10 @@ class SpiralMap extends GoalMap {
                 y++;
             }
         }
-        this.left = left-3;
-        this.top = top-3;
-        this.bottom = bottom+3;
-        this.right = right-1;
+        this.left = left - 3;
+        this.top = top - 3;
+        this.bottom = bottom + 3;
+        this.right = right - 1;
     }
 
     isStateless(): boolean {
@@ -1208,7 +1246,7 @@ class ObstacleMap extends GoalMap {
             this.walls[halfwidth][this.height - i - 1] = true;
         }
     }
-    
+
     generateRobotStart() {
         var rx = 1;
         var ry = this.height - 2;
@@ -1242,7 +1280,7 @@ class DoorMap extends GoalMap {
             }
         }
     }
-    
+
 
     constructor(width: number, height: number, canvas: HTMLCanvasElement) {
         super(width, height, canvas, "Find the Door");
@@ -1396,5 +1434,77 @@ class MazeMap extends GoalMap {
 
     getTestSetups(): (() => void)[] {
         return [() => { this.robot.setPos(this.width - 6, 5); }, () => { this.robot.setPos(this.width - 8, Math.floor(this.height / 2) + ((Math.floor(this.height / 2) % 2) - 1)); }];
+    }
+}
+
+class SquareRoomMap extends CleanMap {
+
+    constructor(sidelength: number, canvas: HTMLCanvasElement) {
+        super(sidelength, sidelength, canvas, "Square Room");
+    }
+
+    initWalls() {
+        super.initWalls();
+        this.surroundingWalls();
+    }
+
+    getTestSetups(): (() => void)[] {
+        return [() => { this.robot.setPos(1, 1); }, () => { this.robot.setPos(4, this.height - 4); }, () => { this.robot.setPos(this.width - 8, Math.floor(this.height / 2)); }];
+    }
+}
+
+class DiamondRoomMap extends CleanMap {
+
+    constructor(sidelength, canvas: HTMLCanvasElement) {
+        super(sidelength, sidelength, canvas, "Diamond Room");
+    }
+
+    initWalls() {
+        super.initWalls();
+        this.surroundingWalls();
+        var halfside = Math.floor(this.width / 2);
+
+        for (var i = 0; i < this.width; i++) {
+            for (var j = 0; j < this.height; j++) {
+                if (i == halfside || j == halfside) {
+                    continue;
+                }
+                var x = i;
+                var y = j;
+                if (i > halfside) {
+                    x = this.width - 1 - i;
+                }
+                if (j > halfside) {
+                    y = this.height - 1 - j;
+                }
+                if (x + y <= halfside) {
+                    this.walls[i][j] = true;
+                }
+            }
+        }
+    }
+
+    generateRobotStart(): { x: number, y: number } {
+        var halfside = Math.floor(this.width / 2);
+        var rx = Math.floor(Math.random() * halfside);
+        var ry = Math.floor(Math.random() * halfside);
+        var x = 1;
+        var y = halfside;
+        while (rx > 0) {
+            x++;
+            y--;
+            rx--;
+        }
+        while (ry > 0) {
+            x++;
+            y++;
+            ry--;
+        }
+        return { x: x, y: y };
+    }
+
+    getTestSetups(): (() => void)[] {
+        var halfside = Math.floor(this.width / 2);
+        return [() => { this.robot.setPos(halfside, halfside); }, () => { this.robot.setPos(1, halfside); }, () => { this.robot.setPos(3, halfside - 2); }];
     }
 }

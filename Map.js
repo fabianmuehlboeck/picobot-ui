@@ -87,23 +87,23 @@ var MapControls = /** @class */ (function () {
         loadbutton.appendChild(document.createTextNode("Load from Editor"));
         loadbutton.addEventListener("click", function () {
             var pp = PicoProgram.fromEditor(_this.map.getRobot());
-            _this.map.getPicoCodeBox().textContent = pp.program.toText().join("\n");
-            _this.map.getPicoErrorTextBox().textContent = pp.errors.map(function (e, n, a) { return e.message; }).join("\n");
+            _this.map.getPicoCodeBox().value = pp.program.toText().join("\n");
+            _this.map.getPicoErrorTextBox().value = pp.errors.map(function (e, n, a) { return e.message; }).join("\n");
         });
         codecontroldiv.appendChild(loadbutton);
         var compilebutton = document.createElement("button");
         compilebutton.appendChild(document.createTextNode("Compile to Editor"));
         compilebutton.addEventListener("click", function () {
-            var pp = PicoProgram.parse(_this.map.getPicoCodeBox().textContent.split("\n"));
+            var pp = PicoProgram.parse(_this.map.getPicoCodeBox().value.split("\n"));
             if (pp.errors.length == 0) {
                 var robot = pp.program.toEditor();
                 robot.setPos(_this.map.getRobot().getX(), _this.map.getRobot().getY());
                 _this.map.setRobot(robot);
                 _this.setMap(_this.map);
-                _this.map.getPicoErrorTextBox().textContent = "Program successfully loaded to the robot.";
+                _this.map.getPicoErrorTextBox().value = "Program successfully loaded to the robot.";
             }
             else {
-                _this.map.getPicoErrorTextBox().textContent = "There were errors, so the program has not been loaded to the robot.\n\n" + pp.errors.map(function (e, n, a) { return e.message; }).join("\n");
+                _this.map.getPicoErrorTextBox().value = "There were errors, so the program has not been loaded to the robot.\n\n" + pp.errors.map(function (e, n, a) { return e.message; }).join("\n");
             }
         });
         codecontroldiv.appendChild(compilebutton);
@@ -326,7 +326,7 @@ var MapControls = /** @class */ (function () {
             else {
                 this.running = true;
                 this.runfastbutton.classList.add("runningbutton");
-                this.runinterval = window.setInterval(function () { _this.run(); }, 50);
+                this.runinterval = window.setInterval(function () { _this.run(); }, 20);
             }
         }
     };
@@ -664,7 +664,7 @@ var Map = /** @class */ (function () {
                         return;
                     }
                 }
-                if (!_this.robot.step(_this, ws, options)) {
+                if (!_this.step(ws, options)) {
                     window.clearInterval(_this.testInterval);
                     _this.testing = false;
                     _this.testingDone = true;
@@ -842,6 +842,23 @@ var CleanMap = /** @class */ (function (_super) {
         _this.winningDialog.appendChild(winp);
         return _this;
     }
+    CleanMap.prototype.step = function (ws, options) {
+        this.cleanedSquares[this.robot.getX()][this.robot.getY()] = true;
+        var ret = _super.prototype.step.call(this, ws, options);
+        this.cleanedSquares[this.robot.getX()][this.robot.getY()] = true;
+        return ret;
+    };
+    CleanMap.prototype.vstep = function (ws, options, thenCont, elseCont) {
+        var _this = this;
+        this.cleanedSquares[this.robot.getX()][this.robot.getY()] = true;
+        _super.prototype.vstep.call(this, ws, options, function () {
+            _this.cleanedSquares[_this.robot.getX()][_this.robot.getY()] = true;
+            thenCont();
+        }, function () {
+            _this.cleanedSquares[_this.robot.getX()][_this.robot.getY()] = true;
+            elseCont();
+        });
+    };
     CleanMap.prototype.allCleaned = function () {
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
@@ -850,6 +867,22 @@ var CleanMap = /** @class */ (function (_super) {
                 }
             }
         }
+        return true;
+    };
+    CleanMap.prototype.reset = function () {
+        _super.prototype.reset.call(this);
+        this.cleanedSquares = emptybools(this.width, this.height);
+    };
+    CleanMap.prototype.setupTest = function () {
+        this.cleanedSquares = emptybools(this.width, this.height);
+        return _super.prototype.setupTest.call(this);
+    };
+    CleanMap.prototype.handleTestWin = function () {
+        if (_super.prototype.handleTestWin.call(this)) {
+            this.cleanedSquares = emptybools(this.width, this.height);
+            return true;
+        }
+        return false;
     };
     CleanMap.prototype.drawContent = function (ctx, cellwidth, cellheight) {
         _super.prototype.drawContent.call(this, ctx, cellwidth, cellheight);
@@ -1257,4 +1290,72 @@ var MazeMap = /** @class */ (function (_super) {
     };
     return MazeMap;
 }(GoalMap));
+var SquareRoomMap = /** @class */ (function (_super) {
+    __extends(SquareRoomMap, _super);
+    function SquareRoomMap(sidelength, canvas) {
+        return _super.call(this, sidelength, sidelength, canvas, "Square Room") || this;
+    }
+    SquareRoomMap.prototype.initWalls = function () {
+        _super.prototype.initWalls.call(this);
+        this.surroundingWalls();
+    };
+    SquareRoomMap.prototype.getTestSetups = function () {
+        var _this = this;
+        return [function () { _this.robot.setPos(1, 1); }, function () { _this.robot.setPos(4, _this.height - 4); }, function () { _this.robot.setPos(_this.width - 8, Math.floor(_this.height / 2)); }];
+    };
+    return SquareRoomMap;
+}(CleanMap));
+var DiamondRoomMap = /** @class */ (function (_super) {
+    __extends(DiamondRoomMap, _super);
+    function DiamondRoomMap(sidelength, canvas) {
+        return _super.call(this, sidelength, sidelength, canvas, "Diamond Room") || this;
+    }
+    DiamondRoomMap.prototype.initWalls = function () {
+        _super.prototype.initWalls.call(this);
+        this.surroundingWalls();
+        var halfside = Math.floor(this.width / 2);
+        for (var i = 0; i < this.width; i++) {
+            for (var j = 0; j < this.height; j++) {
+                if (i == halfside || j == halfside) {
+                    continue;
+                }
+                var x = i;
+                var y = j;
+                if (i > halfside) {
+                    x = this.width - 1 - i;
+                }
+                if (j > halfside) {
+                    y = this.height - 1 - j;
+                }
+                if (x + y <= halfside) {
+                    this.walls[i][j] = true;
+                }
+            }
+        }
+    };
+    DiamondRoomMap.prototype.generateRobotStart = function () {
+        var halfside = Math.floor(this.width / 2);
+        var rx = Math.floor(Math.random() * halfside);
+        var ry = Math.floor(Math.random() * halfside);
+        var x = 1;
+        var y = halfside;
+        while (rx > 0) {
+            x++;
+            y--;
+            rx--;
+        }
+        while (ry > 0) {
+            x++;
+            y++;
+            ry--;
+        }
+        return { x: x, y: y };
+    };
+    DiamondRoomMap.prototype.getTestSetups = function () {
+        var _this = this;
+        var halfside = Math.floor(this.width / 2);
+        return [function () { _this.robot.setPos(halfside, halfside); }, function () { _this.robot.setPos(1, halfside); }, function () { _this.robot.setPos(3, halfside - 2); }];
+    };
+    return DiamondRoomMap;
+}(CleanMap));
 //# sourceMappingURL=Map.js.map
