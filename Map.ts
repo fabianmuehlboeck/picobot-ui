@@ -203,7 +203,6 @@ class MapControls {
 
     setMap(map: IMap) : void {
         this.map = map;
-        this.map.load();
         this.updateMapUI();
     }
 
@@ -553,10 +552,12 @@ class MapControls {
             window.clearInterval(this.runinterval);
             return false;
         }
-        if (this.map.hasWon()) {
-            this.running = false;
-            window.clearInterval(this.runinterval);
-            this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
+        if (this.running) {
+            if (this.map.hasWon()) {
+                this.running = false;
+                window.clearInterval(this.runinterval);
+                this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
+            }
         }
         return true;
     }

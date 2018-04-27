@@ -44,14 +44,55 @@ function MergeFieldStates(l: FieldState, r: FieldState): FieldState {
     if (l == r) {
         return l;
     }
+    if (r == FieldState.Unknown) {
+        return l;
+    }
     return FieldState.Unknown;
 }
 
-function FieldStatesMatch(l: FieldState, r: FieldState): boolean {
-    if (l == FieldState.Unknown || r == FieldState.Unknown) {
+function FieldStateContains(l: FieldState, r: FieldState): boolean {
+    if (l == FieldState.Unknown) {
         return true;
     }
     return l == r;
+}
+
+function WorldStateContains(l: IWorldState, r: IWorldState): boolean {
+    return FieldStateContains(l.getNorth(), r.getNorth()) &&
+        FieldStateContains(l.getEast(), r.getEast()) &&
+        FieldStateContains(l.getWest(), r.getWest()) &&
+        FieldStateContains(l.getSouth(), r.getSouth());
+}
+
+function FieldStatesMatch(l: FieldState, r: FieldState): boolean {
+    /*if (r == FieldState.Unknown) {
+        return true;
+    }*/
+    return l == r;
+}
+
+function FieldStatesMergeable(l: FieldState, r: FieldState): boolean {
+    return l != FieldState.Unknown && l != r;
+}
+
+function AllAWS(): AWorldState[] {
+    return [new AWorldState(),
+        new AWorldState(AFieldState.Empty, AFieldState.Empty, AFieldState.Empty, AFieldState.Wall),
+        new AWorldState(AFieldState.Empty, AFieldState.Empty, AFieldState.Wall),
+        new AWorldState(AFieldState.Empty, AFieldState.Empty, AFieldState.Wall, AFieldState.Wall),
+        new AWorldState(AFieldState.Empty, AFieldState.Wall),
+        new AWorldState(AFieldState.Empty, AFieldState.Wall, AFieldState.Empty, AFieldState.Wall),
+        new AWorldState(AFieldState.Empty, AFieldState.Wall, AFieldState.Wall),
+        new AWorldState(AFieldState.Empty, AFieldState.Wall, AFieldState.Wall, AFieldState.Wall),
+        new AWorldState(AFieldState.Wall),
+        new AWorldState(AFieldState.Wall, AFieldState.Wall),
+        new AWorldState(AFieldState.Wall, AFieldState.Wall, AFieldState.Wall),
+        new AWorldState(AFieldState.Wall, AFieldState.Wall, AFieldState.Wall, AFieldState.Wall),
+        new AWorldState(AFieldState.Wall, AFieldState.Wall, AFieldState.Empty, AFieldState.Wall),
+        new AWorldState(AFieldState.Wall, AFieldState.Empty, AFieldState.Wall, AFieldState.Wall),
+        new AWorldState(AFieldState.Wall, AFieldState.Empty, AFieldState.Wall),
+        new AWorldState(AFieldState.Wall, AFieldState.Empty, AFieldState.Empty, AFieldState.Wall)
+    ];
 }
 
 class AWorldState {
@@ -60,8 +101,11 @@ class AWorldState {
     south: AFieldState = AFieldState.Empty;
     west: AFieldState = AFieldState.Empty;
 
-    constructor() {
-
+    constructor(north: AFieldState = AFieldState.Empty, east: AFieldState = AFieldState.Empty, west: AFieldState = AFieldState.Empty, south: AFieldState = AFieldState.Empty) {
+        this.north = north;
+        this.east = east;
+        this.west = west;
+        this.south = south;
     }
 
     equals(other: AWorldState) {
@@ -77,79 +121,111 @@ class AWorldState {
     }
 
     static FromPicoStr(str: String): AWorldState[] {
-        var ret: AWorldState[] = [new AWorldState()];
+        var ret: AWorldState[] = AllAWS();
         str = str.toLowerCase();
         if (str.length < 4) {
             throw new SyntaxError("missing parts in surroundings descriptor '" + str + "' - needs 4");
         }
         if (str[0] == "*") {
-            var nret: AWorldState[] = [];
-            for (var i = 0; i < ret.length; i++) {
-                nret.push(ret[i].setNorth(AFieldState.Empty));
-                nret.push(AWorldState.Copy(ret[i]).setNorth(AFieldState.Wall));
-            }
-            ret = nret;
+            //var nret: AWorldState[] = [];
+            //for (var i = 0; i < ret.length; i++) {
+            //    nret.push(ret[i].setNorth(AFieldState.Empty));
+            //    nret.push(AWorldState.Copy(ret[i]).setNorth(AFieldState.Wall));
+            //}
+            //ret = nret;
         } else if (str[0] == "n") {
             for (var i = 0; i < ret.length; i++) {
-                ret[i].setNorth(AFieldState.Wall);
+                if (ret[i].north == AFieldState.Empty) {
+                    ret.splice(i, 1);
+                    i--;
+                }
+                //ret[i].setNorth(AFieldState.Wall);
             }
         } else if (str[0] == "x") {
             for (var i = 0; i < ret.length; i++) {
-                ret[i].setNorth(AFieldState.Empty);
+                if (ret[i].north == AFieldState.Wall) {
+                    ret.splice(i, 1);
+                    i--;
+                }
+                //ret[i].setNorth(AFieldState.Empty);
             }
         } else {
             throw new SyntaxError("unexpected symbol '" + str[0] + "' in north position");
         }
         if (str[1] == "*") {
-            var nret: AWorldState[] = [];
-            for (var i = 0; i < ret.length; i++) {
-                nret.push(ret[i].setEast(AFieldState.Empty));
-                nret.push(AWorldState.Copy(ret[i]).setEast(AFieldState.Wall));
-            }
-            ret = nret;
+            //var nret: AWorldState[] = [];
+            //for (var i = 0; i < ret.length; i++) {
+            //    nret.push(ret[i].setEast(AFieldState.Empty));
+            //    nret.push(AWorldState.Copy(ret[i]).setEast(AFieldState.Wall));
+            //}
+            //ret = nret;
         } else if (str[1] == "e") {
             for (var i = 0; i < ret.length; i++) {
-                ret[i].setEast(AFieldState.Wall);
+                if (ret[i].east == AFieldState.Empty) {
+                    ret.splice(i, 1);
+                    i--;
+                }
+                //ret[i].setEast(AFieldState.Wall);
             }
         } else if (str[1] == "x") {
             for (var i = 0; i < ret.length; i++) {
-                ret[i].setEast(AFieldState.Empty);
+                if (ret[i].east == AFieldState.Wall) {
+                    ret.splice(i, 1);
+                    i--;
+                }
+                //ret[i].setEast(AFieldState.Empty);
             }
         } else {
             throw new SyntaxError("unexpected symbol '" + str[1] + "' in east position");
         }
         if (str[2] == "*") {
-            var nret: AWorldState[] = [];
-            for (var i = 0; i < ret.length; i++) {
-                nret.push(ret[i].setWest(AFieldState.Empty));
-                nret.push(AWorldState.Copy(ret[i]).setWest(AFieldState.Wall));
-            }
-            ret = nret;
+            //var nret: AWorldState[] = [];
+            //for (var i = 0; i < ret.length; i++) {
+            //    nret.push(ret[i].setWest(AFieldState.Empty));
+            //    nret.push(AWorldState.Copy(ret[i]).setWest(AFieldState.Wall));
+            //}
+            //ret = nret;
         } else if (str[2] == "w") {
             for (var i = 0; i < ret.length; i++) {
-                ret[i].setWest(AFieldState.Wall);
+                if (ret[i].west == AFieldState.Empty) {
+                    ret.splice(i, 1);
+                    i--;
+                }
+                //ret[i].setWest(AFieldState.Wall);
             }
         } else if (str[2] == "x") {
             for (var i = 0; i < ret.length; i++) {
-                ret[i].setWest(AFieldState.Empty);
+                if (ret[i].west == AFieldState.Wall) {
+                    ret.splice(i, 1);
+                    i--;
+                }
+                //ret[i].setWest(AFieldState.Empty);
             }
         } else {
             throw new SyntaxError("unexpected symbol '" + str[2] + "' in west position");
         }
         if (str[3] == "*") {
-            var nret: AWorldState[] = [];
-            for (var i = 0; i < ret.length; i++) {
-                nret.push(ret[i].setSouth(AFieldState.Empty));
-                nret.push(AWorldState.Copy(ret[i]).setSouth(AFieldState.Wall));
-            }
-            ret = nret;
+            //var nret: AWorldState[] = [];
+            //for (var i = 0; i < ret.length; i++) {
+            //    nret.push(ret[i].setSouth(AFieldState.Empty));
+            //    nret.push(AWorldState.Copy(ret[i]).setSouth(AFieldState.Wall));
+            //}
+            //ret = nret;
         } else if (str[3] == "s") {
             for (var i = 0; i < ret.length; i++) {
-                ret[i].setSouth(AFieldState.Wall);
+                if (ret[i].south == AFieldState.Empty) {
+                    ret.splice(i, 1);
+                    i--;
+                }
+                //ret[i].setSouth(AFieldState.Wall);
             }
         } else if (str[3] == "x") {
             for (var i = 0; i < ret.length; i++) {
-                ret[i].setSouth(AFieldState.Empty);
+                if (ret[i].south == AFieldState.Wall) {
+                    ret.splice(i, 1);
+                    i--;
+                }
+                //ret[i].setSouth(AFieldState.Empty);
             }
         } else {
             throw new SyntaxError("unexpected symbol '" + str[3] + "' in south position");
@@ -224,29 +300,36 @@ function AWorldState_compress(aws: AWorldState[]): WorldState[] {
         changed = false;
         for (var i = 0; i < ret.length; i++) {
             var ws: WorldState = ret[i];
-            for (var j = i + 1; j < ret.length; j++) {
-                var ws2: WorldState = ret[j];
-                var matches = 0;
-                if (FieldStatesMatch(ws.north,ws2.north)) {
-                    matches++;
-                }
-                if (FieldStatesMatch(ws.east, ws2.east)) {
-                    matches++;
-                }
-                if (FieldStatesMatch(ws.south, ws2.south)) {
-                    matches++;
-                }
-                if (FieldStatesMatch(ws.west, ws2.west)) {
-                    matches++;
-                }
-                if (matches >= 3) {
-                    ws.setNorth(MergeFieldStates(ws.north, ws2.north));
-                    ws.setEast(MergeFieldStates(ws.east, ws2.east));
-                    ws.setSouth(MergeFieldStates(ws.south, ws2.south));
-                    ws.setWest(MergeFieldStates(ws.west, ws2.west));
-                    ret.splice(j, 1);
-                    changed = true;
-                    j--;
+            for (var j = 0; j < ret.length; j++) {
+                if (j != i) {
+                    var ws2: WorldState = ret[j];
+                    var matches = 0;
+                    if (FieldStatesMatch(ws.north, ws2.north)) {
+                        matches++;
+                    }
+                    if (FieldStatesMatch(ws.east, ws2.east)) {
+                        matches++;
+                    }
+                    if (FieldStatesMatch(ws.south, ws2.south)) {
+                        matches++;
+                    }
+                    if (FieldStatesMatch(ws.west, ws2.west)) {
+                        matches++;
+                    }
+                    if (matches >= 3) {
+                        ws.setNorth(MergeFieldStates(ws.north, ws2.north));
+                        ws.setEast(MergeFieldStates(ws.east, ws2.east));
+                        ws.setSouth(MergeFieldStates(ws.south, ws2.south));
+                        ws.setWest(MergeFieldStates(ws.west, ws2.west));
+                        if (WorldStateContains(ws, ws2)) {
+                            ret.splice(j, 1);
+                            j--;
+                            if (j < i) {
+                                i--;
+                            }
+                        }
+                        changed = true;
+                    }
                 }
             }
         }

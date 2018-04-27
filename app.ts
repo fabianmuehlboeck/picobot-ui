@@ -249,6 +249,9 @@ class Pico {
         this.maps.push(new DoorMap(25, 25, Pico.createCanvas()));
         this.maps.push(new MazeMap(25, 25, Pico.createCanvas()));
         var pico = this;
+        for (var i = 0; i < this.maps.length; i++) {
+            this.maps[i].load();
+        }
     }
     
     init(): void {

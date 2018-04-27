@@ -327,7 +327,6 @@ var MapControls = /** @class */ (function () {
     };
     MapControls.prototype.setMap = function (map) {
         this.map = map;
-        this.map.load();
         this.updateMapUI();
     };
     MapControls.prototype.stepFast = function () {
@@ -491,10 +490,12 @@ var MapControls = /** @class */ (function () {
             window.clearInterval(this.runinterval);
             return false;
         }
-        if (this.map.hasWon()) {
-            this.running = false;
-            window.clearInterval(this.runinterval);
-            this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
+        if (this.running) {
+            if (this.map.hasWon()) {
+                this.running = false;
+                window.clearInterval(this.runinterval);
+                this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
+            }
         }
         return true;
     };
