@@ -18,6 +18,9 @@ interface IMap {
     isStateless(): boolean;
     getPicoCodeBox(): HTMLTextAreaElement;
     getPicoErrorTextBox(): HTMLTextAreaElement;
+    save(): void;
+    load(): boolean;
+    clear(): void;
 }
 
 class StepOptions {
@@ -121,8 +124,8 @@ class MapControls {
     robotstatediv: HTMLDivElement;
 
     getMap(): IMap { return this.map; }
-    setMap(map: IMap) {
-        this.map = map;
+
+    updateMapUI() : void {
         while (this.editorDiv.childNodes.length > 0) {
             this.editorDiv.removeChild(this.editorDiv.childNodes[0]);
         }
@@ -134,8 +137,9 @@ class MapControls {
         menudiv.classList.add("editormenu");
         var addstatebutton = document.createElement("button");
         addstatebutton.appendChild(document.createTextNode("Add State"));
-        addstatebutton.addEventListener("click", function () {
-            var state = map.getRobot().addState();
+        addstatebutton.classList.add("addstatebutton");
+        addstatebutton.addEventListener("click", () => {
+            var state = this.map.getRobot().addState();
             $('html, body').animate({
                 scrollTop: Math.max(0, $(state.div).offset().top - 96)
             }, 300);
@@ -145,16 +149,41 @@ class MapControls {
             namefield.focus();
         });
         menudiv.appendChild(addstatebutton);
+
+        var loadbutton = document.createElement("button");
+        loadbutton.appendChild(document.createTextNode("Load Program"));
+        loadbutton.addEventListener("click", () => {
+            if (this.map.load()) {
+                this.updateMapUI();
+            }
+        });
+        menudiv.appendChild(loadbutton);
+
+        var savebutton = document.createElement("button");
+        savebutton.appendChild(document.createTextNode("Save Program"));
+        savebutton.addEventListener("click", () => {
+            this.map.save();
+        });
+        menudiv.appendChild(savebutton);
+
+        var savebutton = document.createElement("button");
+        savebutton.appendChild(document.createTextNode("Clear Program"));
+        savebutton.addEventListener("click", () => {
+            this.map.clear();
+            this.updateMapUI();
+        });
+        menudiv.appendChild(savebutton);
+
         this.editorDiv.appendChild(menudiv);
 
         while (this.robotstatediv.childNodes.length > 0) {
             this.robotstatediv.removeChild(this.robotstatediv.childNodes[0]);
         }
-        this.robotstatediv.appendChild(map.getRobot().stateselector.div);
-        this.editorDiv.appendChild(map.getRobot().programdiv);
+        this.robotstatediv.appendChild(this.map.getRobot().stateselector.div);
+        this.editorDiv.appendChild(this.map.getRobot().programdiv);
         this.canvasParent.appendChild(this.map.getCanvas());
 
-        if (map.isStateless()) {
+        if (this.map.isStateless()) {
             this.editorDiv.classList.add("stateless");
             this.robotstatediv.classList.add("stateless");
         }
@@ -166,10 +195,16 @@ class MapControls {
         while (this.codeDiv.childNodes.length > 0) {
             this.codeDiv.removeChild(this.codeDiv.childNodes[0]);
         }
-        this.codeDiv.appendChild(map.getPicoCodeBox());
-        this.codeDiv.appendChild(map.getPicoErrorTextBox());
+        this.codeDiv.appendChild(this.map.getPicoCodeBox());
+        this.codeDiv.appendChild(this.map.getPicoErrorTextBox());
 
         this.refresh();
+    }
+
+    setMap(map: IMap) : void {
+        this.map = map;
+        this.map.load();
+        this.updateMapUI();
     }
 
     constructor(pico: Pico, canvasParent: HTMLDivElement, controlParent: HTMLDivElement, editorDiv: HTMLDivElement, codeDiv: HTMLDivElement, helpDiv: HTMLDivElement) {
@@ -199,7 +234,7 @@ class MapControls {
                 var robot = pp.program.toEditor();
                 robot.setPos(this.map.getRobot().getX(), this.map.getRobot().getY());
                 this.map.setRobot(robot);
-                this.setMap(this.map);
+                this.updateMapUI();
                 this.map.getPicoErrorTextBox().value = "Program successfully loaded to the robot.";
             } else {
                 this.map.getPicoErrorTextBox().value = "There were errors, so the program has not been loaded to the robot.\n\n" + pp.errors.map((e, n, a) => e.message).join("\n");
@@ -505,10 +540,10 @@ class MapControls {
             },
             () => {
                 this.refresh();
+                this.running = false;
                 if (this.map.hasWon()) {
                     this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
                 }
-                this.running = false;
             });
     }
 
@@ -519,9 +554,9 @@ class MapControls {
             return false;
         }
         if (this.map.hasWon()) {
-            this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
             this.running = false;
             window.clearInterval(this.runinterval);
+            this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
         }
         return true;
     }
@@ -532,8 +567,8 @@ class MapControls {
                 () => {
                     this.refresh();
                     if (this.map.hasWon()) {
-                        this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
                         this.running = false;
+                        this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
                     } else {
                         this.vrun();
                     }
@@ -574,6 +609,29 @@ abstract class Map implements IMap {
         this.picocodeerrorbox.classList.add("picoerrors");
         this.picocodeerrorbox.readOnly = true;
         this.initRobot();
+    }
+
+    save(): void {
+        var pp = PicoProgram.fromEditor(this.robot);
+        localStorage.setItem("mapcode:" + this.name, pp.program.toText().join("\n"));
+    }
+    load(): boolean {
+        var code = localStorage.getItem("mapcode:" + this.name);
+        if (code) {
+            var pp = PicoProgram.parse(code.split("\n"));
+            var robot = pp.program.toEditor();
+            robot.setPos(this.robot.getX(), this.robot.getY());
+            this.setRobot(robot);
+            return true;
+        }
+        return false;
+    }
+    clear() {
+        var robot = new Robot(this.robot.getX(), this.robot.getY());
+        this.setRobot(robot);
+        if (localStorage.getItem("mapcode:" + this.name)) {
+            localStorage.removeItem("mapcode:" + this.name);
+        }
     }
 
     isStateless(): boolean {
@@ -755,10 +813,13 @@ abstract class Map implements IMap {
                     window.clearInterval(this.testInterval);
                     this.testing = false;
                     this.testingDone = true;
+                    refreshcb();
                     donecb(false);
                     finishedcb();
                 }
-                refreshcb();
+                else {
+                    refreshcb();
+                }
             }
         }, 10);
         return (cont: () => void) => {
@@ -885,22 +946,22 @@ abstract class WallMap extends Map {
 
     updateWorldState(ws: IWorldState, x: number, y: number): void {
         var north: FieldState = FieldState.Empty;
-        if (this.walls[x][y - 1]) {
+        if (y>0&&this.walls[x][y - 1]) {
             north = FieldState.Wall;
         }
         ws.setNorth(north);
         var east: FieldState = FieldState.Empty;
-        if (this.walls[x + 1][y]) {
+        if (x<this.width-1&&this.walls[x + 1][y]) {
             east = FieldState.Wall;
         }
         ws.setEast(east);
         var south: FieldState = FieldState.Empty;
-        if (this.walls[x][y + 1]) {
+        if (y<this.height-1&&this.walls[x][y + 1]) {
             south = FieldState.Wall;
         }
         ws.setSouth(south);
         var west: FieldState = FieldState.Empty;
-        if (this.walls[x - 1][y]) {
+        if (x>0&&this.walls[x - 1][y]) {
             west = FieldState.Wall;
         }
         ws.setWest(west);
@@ -1404,6 +1465,13 @@ class MazeMap extends GoalMap {
                 }
             }
         }
+    }
+
+    isValidPos(x: number, y: number): boolean {
+        if (x == 0 && y == this.starty) {
+            return true;
+        }
+        return super.isValidPos(x, y);
     }
 
     //reset() {

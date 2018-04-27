@@ -381,12 +381,8 @@ li.rule {
     display:none;
 }
 
-.stateless .editormenu {
+.stateless .editormenu .addstatebutton {
     display:none;
-}
-
-.stateless .programdiv {
-    padding-top:10px;
 }
 
 .ui-menu {

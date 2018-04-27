@@ -99,7 +99,7 @@ var MapControls = /** @class */ (function () {
                 var robot = pp.program.toEditor();
                 robot.setPos(_this.map.getRobot().getX(), _this.map.getRobot().getY());
                 _this.map.setRobot(robot);
-                _this.setMap(_this.map);
+                _this.updateMapUI();
                 _this.map.getPicoErrorTextBox().value = "Program successfully loaded to the robot.";
             }
             else {
@@ -258,8 +258,8 @@ var MapControls = /** @class */ (function () {
         configurable: true
     });
     MapControls.prototype.getMap = function () { return this.map; };
-    MapControls.prototype.setMap = function (map) {
-        this.map = map;
+    MapControls.prototype.updateMapUI = function () {
+        var _this = this;
         while (this.editorDiv.childNodes.length > 0) {
             this.editorDiv.removeChild(this.editorDiv.childNodes[0]);
         }
@@ -270,8 +270,9 @@ var MapControls = /** @class */ (function () {
         menudiv.classList.add("editormenu");
         var addstatebutton = document.createElement("button");
         addstatebutton.appendChild(document.createTextNode("Add State"));
+        addstatebutton.classList.add("addstatebutton");
         addstatebutton.addEventListener("click", function () {
-            var state = map.getRobot().addState();
+            var state = _this.map.getRobot().addState();
             $('html, body').animate({
                 scrollTop: Math.max(0, $(state.div).offset().top - 96)
             }, 300);
@@ -281,14 +282,35 @@ var MapControls = /** @class */ (function () {
             namefield.focus();
         });
         menudiv.appendChild(addstatebutton);
+        var loadbutton = document.createElement("button");
+        loadbutton.appendChild(document.createTextNode("Load Program"));
+        loadbutton.addEventListener("click", function () {
+            if (_this.map.load()) {
+                _this.updateMapUI();
+            }
+        });
+        menudiv.appendChild(loadbutton);
+        var savebutton = document.createElement("button");
+        savebutton.appendChild(document.createTextNode("Save Program"));
+        savebutton.addEventListener("click", function () {
+            _this.map.save();
+        });
+        menudiv.appendChild(savebutton);
+        var savebutton = document.createElement("button");
+        savebutton.appendChild(document.createTextNode("Clear Program"));
+        savebutton.addEventListener("click", function () {
+            _this.map.clear();
+            _this.updateMapUI();
+        });
+        menudiv.appendChild(savebutton);
         this.editorDiv.appendChild(menudiv);
         while (this.robotstatediv.childNodes.length > 0) {
             this.robotstatediv.removeChild(this.robotstatediv.childNodes[0]);
         }
-        this.robotstatediv.appendChild(map.getRobot().stateselector.div);
-        this.editorDiv.appendChild(map.getRobot().programdiv);
+        this.robotstatediv.appendChild(this.map.getRobot().stateselector.div);
+        this.editorDiv.appendChild(this.map.getRobot().programdiv);
         this.canvasParent.appendChild(this.map.getCanvas());
-        if (map.isStateless()) {
+        if (this.map.isStateless()) {
             this.editorDiv.classList.add("stateless");
             this.robotstatediv.classList.add("stateless");
         }
@@ -299,9 +321,14 @@ var MapControls = /** @class */ (function () {
         while (this.codeDiv.childNodes.length > 0) {
             this.codeDiv.removeChild(this.codeDiv.childNodes[0]);
         }
-        this.codeDiv.appendChild(map.getPicoCodeBox());
-        this.codeDiv.appendChild(map.getPicoErrorTextBox());
+        this.codeDiv.appendChild(this.map.getPicoCodeBox());
+        this.codeDiv.appendChild(this.map.getPicoErrorTextBox());
         this.refresh();
+    };
+    MapControls.prototype.setMap = function (map) {
+        this.map = map;
+        this.map.load();
+        this.updateMapUI();
     };
     MapControls.prototype.stepFast = function () {
         var _this = this;
@@ -451,10 +478,10 @@ var MapControls = /** @class */ (function () {
             }
         }, function () {
             _this.refresh();
+            _this.running = false;
             if (_this.map.hasWon()) {
                 _this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
             }
-            _this.running = false;
         });
     };
     MapControls.prototype.run = function () {
@@ -465,9 +492,9 @@ var MapControls = /** @class */ (function () {
             return false;
         }
         if (this.map.hasWon()) {
-            this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
             this.running = false;
             window.clearInterval(this.runinterval);
+            this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
         }
         return true;
     };
@@ -477,8 +504,8 @@ var MapControls = /** @class */ (function () {
             this.map.vstep(this.worldState, this.map.getStepOptions, function () {
                 _this.refresh();
                 if (_this.map.hasWon()) {
-                    _this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
                     _this.running = false;
+                    _this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
                 }
                 else {
                     _this.vrun();
@@ -516,6 +543,28 @@ var Map = /** @class */ (function () {
         this.picocodeerrorbox.readOnly = true;
         this.initRobot();
     }
+    Map.prototype.save = function () {
+        var pp = PicoProgram.fromEditor(this.robot);
+        localStorage.setItem("mapcode:" + this.name, pp.program.toText().join("\n"));
+    };
+    Map.prototype.load = function () {
+        var code = localStorage.getItem("mapcode:" + this.name);
+        if (code) {
+            var pp = PicoProgram.parse(code.split("\n"));
+            var robot = pp.program.toEditor();
+            robot.setPos(this.robot.getX(), this.robot.getY());
+            this.setRobot(robot);
+            return true;
+        }
+        return false;
+    };
+    Map.prototype.clear = function () {
+        var robot = new Robot(this.robot.getX(), this.robot.getY());
+        this.setRobot(robot);
+        if (localStorage.getItem("mapcode:" + this.name)) {
+            localStorage.removeItem("mapcode:" + this.name);
+        }
+    };
     Map.prototype.isStateless = function () {
         return false;
     };
@@ -668,10 +717,13 @@ var Map = /** @class */ (function () {
                     window.clearInterval(_this.testInterval);
                     _this.testing = false;
                     _this.testingDone = true;
+                    refreshcb();
                     donecb(false);
                     finishedcb();
                 }
-                refreshcb();
+                else {
+                    refreshcb();
+                }
             }
         }, 10);
         return function (cont) {
@@ -787,22 +839,22 @@ var WallMap = /** @class */ (function (_super) {
     };
     WallMap.prototype.updateWorldState = function (ws, x, y) {
         var north = FieldState.Empty;
-        if (this.walls[x][y - 1]) {
+        if (y > 0 && this.walls[x][y - 1]) {
             north = FieldState.Wall;
         }
         ws.setNorth(north);
         var east = FieldState.Empty;
-        if (this.walls[x + 1][y]) {
+        if (x < this.width - 1 && this.walls[x + 1][y]) {
             east = FieldState.Wall;
         }
         ws.setEast(east);
         var south = FieldState.Empty;
-        if (this.walls[x][y + 1]) {
+        if (y < this.height - 1 && this.walls[x][y + 1]) {
             south = FieldState.Wall;
         }
         ws.setSouth(south);
         var west = FieldState.Empty;
-        if (this.walls[x - 1][y]) {
+        if (x > 0 && this.walls[x - 1][y]) {
             west = FieldState.Wall;
         }
         ws.setWest(west);
@@ -1262,6 +1314,12 @@ var MazeMap = /** @class */ (function (_super) {
                 }
             }
         }
+    };
+    MazeMap.prototype.isValidPos = function (x, y) {
+        if (x == 0 && y == this.starty) {
+            return true;
+        }
+        return _super.prototype.isValidPos.call(this, x, y);
     };
     //reset() {
     //    var sws = MazeMap.mazewalls(this.width, this.height);
