@@ -1018,7 +1018,6 @@ var SpiralMap = /** @class */ (function (_super) {
         return { x: rx, y: ry };
     };
     SpiralMap.prototype.getGoalZones = function () {
-        var maxdim = Math.min(this.width, this.height) - 3;
         return [{ sx: this.left, sy: this.top, ex: this.right, ey: this.bottom }];
     };
     SpiralMap.prototype.getTestSetups = function () {
@@ -1066,15 +1065,40 @@ var StartMap = /** @class */ (function (_super) {
     };
     return StartMap;
 }(GoalMap));
+var ObstacleMap = /** @class */ (function (_super) {
+    __extends(ObstacleMap, _super);
+    function ObstacleMap(width, height, canvas) {
+        return _super.call(this, width, height, canvas, "Obstacles") || this;
+    }
+    ObstacleMap.prototype.initWalls = function () {
+        _super.prototype.initWalls.call(this);
+        this.surroundingWalls();
+        var halfwidth = Math.ceil(this.width / 2);
+        var halfheight = Math.floor(this.height / 2);
+        var obstacleheight = halfheight - 2;
+        for (var i = 1; i < obstacleheight; i++) {
+            this.walls[halfwidth][i] = true;
+            this.walls[halfwidth][this.height - i - 1] = true;
+        }
+    };
+    ObstacleMap.prototype.generateRobotStart = function () {
+        var rx = 1;
+        var ry = this.height - 2;
+        return { x: rx, y: ry };
+    };
+    ObstacleMap.prototype.getGoalZones = function () {
+        return [{ sx: this.width - 2, sy: this.height - 2, ex: this.width - 2, ey: this.height - 2 }];
+    };
+    ObstacleMap.prototype.getTestSetups = function () {
+        var _this = this;
+        return [function () { _this.robot.setPos(1, _this.height - 2); }];
+    };
+    return ObstacleMap;
+}(GoalMap));
 var DoorMap = /** @class */ (function (_super) {
     __extends(DoorMap, _super);
-    function DoorMap(width, height, canvas, walls) {
-        var _this = _super.call(this, width, height, canvas, "Find the Door") || this;
-        _this.winningDialog = document.createElement("div");
-        var winp = document.createElement("p");
-        winp.appendChild(document.createTextNode("You reached the goal! Run tests to see if your program can handle some variations of this map, or go on to the next level!"));
-        _this.winningDialog.appendChild(winp);
-        return _this;
+    function DoorMap(width, height, canvas) {
+        return _super.call(this, width, height, canvas, "Find the Door") || this;
     }
     DoorMap.prototype.initWalls = function () {
         this.initDoorWalls(Math.floor(Math.random() * (this.height - 2)) + 1);

@@ -174,6 +174,7 @@ var Pico = /** @class */ (function () {
     function Pico() {
         this.maps = [];
         this.maps.push(new SpiralMap(25, 25, Pico.createCanvas()));
+        this.maps.push(new ObstacleMap(15, 15, Pico.createCanvas()));
         this.maps.push(new StartMap(15, 15, Pico.createCanvas()));
         this.maps.push(new DoorMap(25, 25, Pico.createCanvas()));
         this.maps.push(new MazeMap(25, 25, Pico.createCanvas()));

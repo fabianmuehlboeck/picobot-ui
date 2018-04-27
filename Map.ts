@@ -1141,7 +1141,6 @@ class SpiralMap extends GoalMap {
     }
 
     getGoalZones(): { sx: number, sy: number, ex: number, ey: number }[] {
-        var maxdim: number = Math.min(this.width, this.height) - 3;
         return [{ sx: this.left, sy: this.top, ex: this.right, ey: this.bottom }];
     }
 
@@ -1192,6 +1191,39 @@ class StartMap extends GoalMap {
 
 }
 
+class ObstacleMap extends GoalMap {
+
+    constructor(width: number, height: number, canvas: HTMLCanvasElement) {
+        super(width, height, canvas, "Obstacles");
+    }
+
+    initWalls() {
+        super.initWalls();
+        this.surroundingWalls();
+        var halfwidth = Math.ceil(this.width / 2);
+        var halfheight = Math.floor(this.height / 2);
+        var obstacleheight = halfheight - 2;
+        for (var i = 1; i < obstacleheight; i++) {
+            this.walls[halfwidth][i] = true;
+            this.walls[halfwidth][this.height - i - 1] = true;
+        }
+    }
+    
+    generateRobotStart() {
+        var rx = 1;
+        var ry = this.height - 2;
+        return { x: rx, y: ry };
+    }
+
+    getGoalZones(): { sx: number, sy: number, ex: number, ey: number }[] {
+        return [{ sx: this.width - 2, sy: this.height - 2, ex: this.width - 2, ey: this.height - 2 }];
+    }
+
+    getTestSetups(): (() => void)[] {
+        return [() => { this.robot.setPos(1, this.height - 2); }];
+    }
+}
+
 class DoorMap extends GoalMap {
 
     initWalls() {
@@ -1210,15 +1242,10 @@ class DoorMap extends GoalMap {
             }
         }
     }
+    
 
-    winningDialog: HTMLDivElement;
-
-    constructor(width: number, height: number, canvas: HTMLCanvasElement, walls?: boolean[][]) {
+    constructor(width: number, height: number, canvas: HTMLCanvasElement) {
         super(width, height, canvas, "Find the Door");
-        this.winningDialog = document.createElement("div");
-        var winp = document.createElement("p");
-        winp.appendChild(document.createTextNode("You reached the goal! Run tests to see if your program can handle some variations of this map, or go on to the next level!"));
-        this.winningDialog.appendChild(winp);
     }
 
     generateRobotStart() {
