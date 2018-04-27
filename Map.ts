@@ -4,15 +4,16 @@ interface IMap {
     isValidPos(x: number, y: number): boolean;
     draw(): void;
     getRobot(): Robot;
-    setRobot(robot : Robot);
+    setRobot(robot: Robot);
     step(ws: IWorldState, options?: StepOptions): boolean;
     vstep(ws: IWorldState, options: StepOptions, thenCont: () => void, elseCont: () => void): void;
     getCanvas(): HTMLCanvasElement;
     getStepOptions(): StepOptions;
     reset(): void;
-    test(rcb: () => void): void;
+    test(refreshcb: () => void, ws: IWorldState, donecb: (success: boolean) => void, finishedcb: () => void): (cont: () => void) => void;
+    vtest(refreshcb: () => void, ws: IWorldState, donecb: (success: boolean) => void, finishedcb: () => void): (cont: () => void) => void;
     hasWon(): boolean;
-    showWinningMessage(): void;
+    showWinningMessage(runtests: () => void, nextmap: () => void): void;
     getName(): string;
     isStateless(): boolean;
     getPicoCodeBox(): HTMLTextAreaElement;
@@ -94,9 +95,21 @@ class MapControls {
     rightButton: HTMLAnchorElement;
     downButton: HTMLAnchorElement;
     leftButton: HTMLAnchorElement;
+    testSuccessDialog: HTMLDivElement;
+
+    stepfastbutton: HTMLButtonElement;
+    runfastbutton: HTMLButtonElement;
+    testfastbutton: HTMLButtonElement;
+    stepvisualbutton: HTMLButtonElement;
+    runvisualbutton: HTMLButtonElement;
+    testvisualbutton: HTMLButtonElement;
+    stopbutton: HTMLButtonElement;
+
+    pico: Pico;
     map: IMap;
     worldState: DrawWorldState;
     _isrunning: boolean = false;
+    testabort: (cont: () => void) => void = null;
     get running(): boolean { return this._isrunning; }
     set running(b: boolean) {
         this._isrunning = b;
@@ -159,8 +172,9 @@ class MapControls {
         this.refresh();
     }
 
-    constructor(canvasParent: HTMLDivElement, controlParent: HTMLDivElement, editorDiv: HTMLDivElement, codeDiv: HTMLDivElement, helpDiv: HTMLDivElement) {
+    constructor(pico: Pico, canvasParent: HTMLDivElement, controlParent: HTMLDivElement, editorDiv: HTMLDivElement, codeDiv: HTMLDivElement, helpDiv: HTMLDivElement) {
         var mc = this;
+        this.pico = pico;
         this.running = false;
         this.canvasParent = canvasParent;
         this.editorDiv = editorDiv;
@@ -186,8 +200,9 @@ class MapControls {
                 robot.setPos(this.map.getRobot().getX(), this.map.getRobot().getY());
                 this.map.setRobot(robot);
                 this.setMap(this.map);
+                this.map.getPicoErrorTextBox().textContent = "Program successfully loaded to the robot.";
             } else {
-                this.map.getPicoErrorTextBox().textContent = pp.errors.map((e, n, a) => e.message).join("\n");
+                this.map.getPicoErrorTextBox().textContent = "There were errors, so the program has not been loaded to the robot.\n\n" + pp.errors.map((e, n, a) => e.message).join("\n");
             }
         });
         codecontroldiv.appendChild(compilebutton);
@@ -248,81 +263,54 @@ class MapControls {
         runProgramDiv.className = "runprogramdiv";
         var simplerundiv = document.createElement("div");
         simplerundiv.appendChild(document.createTextNode("FAST"));
-        var stepbutton = document.createElement("button");
-        stepbutton.appendChild(document.createTextNode("Step"));
-        stepbutton.addEventListener("click", function () {
-            if (mc.running == false) {
-                if (mc.map.hasWon()) {
-                    mc.map.showWinningMessage();
-                }
-                else {
-                    mc.step();
-                    if (mc.map.hasWon()) {
-                        mc.map.showWinningMessage();
-                    }
-                }
-            }
+        this.stepfastbutton = document.createElement("button");
+        this.stepfastbutton.appendChild(document.createTextNode("Step"));
+        this.stepfastbutton.addEventListener("click", () => {
+            this.stepFast();
         });
-        simplerundiv.appendChild(stepbutton);
-        var runfastbutton = document.createElement("button");
-        runfastbutton.appendChild(document.createTextNode("Run"));
-        runfastbutton.addEventListener("click", function () {
-            if (mc.running == false) {
-                if (mc.map.hasWon()) {
-                    mc.map.showWinningMessage();
-                }
-                else {
-                    mc.running = true;
-                    runfastbutton.classList.add("runningbutton");
-                    mc.runinterval = window.setInterval(() => { mc.run(); }, 50);
-                }
-            }
+        simplerundiv.appendChild(this.stepfastbutton);
+        this.runfastbutton = document.createElement("button");
+        this.runfastbutton.appendChild(document.createTextNode("Run"));
+        this.runfastbutton.addEventListener("click", () => {
+            this.runFast();
         });
-        simplerundiv.appendChild(runfastbutton);
+        simplerundiv.appendChild(this.runfastbutton);
+
+        this.testfastbutton = document.createElement("button");
+        this.testfastbutton.appendChild(document.createTextNode("Test"));
+        this.testfastbutton.addEventListener("click", () => {
+            this.testFast();
+        });
+        simplerundiv.appendChild(this.testfastbutton);
 
         var visualizerundiv = document.createElement("div");
         visualizerundiv.appendChild(document.createTextNode("VISUALIZE"));
-        stepbutton = document.createElement("button");
-        stepbutton.appendChild(document.createTextNode("Step"));
-        stepbutton.addEventListener("click", function () {
-            if (mc.running == false) {
-                if (mc.map.hasWon()) {
-                    mc.map.showWinningMessage();
-                }
-                else {
-                    mc.running = true;
-                    stepbutton.classList.add("runningbutton");
-                    mc.vstep();
-                }
-            }
+        this.stepvisualbutton = document.createElement("button");
+        this.stepvisualbutton.appendChild(document.createTextNode("Step"));
+        this.stepvisualbutton.addEventListener("click", () => {
+            this.stepVisual();
         });
-        visualizerundiv.appendChild(stepbutton);
-        var runbutton = document.createElement("button");
-        runbutton.appendChild(document.createTextNode("Run"));
-        runbutton.addEventListener("click", function () {
-            if (mc.running == false) {
-                if (mc.map.hasWon()) {
-                    mc.map.showWinningMessage();
-                }
-                else {
-                    mc.running = true;
-                    runbutton.classList.add("runningbutton");
-                    mc.vrun();
-                }
-            }
+        visualizerundiv.appendChild(this.stepvisualbutton);
+        this.runvisualbutton = document.createElement("button");
+        this.runvisualbutton.appendChild(document.createTextNode("Run"));
+        this.runvisualbutton.addEventListener("click", () => {
+            this.runVisual();
         })
-        visualizerundiv.appendChild(runbutton);
+        visualizerundiv.appendChild(this.runvisualbutton);
+        this.testvisualbutton = document.createElement("button");
+        this.testvisualbutton.appendChild(document.createTextNode("Test"));
+        this.testvisualbutton.addEventListener("click", () => {
+            this.testVisual();
+        });
+        visualizerundiv.appendChild(this.testvisualbutton);
 
         runProgramDiv.appendChild(simplerundiv);
         runProgramDiv.appendChild(visualizerundiv);
 
         var stopbutton = document.createElement("button");
         stopbutton.appendChild(document.createTextNode("Stop"));
-        stopbutton.addEventListener("click", function () {
-            if (mc.running == true) {
-                mc.running = false;
-                window.clearInterval(mc.runinterval);
-            }
+        stopbutton.addEventListener("click", () => {
+            this.stopRun();
         });
 
         runProgramDiv.appendChild(stopbutton);
@@ -340,12 +328,13 @@ class MapControls {
         });
         scenariodiv.appendChild(resetbutton);
 
-        var testbutton = document.createElement("button");
-        testbutton.appendChild(document.createTextNode("Test Robot"));
-        testbutton.addEventListener("click", function () {
-            mc.map.test(() => { mc.refresh(); });
+        var resetrobotbutton = document.createElement("button");
+        resetrobotbutton.appendChild(document.createTextNode("Reset Robot"));
+        resetrobotbutton.addEventListener("click", function () {
+            mc.map.getRobot().reset();
+            mc.refresh();
         });
-        scenariodiv.appendChild(testbutton);
+        scenariodiv.appendChild(resetrobotbutton);
 
         var fogcheckbox = document.createElement("input");
         fogcheckbox.type = "checkbox";
@@ -368,6 +357,128 @@ class MapControls {
         controlParent.appendChild(this.controlDiv);
 
         (<any>$(fogcheckbox)).checkboxradio();
+
+        this.testSuccessDialog = document.createElement("div");
+        var winp = document.createElement("p");
+        winp.appendChild(document.createTextNode("All tests succeeded!"));
+        this.testSuccessDialog.appendChild(winp);
+
+    }
+
+    stepFast(): void {
+        if (this.running == false) {
+            if (this.map.hasWon()) {
+                this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
+            }
+            else {
+                this.step();
+                if (this.map.hasWon()) {
+                    this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
+                }
+            }
+        }
+    }
+
+    runFast(): void {
+        if (this.running == false) {
+            if (this.map.hasWon()) {
+                this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
+            }
+            else {
+                this.running = true;
+                this.runfastbutton.classList.add("runningbutton");
+                this.runinterval = window.setInterval(() => { this.run(); }, 50);
+            }
+        }
+    }
+
+    testFast(): void {
+        if (!this.running) {
+            this.running = true;
+            this.testfastbutton.classList.add("runningbutton");
+            this.testabort = this.map.test(() => { this.refresh(); }, this.worldState, (success: boolean) => { if (success) { this.showTestSuccessMessage(); } else { alert("Test failed! Robot is stuck!"); } }, () => {
+                this.running = false;
+                this.testabort = null;
+            });
+            if (!this.running) {
+                this.testabort = null;
+            }
+        }
+    }
+
+    stepVisual(): void {
+        if (this.running == false) {
+            if (this.map.hasWon()) {
+                this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
+            }
+            else {
+                this.running = true;
+                this.stepvisualbutton.classList.add("runningbutton");
+                this.vstep();
+            }
+        }
+    }
+
+    runVisual(): void {
+        if (this.running == false) {
+            if (this.map.hasWon()) {
+                this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
+            }
+            else {
+                this.running = true;
+                this.runvisualbutton.classList.add("runningbutton");
+                this.vrun();
+            }
+        }
+    }
+
+    testVisual(): void {
+        if (!this.running) {
+            this.running = true;
+            this.testvisualbutton.classList.add("runningbutton");
+            this.testabort = this.map.vtest(() => { this.refresh(); }, this.worldState, (success: boolean) => { if (success) { this.showTestSuccessMessage(); } else { alert("Test failed! Robot is stuck!"); } }, () => {
+                this.running = false;
+                this.testabort = null;
+            });
+            if (!this.running) {
+                this.testabort = null;
+            }
+        }
+    }
+
+    stopRun(cont: () => void = () => { }): void {
+        if (this.running == true) {
+            if (this.testabort != null) {
+                this.testabort(cont);
+                this.testabort = null;
+            } else {
+                this.running = false;
+            }
+        } else {
+            cont();
+        }
+    }
+
+    showTestSuccessMessage(): void {
+        if (this.testSuccessDialog.parentNode == null) {
+            document.body.appendChild(this.testSuccessDialog);
+        }
+        var mc = this;
+        $(this.testSuccessDialog).dialog({
+            resizable: false,
+            height: "auto",
+            width: 400,
+            modal: true,
+            buttons: {
+                "Go to Next Level": function () {
+                    mc.pico.nextMap();
+                    $(this).dialog("close");
+                },
+                Cancel: function () {
+                    $(this).dialog("close");
+                }
+            }
+        });
     }
 
     refresh(): void {
@@ -389,13 +500,13 @@ class MapControls {
                 this.refresh();
                 this.running = false;
                 if (this.map.hasWon()) {
-                    this.map.showWinningMessage();
+                    this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
                 }
             },
             () => {
                 this.refresh();
                 if (this.map.hasWon()) {
-                    this.map.showWinningMessage();
+                    this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
                 }
                 this.running = false;
             });
@@ -408,7 +519,7 @@ class MapControls {
             return false;
         }
         if (this.map.hasWon()) {
-            this.map.showWinningMessage();
+            this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
             this.running = false;
             window.clearInterval(this.runinterval);
         }
@@ -421,7 +532,7 @@ class MapControls {
                 () => {
                     this.refresh();
                     if (this.map.hasWon()) {
-                        this.map.showWinningMessage();
+                        this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
                         this.running = false;
                     } else {
                         this.vrun();
@@ -431,7 +542,7 @@ class MapControls {
                     this.refresh();
                     this.running = false;
                     if (this.map.hasWon()) {
-                        this.map.showWinningMessage();
+                        this.map.showWinningMessage(() => { this.stopRun(() => this.testFast()); }, () => { this.pico.nextMap(); });
                     }
                 });
         }
@@ -444,7 +555,8 @@ interface StateEventListener {
     notify(s: State, se: StateEvent): void;
 }
 
-class Map implements IMap {
+abstract class Map implements IMap {
+    name: string;
     width: number;
     height: number;
     robot: Robot;
@@ -453,10 +565,11 @@ class Map implements IMap {
     picocodeerrorbox: HTMLTextAreaElement = document.createElement("textarea");
 
 
-    constructor(width: number, height: number, canvas: HTMLCanvasElement) {
+    constructor(width: number, height: number, canvas: HTMLCanvasElement, name: string) {
         this.canvas = canvas;
         this.width = width;
         this.height = height;
+        this.name = name;
         this.picocodebox.classList.add("picocode");
         this.picocodeerrorbox.classList.add("picoerrors");
         this.picocodeerrorbox.readOnly = true;
@@ -590,30 +703,168 @@ class Map implements IMap {
     reset(): void {
         var start = this.generateRobotStart();
         this.robot.setPos(start.x, start.y);
-        this.robot.setState(this.robot.states[this.robot.statenames[0]]);
+        this.robot.reset();
         this.draw();
     }
 
-    test(rcb: () => void): void {
+    private testInterval: number;
+    private testing: boolean = false;
+    private testingDone: boolean = true;
+    private testRun = 0;
 
+    isTesting(): boolean { return this.testing; }
+
+    abstract handleTestWin(): boolean;
+
+    abstract setupTest(): boolean;
+
+    test(refreshcb: () => void, ws: IWorldState, donecb: (success: boolean) => void, finishedcb: () => void): (cont: () => void) => void {
+        if (this.testingDone == false) {
+            alert("Tests still running");
+            finishedcb();
+            return null;
+        }
+        this.testingDone = false;
+        this.testing = true;
+        this.testRun++;
+        var runid = this.testRun;
+        if (!this.setupTest()) {
+            alert("This map has no tests.");
+            this.testingDone = true;
+            this.testing = false;
+            finishedcb();
+            return (cont: () => void) => { cont(); };
+        }
+        refreshcb();
+        this.draw();
+        var options: StepOptions = this.getStepOptions();
+        this.testInterval = window.setInterval(() => {
+            if (this.testing == true && runid == this.testRun) {
+                this.updateWorldState(ws, this.robot.getX(), this.robot.getY());
+                if (this.hasWon()) {
+                    if (!this.handleTestWin()) {
+                        window.clearInterval(this.testInterval);
+                        this.testing = false;
+                        this.testingDone = true;
+                        donecb(true);
+                        finishedcb();
+                        return;
+                    }
+                }
+                if (!this.robot.step(this, ws, options)) {
+                    window.clearInterval(this.testInterval);
+                    this.testing = false;
+                    this.testingDone = true;
+                    donecb(false);
+                    finishedcb();
+                }
+                refreshcb();
+            }
+        }, 10);
+        return (cont: () => void) => {
+            this.testing = false;
+            this.testingDone = true;
+            window.clearInterval(this.testInterval);
+            finishedcb();
+            cont();
+        };
     }
 
-    showWinningMessage(): void {
-
+    vtest(refreshcb: () => void, ws: IWorldState, donecb: (success: boolean) => void, finishedcb: () => void): (cont: () => void) => void {
+        if (this.testingDone == false) {
+            alert("Tests already running");
+            finishedcb();
+            return null;
+        }
+        this.testingDone = false;
+        this.testing = true;
+        this.testRun++;
+        var runid = this.testRun;
+        if (!this.setupTest()) {
+            alert("This map has no tests.");
+            this.testingDone = true;
+            this.testing = false;
+            finishedcb();
+            return null;
+        }
+        var continuation: () => void = () => { };
+        var options: StepOptions = this.getStepOptions();
+        var vstepfun = () => {
+            refreshcb();
+            if (this.hasWon()) {
+                if (!this.handleTestWin()) {
+                    this.testing = false;
+                    this.testingDone = true;
+                    donecb(true);
+                    finishedcb();
+                    continuation();
+                    return;
+                }
+            }
+            if (this.testing == true && runid == this.testRun) {
+                this.vstep(ws, options, vstepfun,
+                    () => {
+                        this.testing = false;
+                        this.testingDone = true;
+                        donecb(false);
+                        finishedcb();
+                        continuation();
+                    });
+            } else {
+                this.testingDone = true;
+                finishedcb();
+                continuation();
+            }
+        };
+        vstepfun();
+        return (cont: () => void) => { continuation = cont; this.testing = false; }
     }
+
+    abstract showWinningMessage(runtests: () => void, nextmap: () => void): void;
+
 
     getName(): string {
-        return "INVALID MAP";
+        return this.name;
     }
 }
 
-class WallMap extends Map {
+function emptybools(width: number, height: number): boolean[][] {
+    var bools: boolean[][] = [];
+    for (var x = 0; x < width; x++) {
+        bools[x] = [];
+        for (var y = 0; y < height; y++) {
+            bools[x][y] = false;
+        }
+    }
+    return bools;
+}
+
+abstract class WallMap extends Map {
 
     walls: boolean[][];
 
-    constructor(width: number, height: number, canvas: HTMLCanvasElement, walls: boolean[][]) {
-        super(width, height, canvas);
-        this.walls = walls;
+    constructor(width: number, height: number, canvas: HTMLCanvasElement, name: string) {
+        super(width, height, canvas, name);
+        this.initWalls();
+    }
+
+    initWalls(): void {
+        this.walls = emptybools(this.width, this.height);
+    }
+
+    surroundingWalls(): void {
+        for (var x = 0; x < this.width; x++) {
+            for (var y = 0; y < this.height; y++) {
+                if (x == 0 || x == this.width - 1 || y == 0 || y == this.height - 1) {
+                    this.walls[x][y] = true;
+                }
+            }
+        }
+    }
+
+    reset(): void {
+        this.initWalls();
+        super.reset();
     }
 
     drawContent(ctx: CanvasRenderingContext2D, cellwidth: number, cellheight: number) {
@@ -654,81 +905,75 @@ class WallMap extends Map {
         }
         ws.setWest(west);
     }
-}
 
-class EmptyMap extends WallMap {
-    constructor(width: number, height: number, canvas: HTMLCanvasElement) {
-        var walls: boolean[][] = [];
-        for (var x = 0; x < width; x++) {
-            walls[x] = [];
-            for (var y = 0; y < height; y++) {
-                if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
-                    walls[x][y] = true;
-                }
-                else {
-                    walls[x][y] = false;
-                }
-            }
+    abstract getTestSetups(): (() => void)[];
+
+    private testNumber = 99;
+
+    setupTest(): boolean {
+        this.robot.reset();
+        this.testNumber = 0;
+        var tss = this.getTestSetups();
+        if (tss.length > 0) {
+            tss[0]();
+            return true;
+        } else {
+            return false;
         }
-        super(width, height, canvas, walls);
+    }
+
+    handleTestWin(): boolean {
+        this.testNumber++;
+        var tss = this.getTestSetups();
+        if (this.testNumber < tss.length) {
+            this.robot.reset();
+            tss[this.testNumber]();
+            return true;
+        }
+        return false;
     }
 }
 
-function emptybools(width: number, height: number): boolean[][] {
-    var bools: boolean[][] = [];
-    for (var x = 0; x < width; x++) {
-        bools[x] = [];
-        for (var y = 0; y < height; y++) {
-            bools[x][y] = false;
-        }
-    }
-    return bools;
-}
+abstract class CleanMap extends WallMap {
 
-class StartMap extends WallMap {
     winningDialog: HTMLDivElement;
-    constructor(width: number, height: number, canvas: HTMLCanvasElement, walls?: boolean[][]) {
-        if (!walls) {
-            walls = emptybools(width, height);
-        }
-        var maxdim: number = Math.min(width - 2, height) - 3;
-        for (var x = 0; x < width; x++) {
-            for (var y = 0; y < height; y++) {
-                if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
-                    walls[x][y] = true;
-                } else if ((x < width - 3 && x >= width - 3 - maxdim && y >= height - 1 - (x - (width - 3 - maxdim)))) {
-                    walls[x][y] = true;
-                }
-            }
-        }
-        super(width, height, canvas, walls);
+    cleanedSquares: boolean[][];
+
+    constructor(width: number, height: number, canvas: HTMLCanvasElement, name: string) {
+        super(width, height, canvas, name);
+        this.cleanedSquares = emptybools(width, height);
         this.winningDialog = document.createElement("div");
         var winp = document.createElement("p");
-        winp.appendChild(document.createTextNode("You reached the goal! Run tests to see if your program can handle some variations of this map, or go on to the next level!"));
+        winp.appendChild(document.createTextNode("You cleaned the whole room! Run tests to see if your program can handle some different starting locations for the robot, or go on to the next level!"));
         this.winningDialog.appendChild(winp);
-        this.robot.addState("State");
     }
 
-    isStateless(): boolean {
-        return true;
+    allCleaned(): boolean {
+        for (var i = 0; i < this.width; i++) {
+            for (var j = 0; j < this.height; j++) {
+                if (!(this.cleanedSquares[i][j] || this.walls[i][j])) {
+                    return false;
+                }
+            }
+        }
     }
 
-    generateRobotStart() {
-        var rx = Math.floor(Math.random() * 5) + 1;
-        var ry = Math.floor(Math.random() * (6 - rx)) + 1;
-        ry = Math.min(ry, 5);
-        return { x: rx, y: this.height-6+ry };
-    }
-
-    drawContent(ctx: CanvasRenderingContext2D, cellwidth : number, cellheight :number) {
+    drawContent(ctx: CanvasRenderingContext2D, cellwidth: number, cellheight: number) {
         super.drawContent(ctx, cellwidth, cellheight);
-        drawFinish(ctx, (this.width - 3) * cellwidth, (this.height - 2) * cellheight, (this.width - 2) * cellwidth, (this.height - 1) * cellheight);
+        ctx.fillStyle = "#dddddd";
+        for (var i = 0; i < this.width; i++) {
+            for (var j = 0; j < this.height; j++) {
+                if (this.cleanedSquares[i][j]) {
+                    ctx.fillRect(i * cellwidth, j * cellheight, cellwidth, cellheight);
+                }
+            }
+        }
     }
 
     hasWon(): boolean {
-        return this.robot.getX() == this.width - 3 && this.robot.getY() == this.height-2;
+        return this.allCleaned();
     }
-    showWinningMessage(): void {
+    showWinningMessage(runtests: () => void, nextmap: () => void): void {
         if (this.winningDialog.parentNode == null) {
             document.body.appendChild(this.winningDialog);
         }
@@ -740,9 +985,11 @@ class StartMap extends WallMap {
             buttons: {
                 "Run Tests": function () {
                     $(this).dialog("close");
+                    runtests();
                 },
                 "Go to Next Level": function () {
                     $(this).dialog("close");
+                    nextmap();
                 },
                 Cancel: function () {
                     $(this).dialog("close");
@@ -750,35 +997,224 @@ class StartMap extends WallMap {
             }
         });
     }
+}
 
-    getName(): string {
-        return "First Steps";
+abstract class GoalMap extends WallMap {
+    winningDialog: HTMLDivElement;
+
+    constructor(width: number, height: number, canvas: HTMLCanvasElement, name: string) {
+        super(width, height, canvas, name);
+        this.winningDialog = document.createElement("div");
+        var winp = document.createElement("p");
+        winp.appendChild(document.createTextNode("You reached the goal! Run tests to see if your program can handle all requirements of the map, or go on to the next level!"));
+        this.winningDialog.appendChild(winp);
+    }
+
+    abstract getGoalZones(): { sx: number, sy: number, ex: number, ey: number }[];
+
+    hasWon(): boolean {
+        var gz = this.getGoalZones();
+        var rx = this.robot.getX();
+        var ry = this.robot.getY();
+        for (var i = 0; i < gz.length; i++) {
+            if (rx >= gz[i].sx && rx <= gz[i].ex && ry >= gz[i].sy && ry <= gz[i].ey) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    drawContent(ctx: CanvasRenderingContext2D, cellwidth: number, cellheight: number) {
+        super.drawContent(ctx, cellwidth, cellheight);
+        var gz = this.getGoalZones();
+        for (var i = 0; i < gz.length; i++) {
+            drawFinish(ctx, gz[i].sx * cellwidth, gz[i].sy * cellheight, (gz[i].ex + 1) * cellwidth, (gz[i].ey + 1) * cellheight);
+        }
+    }
+    showWinningMessage(runtests: () => void, nextmap: () => void): void {
+        if (this.winningDialog.parentNode == null) {
+            document.body.appendChild(this.winningDialog);
+        }
+        $(this.winningDialog).dialog({
+            resizable: false,
+            height: "auto",
+            width: 400,
+            modal: true,
+            buttons: {
+                "Run Tests": function () {
+                    $(this).dialog("close");
+                    runtests();
+                },
+                "Go to Next Level": function () {
+                    $(this).dialog("close");
+                    nextmap();
+                },
+                Cancel: function () {
+                    $(this).dialog("close");
+                }
+            }
+        });
     }
 }
 
-class DoorMap extends WallMap {
+//class EmptyMap extends WallMap {
+//    constructor(width: number, height: number, canvas: HTMLCanvasElement) {
+//        var walls: boolean[][] = [];
+//        for (var x = 0; x < width; x++) {
+//            walls[x] = [];
+//            for (var y = 0; y < height; y++) {
+//                if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
+//                    walls[x][y] = true;
+//                }
+//                else {
+//                    walls[x][y] = false;
+//                }
+//            }
+//        }
+//        super(width, height, canvas);
+//    }
 
-    static doorwalls(width: number, height: number, walls?: boolean[][]): boolean[][] {
-        if (!walls) {
-            walls = emptybools(width, height);
+//    initWalls()
+
+//    handleTestWin(): boolean {
+//        return false;
+//    }
+//}
+
+
+class SpiralMap extends GoalMap {
+    constructor(width: number, height: number, canvas: HTMLCanvasElement) {
+        super(width, height, canvas, "Spirals");
+        this.robot.addState("State");
+    }
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+
+    initWalls() {
+        super.initWalls();
+        this.surroundingWalls();
+        var x = 1;
+        var y = this.height - 5;
+        var left = 0;
+        var right = this.width - 1;
+        var top = 0;
+        var bottom = y;
+
+        while (left <= right && top <= bottom) {
+            right -= 4;
+            while (x < right) {
+                this.walls[x][y] = true;
+                x++;
+            }
+            top += 4;
+            while (y > top) {
+                this.walls[x][y] = true;
+                y--;
+            }
+            left += 4;
+            while (x > left) {
+                this.walls[x][y] = true;
+                x--;
+            }
+            bottom -= 4;
+            while (y < bottom) {
+                this.walls[x][y] = true;
+                y++;
+            }
         }
-        var doorheight = Math.floor(Math.random() * (height - 2)) + 1;
-        for (var x = 0; x < width; x++) {
-            for (var y = 0; y < height; y++) {
-                if (x == 0 || y == 0 || y == height - 1) {
-                    walls[x][y] = true;
-                } else if (x == width - 3 && y != doorheight) {
-                    walls[x][y] = true;
+        this.left = left-3;
+        this.top = top-3;
+        this.bottom = bottom+3;
+        this.right = right-1;
+    }
+
+    isStateless(): boolean {
+        return true;
+    }
+
+    generateRobotStart() {
+        var rx = 1;
+        var ry = this.height - 2;
+        return { x: rx, y: ry };
+    }
+
+    getGoalZones(): { sx: number, sy: number, ex: number, ey: number }[] {
+        var maxdim: number = Math.min(this.width, this.height) - 3;
+        return [{ sx: this.left, sy: this.top, ex: this.right, ey: this.bottom }];
+    }
+
+    getTestSetups(): (() => void)[] {
+        return [() => { this.robot.setPos(1, this.height - 2); }];
+    }
+}
+
+class StartMap extends GoalMap {
+    constructor(width: number, height: number, canvas: HTMLCanvasElement) {
+        super(width, height, canvas, "First Steps");
+        this.robot.addState("State");
+    }
+
+    initWalls() {
+        super.initWalls();
+        this.surroundingWalls();
+        var maxdim: number = Math.min(this.width, this.height) - 3;
+        for (var x = 0; x < this.width; x++) {
+            for (var y = 0; y < this.height; y++) {
+                if ((x < this.width && x >= this.width - 3 - maxdim && y >= this.height - 1 - (x - (this.width - maxdim)))) {
+                    this.walls[x][y] = true;
                 }
             }
         }
-        return walls;
+    }
+
+    isStateless(): boolean {
+        return true;
+    }
+
+    generateRobotStart() {
+        var rx = Math.floor(Math.random() * 5) + 1;
+        var ry = Math.floor(Math.random() * (6 - rx)) + 1;
+        ry = Math.min(ry, 5);
+        return { x: rx, y: this.height - 6 + ry };
+    }
+
+    getGoalZones(): { sx: number, sy: number, ex: number, ey: number }[] {
+        var maxdim: number = Math.min(this.width, this.height) - 3;
+        return [{ sx: this.width - 2, sy: this.height - maxdim, ex: this.width - 2, ey: this.height - maxdim }];
+    }
+
+    getTestSetups(): (() => void)[] {
+        var maxdim: number = Math.min(this.width, this.height) - 3;
+        return [() => { this.robot.setPos(1, this.height - 2); }, () => { this.robot.setPos(2, this.height - 3), this.robot.setPos(this.width - maxdim, this.height - 4); }];
+    }
+
+}
+
+class DoorMap extends GoalMap {
+
+    initWalls() {
+        this.initDoorWalls(Math.floor(Math.random() * (this.height - 2)) + 1);
+    }
+
+    initDoorWalls(doorheight: number) {
+        this.walls = emptybools(this.width, this.height);
+        for (var x = 0; x < this.width; x++) {
+            for (var y = 0; y < this.height; y++) {
+                if (x == 0 || y == 0 || y == this.height - 1) {
+                    this.walls[x][y] = true;
+                } else if (x == this.width - 3 && y != doorheight) {
+                    this.walls[x][y] = true;
+                }
+            }
+        }
     }
 
     winningDialog: HTMLDivElement;
 
     constructor(width: number, height: number, canvas: HTMLCanvasElement, walls?: boolean[][]) {
-        super(width, height, canvas, DoorMap.doorwalls(width, height, walls));
+        super(width, height, canvas, "Find the Door");
         this.winningDialog = document.createElement("div");
         var winp = document.createElement("p");
         winp.appendChild(document.createTextNode("You reached the goal! Run tests to see if your program can handle some variations of this map, or go on to the next level!"));
@@ -791,45 +1227,19 @@ class DoorMap extends WallMap {
         return { x: rx, y: ry };
     }
 
-    reset() {
-        this.walls = DoorMap.doorwalls(this.width, this.height);
-        super.reset();
+    getGoalZones(): { sx: number, sy: number, ex: number, ey: number }[] {
+        return [{ sx: this.width - 2, sy: 1, ex: this.width - 1, ey: this.height - 2 }];
     }
 
-    drawContent(ctx: CanvasRenderingContext2D, cellwidth: number, cellheight: number) {
-        super.drawContent(ctx, cellwidth, cellheight);
-        drawFinish(ctx, this.canvas.width - cellwidth * 2, cellheight, this.canvas.width, this.canvas.height - cellheight);
+    getTestSetups(): (() => void)[] {
+        var rs = this.generateRobotStart();
+        return [() => { this.robot.setPos(rs.x, rs.y); this.initDoorWalls(1); },
+        () => { this.robot.setPos(rs.x, rs.y); this.initDoorWalls(rs.y - 3); },
+        () => { this.robot.setPos(rs.x, rs.y); this.initDoorWalls(rs.y); },
+        () => { this.robot.setPos(rs.x, rs.y); this.initDoorWalls(rs.y + 3); },
+        () => { this.robot.setPos(rs.x, rs.y); this.initDoorWalls(this.height - 2); }];
     }
 
-    hasWon(): boolean {
-        return this.robot.getX() > this.width - 3;
-    }
-    showWinningMessage(): void {
-        if (this.winningDialog.parentNode == null) {
-            document.body.appendChild(this.winningDialog);
-        }
-        $(this.winningDialog).dialog({
-            resizable: false,
-            height: "auto",
-            width: 400,
-            modal: true,
-            buttons: {
-                "Run Tests": function () {
-                    $(this).dialog("close");
-                },
-                "Go to Next Level": function () {
-                    $(this).dialog("close");
-                },
-                Cancel: function () {
-                    $(this).dialog("close");
-                }
-            }
-        });
-    }
-
-    getName(): string {
-        return "Find the Door";
-    }
 }
 
 function mirror_set_v(walls: boolean[][], x: number, y: number, height: number): void {
@@ -837,87 +1247,39 @@ function mirror_set_v(walls: boolean[][], x: number, y: number, height: number):
     walls[x][height - y - 1] = true;
 }
 
-class StateDoorMap extends DoorMap {
-    constructor(width: number, height: number, canvas: HTMLCanvasElement) {
-        var walls: boolean[][] = emptybools(width, height);
-        mirror_set_v(walls, 5, 5, height);
-        mirror_set_v(walls, 5, 4, height);
-        mirror_set_v(walls, 5, 3, height);
-        mirror_set_v(walls, 6, 3, height);
-        mirror_set_v(walls, 7, 3, height);
-        mirror_set_v(walls, 8, 3, height);
-        mirror_set_v(walls, 8, 4, height);
-        mirror_set_v(walls, 8, 5, height);
-        mirror_set_v(walls, 5, 6, height);
-        mirror_set_v(walls, 5, 7, height);
-        mirror_set_v(walls, 5, 8, height);
-        mirror_set_v(walls, 6, 8, height);
-        mirror_set_v(walls, 7, 8, height);
-        mirror_set_v(walls, 8, 8, height);
-        mirror_set_v(walls, 9, 8, height);
-        mirror_set_v(walls, 10, 8, height);
-        mirror_set_v(walls, 11, 8, height);
-        mirror_set_v(walls, 12, 8, height);
-        mirror_set_v(walls, 12, 7, height);
-        mirror_set_v(walls, 12, 6, height);
-        mirror_set_v(walls, 12, 5, height);
-        mirror_set_v(walls, 12, 4, height);
-        mirror_set_v(walls, 12, 3, height);
-        mirror_set_v(walls, 12, 2, height);
-        mirror_set_v(walls, 12, 1, height);
-        super(width, height, canvas, walls);
-    }
-}
+//class StateDoorMap extends DoorMap {
+//    constructor(width: number, height: number, canvas: HTMLCanvasElement) {
+//        var walls: boolean[][] = emptybools(width, height);
+//        mirror_set_v(walls, 5, 5, height);
+//        mirror_set_v(walls, 5, 4, height);
+//        mirror_set_v(walls, 5, 3, height);
+//        mirror_set_v(walls, 6, 3, height);
+//        mirror_set_v(walls, 7, 3, height);
+//        mirror_set_v(walls, 8, 3, height);
+//        mirror_set_v(walls, 8, 4, height);
+//        mirror_set_v(walls, 8, 5, height);
+//        mirror_set_v(walls, 5, 6, height);
+//        mirror_set_v(walls, 5, 7, height);
+//        mirror_set_v(walls, 5, 8, height);
+//        mirror_set_v(walls, 6, 8, height);
+//        mirror_set_v(walls, 7, 8, height);
+//        mirror_set_v(walls, 8, 8, height);
+//        mirror_set_v(walls, 9, 8, height);
+//        mirror_set_v(walls, 10, 8, height);
+//        mirror_set_v(walls, 11, 8, height);
+//        mirror_set_v(walls, 12, 8, height);
+//        mirror_set_v(walls, 12, 7, height);
+//        mirror_set_v(walls, 12, 6, height);
+//        mirror_set_v(walls, 12, 5, height);
+//        mirror_set_v(walls, 12, 4, height);
+//        mirror_set_v(walls, 12, 3, height);
+//        mirror_set_v(walls, 12, 2, height);
+//        mirror_set_v(walls, 12, 1, height);
+//        super(width, height, canvas, walls);
+//    }
+//}
 
-class MazeMap extends WallMap {
-
-    static mazewalls(width: number, height: number): { walls: boolean[][], starty: number } {
-        var walls: boolean[][] = emptybools(width, height);
-        for (var x = 0; x < width; x++) {
-            for (var y = 0; y < height; y++) {
-                if (x % 2 == 0 || y % 2 == 0) {
-                    walls[x][y] = true;
-                }
-            }
-        }
-        var inmaze: boolean[][] = emptybools(width, height);
-        var starty = Math.floor(Math.random() * Math.floor(height / 2)) * 2 + 1;
-        var walllist: Array<{ x: number, y: number, cx: number, cy: number }> = [];
-        walls[0][starty] = false;
-        inmaze[1][starty] = true;
-        if (starty > 1) {
-            walllist.push({ x: 1, y: starty - 1, cx: 1, cy: starty - 2 });
-        }
-        if (starty < height - 2) {
-            walllist.push({ x: 1, y: starty + 1, cx: 1, cy: starty + 2 });
-        }
-        walllist.push({ x: 2, y: starty, cx: 3, cy: starty });
-        while (walllist.length > 0) {
-            var index = Math.floor(Math.random() * walllist.length);
-            var x = walllist[index].x;
-            var y = walllist[index].y;
-            var cx = walllist[index].cx;
-            var cy = walllist[index].cy;
-            walllist.splice(index, 1);
-            if (!inmaze[cx][cy]) {
-                inmaze[cx][cy] = true;
-                walls[x][y] = false;
-                if (walls[cx + 1][cy] && cx < width - 2) {
-                    walllist.push({ x: cx + 1, y: cy, cx: cx + 2, cy: cy });
-                }
-                if (walls[cx - 1][cy] && cx > 1) {
-                    walllist.push({ x: cx - 1, y: cy, cx: cx - 2, cy: cy });
-                }
-                if (walls[cx][cy + 1] && cy < height - 2) {
-                    walllist.push({ x: cx, y: cy + 1, cx: cx, cy: cy + 2 });
-                }
-                if (walls[cx][cy - 1] && cy > 1) {
-                    walllist.push({ x: cx, y: cy - 1, cx: cx, cy: cy - 2 });
-                }
-            }
-        }
-        return { walls: walls, starty: starty };
-    }
+class MazeMap extends GoalMap {
 
     starty: number;
 
@@ -928,17 +1290,63 @@ class MazeMap extends WallMap {
         if (height % 2 == 0) {
             height++;
         }
-        var sws = MazeMap.mazewalls(width, height);
-        super(width, height, canvas, sws.walls);
-        this.starty = sws.starty;
+        //var sws = MazeMap.mazewalls(width, height);
+        super(width, height, canvas, "Maze");
     }
 
-    reset() {
-        var sws = MazeMap.mazewalls(this.width, this.height);
-        this.walls = sws.walls;
-        this.starty = sws.starty;
-        super.reset();
+    initWalls() {
+        super.initWalls();
+        for (var x = 0; x < this.width; x++) {
+            for (var y = 0; y < this.height; y++) {
+                if (x % 2 == 0 || y % 2 == 0) {
+                    this.walls[x][y] = true;
+                }
+            }
+        }
+        var inmaze: boolean[][] = emptybools(this.width, this.height);
+        this.starty = Math.floor(Math.random() * Math.floor(this.height / 2)) * 2 + 1;
+        var walllist: Array<{ x: number, y: number, cx: number, cy: number }> = [];
+        this.walls[0][this.starty] = false;
+        inmaze[1][this.starty] = true;
+        if (this.starty > 1) {
+            walllist.push({ x: 1, y: this.starty - 1, cx: 1, cy: this.starty - 2 });
+        }
+        if (this.starty < this.height - 2) {
+            walllist.push({ x: 1, y: this.starty + 1, cx: 1, cy: this.starty + 2 });
+        }
+        walllist.push({ x: 2, y: this.starty, cx: 3, cy: this.starty });
+        while (walllist.length > 0) {
+            var index = Math.floor(Math.random() * walllist.length);
+            var x = walllist[index].x;
+            var y = walllist[index].y;
+            var cx = walllist[index].cx;
+            var cy = walllist[index].cy;
+            walllist.splice(index, 1);
+            if (!inmaze[cx][cy]) {
+                inmaze[cx][cy] = true;
+                this.walls[x][y] = false;
+                if (this.walls[cx + 1][cy] && cx < this.width - 2) {
+                    walllist.push({ x: cx + 1, y: cy, cx: cx + 2, cy: cy });
+                }
+                if (this.walls[cx - 1][cy] && cx > 1) {
+                    walllist.push({ x: cx - 1, y: cy, cx: cx - 2, cy: cy });
+                }
+                if (this.walls[cx][cy + 1] && cy < this.height - 2) {
+                    walllist.push({ x: cx, y: cy + 1, cx: cx, cy: cy + 2 });
+                }
+                if (this.walls[cx][cy - 1] && cy > 1) {
+                    walllist.push({ x: cx, y: cy - 1, cx: cx, cy: cy - 2 });
+                }
+            }
+        }
     }
+
+    //reset() {
+    //    var sws = MazeMap.mazewalls(this.width, this.height);
+    //    this.walls = sws.walls;
+    //    this.starty = sws.starty;
+    //    super.reset();
+    //}
 
     generateRobotStart(): { x: number, y: number } {
         var rx = (Math.floor(Math.random() * Math.floor(this.width / 2)) * 2) + 1;
@@ -946,16 +1354,20 @@ class MazeMap extends WallMap {
         return { x: rx, y: ry };
     }
 
-    drawContent(ctx: CanvasRenderingContext2D, cellwidth: number, cellheight: number) {
-        super.drawContent(ctx, cellwidth, cellheight);
-        drawFinish(ctx, 0, this.starty * cellwidth, cellwidth, this.starty * cellwidth + cellheight);
+    //drawContent(ctx: CanvasRenderingContext2D, cellwidth: number, cellheight: number) {
+    //    super.drawContent(ctx, cellwidth, cellheight);
+    //    drawFinish(ctx, 0, this.starty * cellwidth, cellwidth, this.starty * cellwidth + cellheight);
+    //}
+
+    //hasWon(): boolean {
+    //    return this.robot.getX() == 0;
+    //}
+
+    getGoalZones(): { sx: number, sy: number, ex: number, ey: number }[] {
+        return [{ sx: 0, sy: this.starty, ex: 0, ey: this.starty }];
     }
 
-    hasWon(): boolean {
-        return this.robot.getX() == 0;
-    }
-
-    getName(): string {
-        return "Maze";
+    getTestSetups(): (() => void)[] {
+        return [() => { this.robot.setPos(this.width - 6, 5); }, () => { this.robot.setPos(this.width - 8, Math.floor(this.height / 2) + ((Math.floor(this.height / 2) % 2) - 1)); }];
     }
 }

@@ -1,5 +1,6 @@
 var Robot = /** @class */ (function () {
     function Robot(x, y) {
+        this.initialstate = null;
         this.states = {};
         this.statenames = new Array();
         var rbt = this;
@@ -46,6 +47,13 @@ var Robot = /** @class */ (function () {
     });
     ;
     ;
+    Robot.prototype.setInitial = function (state) {
+        if (this.initialstate != null) {
+            this.initialstate.div.classList.remove("startstate");
+        }
+        state.div.classList.add("startstate");
+        this.initialstate = state;
+    };
     Robot.prototype.addState = function (name) {
         if (name === void 0) { name = undefined; }
         if (!name) {
@@ -62,8 +70,12 @@ var Robot = /** @class */ (function () {
         this.statemenu.appendChild(state.menuItem);
         if (this.state == null) {
             this.state = state;
+            this.setInitial(state);
         }
         return state;
+    };
+    Robot.prototype.reset = function () {
+        this.state = this.initialstate;
     };
     Robot.prototype.renameState = function (s, oldName) {
         this.statenames.splice(this.statenames.indexOf(oldName), 1);
@@ -77,6 +89,18 @@ var Robot = /** @class */ (function () {
         delete this.states[s.name];
         if (s == this.state) {
             this.state = null;
+        }
+        if (s == this.initialstate) {
+            var index = this.statenames.indexOf(s.name);
+            if (index - 1 >= 0) {
+                this.setInitial(this.states[this.statenames[index - 1]]);
+            }
+            else if (this.statenames.length > index + 1) {
+                this.setInitial(this.states[this.statenames[index + 1]]);
+            }
+            else {
+                this.initialstate = null;
+            }
         }
         this.statenames.splice(this.statenames.indexOf(s.name), 1);
         this.programdiv.removeChild(s.div);

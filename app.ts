@@ -241,7 +241,8 @@ class Pico {
 
     constructor() {
         this.maps = [];
-        this.maps.push(new StartMap(25, 25, Pico.createCanvas()));
+        this.maps.push(new SpiralMap(25, 25, Pico.createCanvas()));
+        this.maps.push(new StartMap(15, 15, Pico.createCanvas()));
         this.maps.push(new DoorMap(25, 25, Pico.createCanvas()));
         this.maps.push(new MazeMap(25, 25, Pico.createCanvas()));
         var pico = this;
@@ -249,6 +250,7 @@ class Pico {
     
     init(): void {
         this.mapcontrols = new MapControls(
+            this,
             <HTMLDivElement>document.getElementById("mapcanvas"),
             <HTMLDivElement>document.getElementById("mapdata"),
             <HTMLDivElement>document.getElementById("gui"),
@@ -258,11 +260,7 @@ class Pico {
         var leftbutton = document.createElement("button");
         leftbutton.classList.add("mapleft");
         leftbutton.addEventListener("click", () => {
-            var index = this.maps.indexOf(this.mapcontrols.getMap())-1;
-            while (index < 0) {
-                index += this.maps.length;
-            }
-            this.changeMap(this.maps[index]);
+            this.previousMap();
         })
 
         this.header.appendChild(leftbutton);
@@ -272,9 +270,9 @@ class Pico {
         this.mapspan = document.createElement("span");
         mapselectdiv.appendChild(this.mapspan);
 
-        var mapselectbutton = document.createElement("button");
-        mapselectbutton.classList.add("mapselect");
-        mapselectdiv.appendChild(mapselectbutton);
+        //var mapselectbutton = document.createElement("button");
+        //mapselectbutton.classList.add("mapselect");
+        //mapselectdiv.appendChild(mapselectbutton);
 
         this.header.appendChild(mapselectdiv);
 
@@ -282,11 +280,7 @@ class Pico {
         var rightbutton = document.createElement("button");
         rightbutton.classList.add("mapright");
         rightbutton.addEventListener("click", () => {
-            var index = this.maps.indexOf(this.mapcontrols.getMap()) + 1;
-            while (index >= this.maps.length) {
-                index -= this.maps.length;
-            }
-            this.changeMap(this.maps[index]);
+            this.nextMap();
         })
 
         this.header.appendChild(rightbutton);
@@ -297,5 +291,21 @@ class Pico {
     changeMap(map : IMap) {
         this.mapcontrols.setMap(map);
         this.mapspan.innerText = map.getName();
+    }
+
+    nextMap() {
+        var index = this.maps.indexOf(this.mapcontrols.getMap()) + 1;
+        while (index >= this.maps.length) {
+            index -= this.maps.length;
+        }
+        this.changeMap(this.maps[index]);
+    }
+
+    previousMap() {
+        var index = this.maps.indexOf(this.mapcontrols.getMap()) - 1;
+        while (index < 0) {
+            index += this.maps.length;
+        }
+        this.changeMap(this.maps[index]);
     }
 }

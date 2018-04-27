@@ -46,6 +46,13 @@ var State = /** @class */ (function () {
         });
         this.namefield = namefield;
         this.header.appendChild(namefield);
+        var initialbutton = document.createElement("button");
+        initialbutton.appendChild(document.createTextNode("Start State"));
+        initialbutton.classList.add("startstatebutton");
+        initialbutton.addEventListener("click", function () {
+            _this.parent.setInitial(_this);
+        });
+        this.header.appendChild(initialbutton);
         var delbutton = document.createElement("button");
         delbutton.appendChild(document.createTextNode("Delete"));
         delbutton.addEventListener("click", function () {

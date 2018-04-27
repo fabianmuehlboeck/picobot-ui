@@ -90,7 +90,7 @@ class DrawWorldState extends WorldState {
     canvas: HTMLCanvasElement;
 
     constructor(canvas: HTMLCanvasElement) {
-        super(FieldState.Unknown, FieldState.Unknown, FieldState.Unknown, FieldState.Unknown);
+        super(FieldState.Empty, FieldState.Empty, FieldState.Empty, FieldState.Empty);
         this.canvas = canvas;
         if (!canvas.classList.contains("worldstatecanvas")) {
             canvas.classList.add("worldstatecanvas");

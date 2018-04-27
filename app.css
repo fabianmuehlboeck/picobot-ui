@@ -279,6 +279,11 @@ button.deletebutton:active:not(:disabled) {
         width: 550px;
     }
 
+.startstate .stateheader button.startstatebutton {
+    background-color: #00ff00;
+    border-style:ridge;
+}
+
 button.expander:hover {
     background-color: red;
 }
@@ -517,7 +522,7 @@ a.controlleftbutton:hover {
 
 .runprogramdiv {
     width: 280px;
-    height: 150px;
+    height: 180px;
     display: inline-block;
     vertical-align: top;
 }

@@ -4,6 +4,7 @@ class Robot {
     //state: State;
     x: number;
     y: number;
+    initialstate: State = null;
     states: { [name: string]: State } = {};
     statenames: Array<string> = new Array<string>();
     stateselector: StateSelector;
@@ -55,6 +56,14 @@ class Robot {
         this.stateselector = new StateSelector(this, null);
     }
 
+    setInitial(state: State): void {
+        if (this.initialstate != null) {
+            this.initialstate.div.classList.remove("startstate");
+        }
+        state.div.classList.add("startstate");
+        this.initialstate = state;
+    }
+
     addState(name: string = undefined) : State {
         if (!name) {
             var i = 1;
@@ -70,8 +79,13 @@ class Robot {
         this.statemenu.appendChild(state.menuItem);
         if (this.state == null) {
             this.state = state;
+            this.setInitial(state);
         }
         return state;
+    }
+
+    reset(): void {
+        this.state = this.initialstate;
     }
 
     renameState(s: State, oldName: string) {
@@ -87,6 +101,16 @@ class Robot {
         delete this.states[s.name];
         if (s == this.state) {
             this.state = null;
+        }
+        if (s == this.initialstate) {
+            var index = this.statenames.indexOf(s.name);
+            if (index - 1 >= 0) {
+                this.setInitial(this.states[this.statenames[index - 1]]);
+            } else if (this.statenames.length > index + 1) {
+                this.setInitial(this.states[this.statenames[index + 1]]);
+            } else {
+                this.initialstate = null;
+            }
         }
         this.statenames.splice(this.statenames.indexOf(s.name), 1);
         this.programdiv.removeChild(s.div);

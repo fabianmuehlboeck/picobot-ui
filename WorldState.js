@@ -76,7 +76,7 @@ var WorldState = /** @class */ (function () {
 var DrawWorldState = /** @class */ (function (_super) {
     __extends(DrawWorldState, _super);
     function DrawWorldState(canvas) {
-        var _this = _super.call(this, FieldState.Unknown, FieldState.Unknown, FieldState.Unknown, FieldState.Unknown) || this;
+        var _this = _super.call(this, FieldState.Empty, FieldState.Empty, FieldState.Empty, FieldState.Empty) || this;
         _this.canvas = canvas;
         if (!canvas.classList.contains("worldstatecanvas")) {
             canvas.classList.add("worldstatecanvas");

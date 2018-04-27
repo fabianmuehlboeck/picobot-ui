@@ -71,10 +71,12 @@ function drawFinish(ctx, sx, sy, ex, ey) {
     }
 }
 var MapControls = /** @class */ (function () {
-    function MapControls(canvasParent, controlParent, editorDiv, codeDiv, helpDiv) {
+    function MapControls(pico, canvasParent, controlParent, editorDiv, codeDiv, helpDiv) {
         var _this = this;
         this._isrunning = false;
+        this.testabort = null;
         var mc = this;
+        this.pico = pico;
         this.running = false;
         this.canvasParent = canvasParent;
         this.editorDiv = editorDiv;
@@ -98,9 +100,10 @@ var MapControls = /** @class */ (function () {
                 robot.setPos(_this.map.getRobot().getX(), _this.map.getRobot().getY());
                 _this.map.setRobot(robot);
                 _this.setMap(_this.map);
+                _this.map.getPicoErrorTextBox().textContent = "Program successfully loaded to the robot.";
             }
             else {
-                _this.map.getPicoErrorTextBox().textContent = pp.errors.map(function (e, n, a) { return e.message; }).join("\n");
+                _this.map.getPicoErrorTextBox().textContent = "There were errors, so the program has not been loaded to the robot.\n\n" + pp.errors.map(function (e, n, a) { return e.message; }).join("\n");
             }
         });
         codecontroldiv.appendChild(compilebutton);
@@ -157,78 +160,50 @@ var MapControls = /** @class */ (function () {
         runProgramDiv.className = "runprogramdiv";
         var simplerundiv = document.createElement("div");
         simplerundiv.appendChild(document.createTextNode("FAST"));
-        var stepbutton = document.createElement("button");
-        stepbutton.appendChild(document.createTextNode("Step"));
-        stepbutton.addEventListener("click", function () {
-            if (mc.running == false) {
-                if (mc.map.hasWon()) {
-                    mc.map.showWinningMessage();
-                }
-                else {
-                    mc.step();
-                    if (mc.map.hasWon()) {
-                        mc.map.showWinningMessage();
-                    }
-                }
-            }
+        this.stepfastbutton = document.createElement("button");
+        this.stepfastbutton.appendChild(document.createTextNode("Step"));
+        this.stepfastbutton.addEventListener("click", function () {
+            _this.stepFast();
         });
-        simplerundiv.appendChild(stepbutton);
-        var runfastbutton = document.createElement("button");
-        runfastbutton.appendChild(document.createTextNode("Run"));
-        runfastbutton.addEventListener("click", function () {
-            if (mc.running == false) {
-                if (mc.map.hasWon()) {
-                    mc.map.showWinningMessage();
-                }
-                else {
-                    mc.running = true;
-                    runfastbutton.classList.add("runningbutton");
-                    mc.runinterval = window.setInterval(function () { mc.run(); }, 50);
-                }
-            }
+        simplerundiv.appendChild(this.stepfastbutton);
+        this.runfastbutton = document.createElement("button");
+        this.runfastbutton.appendChild(document.createTextNode("Run"));
+        this.runfastbutton.addEventListener("click", function () {
+            _this.runFast();
         });
-        simplerundiv.appendChild(runfastbutton);
+        simplerundiv.appendChild(this.runfastbutton);
+        this.testfastbutton = document.createElement("button");
+        this.testfastbutton.appendChild(document.createTextNode("Test"));
+        this.testfastbutton.addEventListener("click", function () {
+            _this.testFast();
+        });
+        simplerundiv.appendChild(this.testfastbutton);
         var visualizerundiv = document.createElement("div");
         visualizerundiv.appendChild(document.createTextNode("VISUALIZE"));
-        stepbutton = document.createElement("button");
-        stepbutton.appendChild(document.createTextNode("Step"));
-        stepbutton.addEventListener("click", function () {
-            if (mc.running == false) {
-                if (mc.map.hasWon()) {
-                    mc.map.showWinningMessage();
-                }
-                else {
-                    mc.running = true;
-                    stepbutton.classList.add("runningbutton");
-                    mc.vstep();
-                }
-            }
+        this.stepvisualbutton = document.createElement("button");
+        this.stepvisualbutton.appendChild(document.createTextNode("Step"));
+        this.stepvisualbutton.addEventListener("click", function () {
+            _this.stepVisual();
         });
-        visualizerundiv.appendChild(stepbutton);
-        var runbutton = document.createElement("button");
-        runbutton.appendChild(document.createTextNode("Run"));
-        runbutton.addEventListener("click", function () {
-            if (mc.running == false) {
-                if (mc.map.hasWon()) {
-                    mc.map.showWinningMessage();
-                }
-                else {
-                    mc.running = true;
-                    runbutton.classList.add("runningbutton");
-                    mc.vrun();
-                }
-            }
+        visualizerundiv.appendChild(this.stepvisualbutton);
+        this.runvisualbutton = document.createElement("button");
+        this.runvisualbutton.appendChild(document.createTextNode("Run"));
+        this.runvisualbutton.addEventListener("click", function () {
+            _this.runVisual();
         });
-        visualizerundiv.appendChild(runbutton);
+        visualizerundiv.appendChild(this.runvisualbutton);
+        this.testvisualbutton = document.createElement("button");
+        this.testvisualbutton.appendChild(document.createTextNode("Test"));
+        this.testvisualbutton.addEventListener("click", function () {
+            _this.testVisual();
+        });
+        visualizerundiv.appendChild(this.testvisualbutton);
         runProgramDiv.appendChild(simplerundiv);
         runProgramDiv.appendChild(visualizerundiv);
         var stopbutton = document.createElement("button");
         stopbutton.appendChild(document.createTextNode("Stop"));
         stopbutton.addEventListener("click", function () {
-            if (mc.running == true) {
-                mc.running = false;
-                window.clearInterval(mc.runinterval);
-            }
+            _this.stopRun();
         });
         runProgramDiv.appendChild(stopbutton);
         var scenariodiv = document.createElement("div");
@@ -243,12 +218,13 @@ var MapControls = /** @class */ (function () {
             mc.refresh();
         });
         scenariodiv.appendChild(resetbutton);
-        var testbutton = document.createElement("button");
-        testbutton.appendChild(document.createTextNode("Test Robot"));
-        testbutton.addEventListener("click", function () {
-            mc.map.test(function () { mc.refresh(); });
+        var resetrobotbutton = document.createElement("button");
+        resetrobotbutton.appendChild(document.createTextNode("Reset Robot"));
+        resetrobotbutton.addEventListener("click", function () {
+            mc.map.getRobot().reset();
+            mc.refresh();
         });
-        scenariodiv.appendChild(testbutton);
+        scenariodiv.appendChild(resetrobotbutton);
         var fogcheckbox = document.createElement("input");
         fogcheckbox.type = "checkbox";
         fogcheckbox.id = "fogcheckbox";
@@ -265,6 +241,10 @@ var MapControls = /** @class */ (function () {
         this.controlDiv.appendChild(this.robotstatediv);
         controlParent.appendChild(this.controlDiv);
         $(fogcheckbox).checkboxradio();
+        this.testSuccessDialog = document.createElement("div");
+        var winp = document.createElement("p");
+        winp.appendChild(document.createTextNode("All tests succeeded!"));
+        this.testSuccessDialog.appendChild(winp);
     }
     Object.defineProperty(MapControls.prototype, "running", {
         get: function () { return this._isrunning; },
@@ -323,6 +303,133 @@ var MapControls = /** @class */ (function () {
         this.codeDiv.appendChild(map.getPicoErrorTextBox());
         this.refresh();
     };
+    MapControls.prototype.stepFast = function () {
+        var _this = this;
+        if (this.running == false) {
+            if (this.map.hasWon()) {
+                this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
+            }
+            else {
+                this.step();
+                if (this.map.hasWon()) {
+                    this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
+                }
+            }
+        }
+    };
+    MapControls.prototype.runFast = function () {
+        var _this = this;
+        if (this.running == false) {
+            if (this.map.hasWon()) {
+                this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
+            }
+            else {
+                this.running = true;
+                this.runfastbutton.classList.add("runningbutton");
+                this.runinterval = window.setInterval(function () { _this.run(); }, 50);
+            }
+        }
+    };
+    MapControls.prototype.testFast = function () {
+        var _this = this;
+        if (!this.running) {
+            this.running = true;
+            this.testfastbutton.classList.add("runningbutton");
+            this.testabort = this.map.test(function () { _this.refresh(); }, this.worldState, function (success) { if (success) {
+                _this.showTestSuccessMessage();
+            }
+            else {
+                alert("Test failed! Robot is stuck!");
+            } }, function () {
+                _this.running = false;
+                _this.testabort = null;
+            });
+            if (!this.running) {
+                this.testabort = null;
+            }
+        }
+    };
+    MapControls.prototype.stepVisual = function () {
+        var _this = this;
+        if (this.running == false) {
+            if (this.map.hasWon()) {
+                this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
+            }
+            else {
+                this.running = true;
+                this.stepvisualbutton.classList.add("runningbutton");
+                this.vstep();
+            }
+        }
+    };
+    MapControls.prototype.runVisual = function () {
+        var _this = this;
+        if (this.running == false) {
+            if (this.map.hasWon()) {
+                this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
+            }
+            else {
+                this.running = true;
+                this.runvisualbutton.classList.add("runningbutton");
+                this.vrun();
+            }
+        }
+    };
+    MapControls.prototype.testVisual = function () {
+        var _this = this;
+        if (!this.running) {
+            this.running = true;
+            this.testvisualbutton.classList.add("runningbutton");
+            this.testabort = this.map.vtest(function () { _this.refresh(); }, this.worldState, function (success) { if (success) {
+                _this.showTestSuccessMessage();
+            }
+            else {
+                alert("Test failed! Robot is stuck!");
+            } }, function () {
+                _this.running = false;
+                _this.testabort = null;
+            });
+            if (!this.running) {
+                this.testabort = null;
+            }
+        }
+    };
+    MapControls.prototype.stopRun = function (cont) {
+        if (cont === void 0) { cont = function () { }; }
+        if (this.running == true) {
+            if (this.testabort != null) {
+                this.testabort(cont);
+                this.testabort = null;
+            }
+            else {
+                this.running = false;
+            }
+        }
+        else {
+            cont();
+        }
+    };
+    MapControls.prototype.showTestSuccessMessage = function () {
+        if (this.testSuccessDialog.parentNode == null) {
+            document.body.appendChild(this.testSuccessDialog);
+        }
+        var mc = this;
+        $(this.testSuccessDialog).dialog({
+            resizable: false,
+            height: "auto",
+            width: 400,
+            modal: true,
+            buttons: {
+                "Go to Next Level": function () {
+                    mc.pico.nextMap();
+                    $(this).dialog("close");
+                },
+                Cancel: function () {
+                    $(this).dialog("close");
+                }
+            }
+        });
+    };
     MapControls.prototype.refresh = function () {
         this.map.draw();
         var robot = this.map.getRobot();
@@ -340,24 +447,25 @@ var MapControls = /** @class */ (function () {
             _this.refresh();
             _this.running = false;
             if (_this.map.hasWon()) {
-                _this.map.showWinningMessage();
+                _this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
             }
         }, function () {
             _this.refresh();
             if (_this.map.hasWon()) {
-                _this.map.showWinningMessage();
+                _this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
             }
             _this.running = false;
         });
     };
     MapControls.prototype.run = function () {
+        var _this = this;
         if (this.running && !this.step()) {
             this.running = false;
             window.clearInterval(this.runinterval);
             return false;
         }
         if (this.map.hasWon()) {
-            this.map.showWinningMessage();
+            this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
             this.running = false;
             window.clearInterval(this.runinterval);
         }
@@ -369,7 +477,7 @@ var MapControls = /** @class */ (function () {
             this.map.vstep(this.worldState, this.map.getStepOptions, function () {
                 _this.refresh();
                 if (_this.map.hasWon()) {
-                    _this.map.showWinningMessage();
+                    _this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
                     _this.running = false;
                 }
                 else {
@@ -379,7 +487,7 @@ var MapControls = /** @class */ (function () {
                 _this.refresh();
                 _this.running = false;
                 if (_this.map.hasWon()) {
-                    _this.map.showWinningMessage();
+                    _this.map.showWinningMessage(function () { _this.stopRun(function () { return _this.testFast(); }); }, function () { _this.pico.nextMap(); });
                 }
             });
         }
@@ -393,12 +501,16 @@ var StateEvent;
 })(StateEvent || (StateEvent = {}));
 ;
 var Map = /** @class */ (function () {
-    function Map(width, height, canvas) {
+    function Map(width, height, canvas, name) {
         this.picocodebox = document.createElement("textarea");
         this.picocodeerrorbox = document.createElement("textarea");
+        this.testing = false;
+        this.testingDone = true;
+        this.testRun = 0;
         this.canvas = canvas;
         this.width = width;
         this.height = height;
+        this.name = name;
         this.picocodebox.classList.add("picocode");
         this.picocodeerrorbox.classList.add("picoerrors");
         this.picocodeerrorbox.readOnly = true;
@@ -514,25 +626,151 @@ var Map = /** @class */ (function () {
     Map.prototype.reset = function () {
         var start = this.generateRobotStart();
         this.robot.setPos(start.x, start.y);
-        this.robot.setState(this.robot.states[this.robot.statenames[0]]);
+        this.robot.reset();
         this.draw();
     };
-    Map.prototype.test = function (rcb) {
+    Map.prototype.isTesting = function () { return this.testing; };
+    Map.prototype.test = function (refreshcb, ws, donecb, finishedcb) {
+        var _this = this;
+        if (this.testingDone == false) {
+            alert("Tests still running");
+            finishedcb();
+            return null;
+        }
+        this.testingDone = false;
+        this.testing = true;
+        this.testRun++;
+        var runid = this.testRun;
+        if (!this.setupTest()) {
+            alert("This map has no tests.");
+            this.testingDone = true;
+            this.testing = false;
+            finishedcb();
+            return function (cont) { cont(); };
+        }
+        refreshcb();
+        this.draw();
+        var options = this.getStepOptions();
+        this.testInterval = window.setInterval(function () {
+            if (_this.testing == true && runid == _this.testRun) {
+                _this.updateWorldState(ws, _this.robot.getX(), _this.robot.getY());
+                if (_this.hasWon()) {
+                    if (!_this.handleTestWin()) {
+                        window.clearInterval(_this.testInterval);
+                        _this.testing = false;
+                        _this.testingDone = true;
+                        donecb(true);
+                        finishedcb();
+                        return;
+                    }
+                }
+                if (!_this.robot.step(_this, ws, options)) {
+                    window.clearInterval(_this.testInterval);
+                    _this.testing = false;
+                    _this.testingDone = true;
+                    donecb(false);
+                    finishedcb();
+                }
+                refreshcb();
+            }
+        }, 10);
+        return function (cont) {
+            _this.testing = false;
+            _this.testingDone = true;
+            window.clearInterval(_this.testInterval);
+            finishedcb();
+            cont();
+        };
     };
-    Map.prototype.showWinningMessage = function () {
+    Map.prototype.vtest = function (refreshcb, ws, donecb, finishedcb) {
+        var _this = this;
+        if (this.testingDone == false) {
+            alert("Tests already running");
+            finishedcb();
+            return null;
+        }
+        this.testingDone = false;
+        this.testing = true;
+        this.testRun++;
+        var runid = this.testRun;
+        if (!this.setupTest()) {
+            alert("This map has no tests.");
+            this.testingDone = true;
+            this.testing = false;
+            finishedcb();
+            return null;
+        }
+        var continuation = function () { };
+        var options = this.getStepOptions();
+        var vstepfun = function () {
+            refreshcb();
+            if (_this.hasWon()) {
+                if (!_this.handleTestWin()) {
+                    _this.testing = false;
+                    _this.testingDone = true;
+                    donecb(true);
+                    finishedcb();
+                    continuation();
+                    return;
+                }
+            }
+            if (_this.testing == true && runid == _this.testRun) {
+                _this.vstep(ws, options, vstepfun, function () {
+                    _this.testing = false;
+                    _this.testingDone = true;
+                    donecb(false);
+                    finishedcb();
+                    continuation();
+                });
+            }
+            else {
+                _this.testingDone = true;
+                finishedcb();
+                continuation();
+            }
+        };
+        vstepfun();
+        return function (cont) { continuation = cont; _this.testing = false; };
     };
     Map.prototype.getName = function () {
-        return "INVALID MAP";
+        return this.name;
     };
     return Map;
 }());
+function emptybools(width, height) {
+    var bools = [];
+    for (var x = 0; x < width; x++) {
+        bools[x] = [];
+        for (var y = 0; y < height; y++) {
+            bools[x][y] = false;
+        }
+    }
+    return bools;
+}
 var WallMap = /** @class */ (function (_super) {
     __extends(WallMap, _super);
-    function WallMap(width, height, canvas, walls) {
-        var _this = _super.call(this, width, height, canvas) || this;
-        _this.walls = walls;
+    function WallMap(width, height, canvas, name) {
+        var _this = _super.call(this, width, height, canvas, name) || this;
+        _this.testNumber = 99;
+        _this.initWalls();
         return _this;
     }
+    WallMap.prototype.initWalls = function () {
+        this.walls = emptybools(this.width, this.height);
+    };
+    WallMap.prototype.surroundingWalls = function () {
+        for (var x = 0; x < this.width; x++) {
+            for (var y = 0; y < this.height; y++) {
+                if (x == 0 || x == this.width - 1 || y == 0 || y == this.height - 1) {
+                    this.walls[x][y] = true;
+                }
+            }
+        }
+    };
+    WallMap.prototype.reset = function () {
+        this.initWalls();
+        _super.prototype.reset.call(this);
+    };
     WallMap.prototype.drawContent = function (ctx, cellwidth, cellheight) {
         var canvas = this.canvas;
         ctx.fillStyle = WALLCOLOR;
@@ -569,65 +807,245 @@ var WallMap = /** @class */ (function (_super) {
         }
         ws.setWest(west);
     };
+    WallMap.prototype.setupTest = function () {
+        this.robot.reset();
+        this.testNumber = 0;
+        var tss = this.getTestSetups();
+        if (tss.length > 0) {
+            tss[0]();
+            return true;
+        }
+        else {
+            return false;
+        }
+    };
+    WallMap.prototype.handleTestWin = function () {
+        this.testNumber++;
+        var tss = this.getTestSetups();
+        if (this.testNumber < tss.length) {
+            this.robot.reset();
+            tss[this.testNumber]();
+            return true;
+        }
+        return false;
+    };
     return WallMap;
 }(Map));
-var EmptyMap = /** @class */ (function (_super) {
-    __extends(EmptyMap, _super);
-    function EmptyMap(width, height, canvas) {
-        var _this = this;
-        var walls = [];
-        for (var x = 0; x < width; x++) {
-            walls[x] = [];
-            for (var y = 0; y < height; y++) {
-                if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
-                    walls[x][y] = true;
-                }
-                else {
-                    walls[x][y] = false;
-                }
-            }
-        }
-        _this = _super.call(this, width, height, canvas, walls) || this;
-        return _this;
-    }
-    return EmptyMap;
-}(WallMap));
-function emptybools(width, height) {
-    var bools = [];
-    for (var x = 0; x < width; x++) {
-        bools[x] = [];
-        for (var y = 0; y < height; y++) {
-            bools[x][y] = false;
-        }
-    }
-    return bools;
-}
-var StartMap = /** @class */ (function (_super) {
-    __extends(StartMap, _super);
-    function StartMap(width, height, canvas, walls) {
-        var _this = this;
-        if (!walls) {
-            walls = emptybools(width, height);
-        }
-        var maxdim = Math.min(width - 2, height) - 3;
-        for (var x = 0; x < width; x++) {
-            for (var y = 0; y < height; y++) {
-                if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
-                    walls[x][y] = true;
-                }
-                else if ((x < width - 3 && x >= width - 3 - maxdim && y >= height - 1 - (x - (width - 3 - maxdim)))) {
-                    walls[x][y] = true;
-                }
-            }
-        }
-        _this = _super.call(this, width, height, canvas, walls) || this;
+var CleanMap = /** @class */ (function (_super) {
+    __extends(CleanMap, _super);
+    function CleanMap(width, height, canvas, name) {
+        var _this = _super.call(this, width, height, canvas, name) || this;
+        _this.cleanedSquares = emptybools(width, height);
         _this.winningDialog = document.createElement("div");
         var winp = document.createElement("p");
-        winp.appendChild(document.createTextNode("You reached the goal! Run tests to see if your program can handle some variations of this map, or go on to the next level!"));
+        winp.appendChild(document.createTextNode("You cleaned the whole room! Run tests to see if your program can handle some different starting locations for the robot, or go on to the next level!"));
         _this.winningDialog.appendChild(winp);
+        return _this;
+    }
+    CleanMap.prototype.allCleaned = function () {
+        for (var i = 0; i < this.width; i++) {
+            for (var j = 0; j < this.height; j++) {
+                if (!(this.cleanedSquares[i][j] || this.walls[i][j])) {
+                    return false;
+                }
+            }
+        }
+    };
+    CleanMap.prototype.drawContent = function (ctx, cellwidth, cellheight) {
+        _super.prototype.drawContent.call(this, ctx, cellwidth, cellheight);
+        ctx.fillStyle = "#dddddd";
+        for (var i = 0; i < this.width; i++) {
+            for (var j = 0; j < this.height; j++) {
+                if (this.cleanedSquares[i][j]) {
+                    ctx.fillRect(i * cellwidth, j * cellheight, cellwidth, cellheight);
+                }
+            }
+        }
+    };
+    CleanMap.prototype.hasWon = function () {
+        return this.allCleaned();
+    };
+    CleanMap.prototype.showWinningMessage = function (runtests, nextmap) {
+        if (this.winningDialog.parentNode == null) {
+            document.body.appendChild(this.winningDialog);
+        }
+        $(this.winningDialog).dialog({
+            resizable: false,
+            height: "auto",
+            width: 400,
+            modal: true,
+            buttons: {
+                "Run Tests": function () {
+                    $(this).dialog("close");
+                    runtests();
+                },
+                "Go to Next Level": function () {
+                    $(this).dialog("close");
+                    nextmap();
+                },
+                Cancel: function () {
+                    $(this).dialog("close");
+                }
+            }
+        });
+    };
+    return CleanMap;
+}(WallMap));
+var GoalMap = /** @class */ (function (_super) {
+    __extends(GoalMap, _super);
+    function GoalMap(width, height, canvas, name) {
+        var _this = _super.call(this, width, height, canvas, name) || this;
+        _this.winningDialog = document.createElement("div");
+        var winp = document.createElement("p");
+        winp.appendChild(document.createTextNode("You reached the goal! Run tests to see if your program can handle all requirements of the map, or go on to the next level!"));
+        _this.winningDialog.appendChild(winp);
+        return _this;
+    }
+    GoalMap.prototype.hasWon = function () {
+        var gz = this.getGoalZones();
+        var rx = this.robot.getX();
+        var ry = this.robot.getY();
+        for (var i = 0; i < gz.length; i++) {
+            if (rx >= gz[i].sx && rx <= gz[i].ex && ry >= gz[i].sy && ry <= gz[i].ey) {
+                return true;
+            }
+        }
+        return false;
+    };
+    GoalMap.prototype.drawContent = function (ctx, cellwidth, cellheight) {
+        _super.prototype.drawContent.call(this, ctx, cellwidth, cellheight);
+        var gz = this.getGoalZones();
+        for (var i = 0; i < gz.length; i++) {
+            drawFinish(ctx, gz[i].sx * cellwidth, gz[i].sy * cellheight, (gz[i].ex + 1) * cellwidth, (gz[i].ey + 1) * cellheight);
+        }
+    };
+    GoalMap.prototype.showWinningMessage = function (runtests, nextmap) {
+        if (this.winningDialog.parentNode == null) {
+            document.body.appendChild(this.winningDialog);
+        }
+        $(this.winningDialog).dialog({
+            resizable: false,
+            height: "auto",
+            width: 400,
+            modal: true,
+            buttons: {
+                "Run Tests": function () {
+                    $(this).dialog("close");
+                    runtests();
+                },
+                "Go to Next Level": function () {
+                    $(this).dialog("close");
+                    nextmap();
+                },
+                Cancel: function () {
+                    $(this).dialog("close");
+                }
+            }
+        });
+    };
+    return GoalMap;
+}(WallMap));
+//class EmptyMap extends WallMap {
+//    constructor(width: number, height: number, canvas: HTMLCanvasElement) {
+//        var walls: boolean[][] = [];
+//        for (var x = 0; x < width; x++) {
+//            walls[x] = [];
+//            for (var y = 0; y < height; y++) {
+//                if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
+//                    walls[x][y] = true;
+//                }
+//                else {
+//                    walls[x][y] = false;
+//                }
+//            }
+//        }
+//        super(width, height, canvas);
+//    }
+//    initWalls()
+//    handleTestWin(): boolean {
+//        return false;
+//    }
+//}
+var SpiralMap = /** @class */ (function (_super) {
+    __extends(SpiralMap, _super);
+    function SpiralMap(width, height, canvas) {
+        var _this = _super.call(this, width, height, canvas, "Spirals") || this;
         _this.robot.addState("State");
         return _this;
     }
+    SpiralMap.prototype.initWalls = function () {
+        _super.prototype.initWalls.call(this);
+        this.surroundingWalls();
+        var x = 1;
+        var y = this.height - 5;
+        var left = 0;
+        var right = this.width - 1;
+        var top = 0;
+        var bottom = y;
+        while (left <= right && top <= bottom) {
+            right -= 4;
+            while (x < right) {
+                this.walls[x][y] = true;
+                x++;
+            }
+            top += 4;
+            while (y > top) {
+                this.walls[x][y] = true;
+                y--;
+            }
+            left += 4;
+            while (x > left) {
+                this.walls[x][y] = true;
+                x--;
+            }
+            bottom -= 4;
+            while (y < bottom) {
+                this.walls[x][y] = true;
+                y++;
+            }
+        }
+        this.left = left - 3;
+        this.top = top - 3;
+        this.bottom = bottom + 3;
+        this.right = right - 1;
+    };
+    SpiralMap.prototype.isStateless = function () {
+        return true;
+    };
+    SpiralMap.prototype.generateRobotStart = function () {
+        var rx = 1;
+        var ry = this.height - 2;
+        return { x: rx, y: ry };
+    };
+    SpiralMap.prototype.getGoalZones = function () {
+        var maxdim = Math.min(this.width, this.height) - 3;
+        return [{ sx: this.left, sy: this.top, ex: this.right, ey: this.bottom }];
+    };
+    SpiralMap.prototype.getTestSetups = function () {
+        var _this = this;
+        return [function () { _this.robot.setPos(1, _this.height - 2); }];
+    };
+    return SpiralMap;
+}(GoalMap));
+var StartMap = /** @class */ (function (_super) {
+    __extends(StartMap, _super);
+    function StartMap(width, height, canvas) {
+        var _this = _super.call(this, width, height, canvas, "First Steps") || this;
+        _this.robot.addState("State");
+        return _this;
+    }
+    StartMap.prototype.initWalls = function () {
+        _super.prototype.initWalls.call(this);
+        this.surroundingWalls();
+        var maxdim = Math.min(this.width, this.height) - 3;
+        for (var x = 0; x < this.width; x++) {
+            for (var y = 0; y < this.height; y++) {
+                if ((x < this.width && x >= this.width - 3 - maxdim && y >= this.height - 1 - (x - (this.width - maxdim)))) {
+                    this.walls[x][y] = true;
+                }
+            }
+        }
+    };
     StartMap.prototype.isStateless = function () {
         return true;
     };
@@ -637,149 +1055,97 @@ var StartMap = /** @class */ (function (_super) {
         ry = Math.min(ry, 5);
         return { x: rx, y: this.height - 6 + ry };
     };
-    StartMap.prototype.drawContent = function (ctx, cellwidth, cellheight) {
-        _super.prototype.drawContent.call(this, ctx, cellwidth, cellheight);
-        drawFinish(ctx, (this.width - 3) * cellwidth, (this.height - 2) * cellheight, (this.width - 2) * cellwidth, (this.height - 1) * cellheight);
+    StartMap.prototype.getGoalZones = function () {
+        var maxdim = Math.min(this.width, this.height) - 3;
+        return [{ sx: this.width - 2, sy: this.height - maxdim, ex: this.width - 2, ey: this.height - maxdim }];
     };
-    StartMap.prototype.hasWon = function () {
-        return this.robot.getX() == this.width - 3 && this.robot.getY() == this.height - 2;
-    };
-    StartMap.prototype.showWinningMessage = function () {
-        if (this.winningDialog.parentNode == null) {
-            document.body.appendChild(this.winningDialog);
-        }
-        $(this.winningDialog).dialog({
-            resizable: false,
-            height: "auto",
-            width: 400,
-            modal: true,
-            buttons: {
-                "Run Tests": function () {
-                    $(this).dialog("close");
-                },
-                "Go to Next Level": function () {
-                    $(this).dialog("close");
-                },
-                Cancel: function () {
-                    $(this).dialog("close");
-                }
-            }
-        });
-    };
-    StartMap.prototype.getName = function () {
-        return "First Steps";
+    StartMap.prototype.getTestSetups = function () {
+        var _this = this;
+        var maxdim = Math.min(this.width, this.height) - 3;
+        return [function () { _this.robot.setPos(1, _this.height - 2); }, function () { _this.robot.setPos(2, _this.height - 3), _this.robot.setPos(_this.width - maxdim, _this.height - 4); }];
     };
     return StartMap;
-}(WallMap));
+}(GoalMap));
 var DoorMap = /** @class */ (function (_super) {
     __extends(DoorMap, _super);
     function DoorMap(width, height, canvas, walls) {
-        var _this = _super.call(this, width, height, canvas, DoorMap.doorwalls(width, height, walls)) || this;
+        var _this = _super.call(this, width, height, canvas, "Find the Door") || this;
         _this.winningDialog = document.createElement("div");
         var winp = document.createElement("p");
         winp.appendChild(document.createTextNode("You reached the goal! Run tests to see if your program can handle some variations of this map, or go on to the next level!"));
         _this.winningDialog.appendChild(winp);
         return _this;
     }
-    DoorMap.doorwalls = function (width, height, walls) {
-        if (!walls) {
-            walls = emptybools(width, height);
-        }
-        var doorheight = Math.floor(Math.random() * (height - 2)) + 1;
-        for (var x = 0; x < width; x++) {
-            for (var y = 0; y < height; y++) {
-                if (x == 0 || y == 0 || y == height - 1) {
-                    walls[x][y] = true;
+    DoorMap.prototype.initWalls = function () {
+        this.initDoorWalls(Math.floor(Math.random() * (this.height - 2)) + 1);
+    };
+    DoorMap.prototype.initDoorWalls = function (doorheight) {
+        this.walls = emptybools(this.width, this.height);
+        for (var x = 0; x < this.width; x++) {
+            for (var y = 0; y < this.height; y++) {
+                if (x == 0 || y == 0 || y == this.height - 1) {
+                    this.walls[x][y] = true;
                 }
-                else if (x == width - 3 && y != doorheight) {
-                    walls[x][y] = true;
+                else if (x == this.width - 3 && y != doorheight) {
+                    this.walls[x][y] = true;
                 }
             }
         }
-        return walls;
     };
     DoorMap.prototype.generateRobotStart = function () {
         var rx = 3;
         var ry = Math.floor(this.height / 2) + 1;
         return { x: rx, y: ry };
     };
-    DoorMap.prototype.reset = function () {
-        this.walls = DoorMap.doorwalls(this.width, this.height);
-        _super.prototype.reset.call(this);
+    DoorMap.prototype.getGoalZones = function () {
+        return [{ sx: this.width - 2, sy: 1, ex: this.width - 1, ey: this.height - 2 }];
     };
-    DoorMap.prototype.drawContent = function (ctx, cellwidth, cellheight) {
-        _super.prototype.drawContent.call(this, ctx, cellwidth, cellheight);
-        drawFinish(ctx, this.canvas.width - cellwidth * 2, cellheight, this.canvas.width, this.canvas.height - cellheight);
-    };
-    DoorMap.prototype.hasWon = function () {
-        return this.robot.getX() > this.width - 3;
-    };
-    DoorMap.prototype.showWinningMessage = function () {
-        if (this.winningDialog.parentNode == null) {
-            document.body.appendChild(this.winningDialog);
-        }
-        $(this.winningDialog).dialog({
-            resizable: false,
-            height: "auto",
-            width: 400,
-            modal: true,
-            buttons: {
-                "Run Tests": function () {
-                    $(this).dialog("close");
-                },
-                "Go to Next Level": function () {
-                    $(this).dialog("close");
-                },
-                Cancel: function () {
-                    $(this).dialog("close");
-                }
-            }
-        });
-    };
-    DoorMap.prototype.getName = function () {
-        return "Find the Door";
+    DoorMap.prototype.getTestSetups = function () {
+        var _this = this;
+        var rs = this.generateRobotStart();
+        return [function () { _this.robot.setPos(rs.x, rs.y); _this.initDoorWalls(1); },
+            function () { _this.robot.setPos(rs.x, rs.y); _this.initDoorWalls(rs.y - 3); },
+            function () { _this.robot.setPos(rs.x, rs.y); _this.initDoorWalls(rs.y); },
+            function () { _this.robot.setPos(rs.x, rs.y); _this.initDoorWalls(rs.y + 3); },
+            function () { _this.robot.setPos(rs.x, rs.y); _this.initDoorWalls(_this.height - 2); }];
     };
     return DoorMap;
-}(WallMap));
+}(GoalMap));
 function mirror_set_v(walls, x, y, height) {
     walls[x][y] = true;
     walls[x][height - y - 1] = true;
 }
-var StateDoorMap = /** @class */ (function (_super) {
-    __extends(StateDoorMap, _super);
-    function StateDoorMap(width, height, canvas) {
-        var _this = this;
-        var walls = emptybools(width, height);
-        mirror_set_v(walls, 5, 5, height);
-        mirror_set_v(walls, 5, 4, height);
-        mirror_set_v(walls, 5, 3, height);
-        mirror_set_v(walls, 6, 3, height);
-        mirror_set_v(walls, 7, 3, height);
-        mirror_set_v(walls, 8, 3, height);
-        mirror_set_v(walls, 8, 4, height);
-        mirror_set_v(walls, 8, 5, height);
-        mirror_set_v(walls, 5, 6, height);
-        mirror_set_v(walls, 5, 7, height);
-        mirror_set_v(walls, 5, 8, height);
-        mirror_set_v(walls, 6, 8, height);
-        mirror_set_v(walls, 7, 8, height);
-        mirror_set_v(walls, 8, 8, height);
-        mirror_set_v(walls, 9, 8, height);
-        mirror_set_v(walls, 10, 8, height);
-        mirror_set_v(walls, 11, 8, height);
-        mirror_set_v(walls, 12, 8, height);
-        mirror_set_v(walls, 12, 7, height);
-        mirror_set_v(walls, 12, 6, height);
-        mirror_set_v(walls, 12, 5, height);
-        mirror_set_v(walls, 12, 4, height);
-        mirror_set_v(walls, 12, 3, height);
-        mirror_set_v(walls, 12, 2, height);
-        mirror_set_v(walls, 12, 1, height);
-        _this = _super.call(this, width, height, canvas, walls) || this;
-        return _this;
-    }
-    return StateDoorMap;
-}(DoorMap));
+//class StateDoorMap extends DoorMap {
+//    constructor(width: number, height: number, canvas: HTMLCanvasElement) {
+//        var walls: boolean[][] = emptybools(width, height);
+//        mirror_set_v(walls, 5, 5, height);
+//        mirror_set_v(walls, 5, 4, height);
+//        mirror_set_v(walls, 5, 3, height);
+//        mirror_set_v(walls, 6, 3, height);
+//        mirror_set_v(walls, 7, 3, height);
+//        mirror_set_v(walls, 8, 3, height);
+//        mirror_set_v(walls, 8, 4, height);
+//        mirror_set_v(walls, 8, 5, height);
+//        mirror_set_v(walls, 5, 6, height);
+//        mirror_set_v(walls, 5, 7, height);
+//        mirror_set_v(walls, 5, 8, height);
+//        mirror_set_v(walls, 6, 8, height);
+//        mirror_set_v(walls, 7, 8, height);
+//        mirror_set_v(walls, 8, 8, height);
+//        mirror_set_v(walls, 9, 8, height);
+//        mirror_set_v(walls, 10, 8, height);
+//        mirror_set_v(walls, 11, 8, height);
+//        mirror_set_v(walls, 12, 8, height);
+//        mirror_set_v(walls, 12, 7, height);
+//        mirror_set_v(walls, 12, 6, height);
+//        mirror_set_v(walls, 12, 5, height);
+//        mirror_set_v(walls, 12, 4, height);
+//        mirror_set_v(walls, 12, 3, height);
+//        mirror_set_v(walls, 12, 2, height);
+//        mirror_set_v(walls, 12, 1, height);
+//        super(width, height, canvas, walls);
+//    }
+//}
 var MazeMap = /** @class */ (function (_super) {
     __extends(MazeMap, _super);
     function MazeMap(width, height, canvas) {
@@ -790,32 +1156,31 @@ var MazeMap = /** @class */ (function (_super) {
         if (height % 2 == 0) {
             height++;
         }
-        var sws = MazeMap.mazewalls(width, height);
-        _this = _super.call(this, width, height, canvas, sws.walls) || this;
-        _this.starty = sws.starty;
+        //var sws = MazeMap.mazewalls(width, height);
+        _this = _super.call(this, width, height, canvas, "Maze") || this;
         return _this;
     }
-    MazeMap.mazewalls = function (width, height) {
-        var walls = emptybools(width, height);
-        for (var x = 0; x < width; x++) {
-            for (var y = 0; y < height; y++) {
+    MazeMap.prototype.initWalls = function () {
+        _super.prototype.initWalls.call(this);
+        for (var x = 0; x < this.width; x++) {
+            for (var y = 0; y < this.height; y++) {
                 if (x % 2 == 0 || y % 2 == 0) {
-                    walls[x][y] = true;
+                    this.walls[x][y] = true;
                 }
             }
         }
-        var inmaze = emptybools(width, height);
-        var starty = Math.floor(Math.random() * Math.floor(height / 2)) * 2 + 1;
+        var inmaze = emptybools(this.width, this.height);
+        this.starty = Math.floor(Math.random() * Math.floor(this.height / 2)) * 2 + 1;
         var walllist = [];
-        walls[0][starty] = false;
-        inmaze[1][starty] = true;
-        if (starty > 1) {
-            walllist.push({ x: 1, y: starty - 1, cx: 1, cy: starty - 2 });
+        this.walls[0][this.starty] = false;
+        inmaze[1][this.starty] = true;
+        if (this.starty > 1) {
+            walllist.push({ x: 1, y: this.starty - 1, cx: 1, cy: this.starty - 2 });
         }
-        if (starty < height - 2) {
-            walllist.push({ x: 1, y: starty + 1, cx: 1, cy: starty + 2 });
+        if (this.starty < this.height - 2) {
+            walllist.push({ x: 1, y: this.starty + 1, cx: 1, cy: this.starty + 2 });
         }
-        walllist.push({ x: 2, y: starty, cx: 3, cy: starty });
+        walllist.push({ x: 2, y: this.starty, cx: 3, cy: this.starty });
         while (walllist.length > 0) {
             var index = Math.floor(Math.random() * walllist.length);
             var x = walllist[index].x;
@@ -825,44 +1190,47 @@ var MazeMap = /** @class */ (function (_super) {
             walllist.splice(index, 1);
             if (!inmaze[cx][cy]) {
                 inmaze[cx][cy] = true;
-                walls[x][y] = false;
-                if (walls[cx + 1][cy] && cx < width - 2) {
+                this.walls[x][y] = false;
+                if (this.walls[cx + 1][cy] && cx < this.width - 2) {
                     walllist.push({ x: cx + 1, y: cy, cx: cx + 2, cy: cy });
                 }
-                if (walls[cx - 1][cy] && cx > 1) {
+                if (this.walls[cx - 1][cy] && cx > 1) {
                     walllist.push({ x: cx - 1, y: cy, cx: cx - 2, cy: cy });
                 }
-                if (walls[cx][cy + 1] && cy < height - 2) {
+                if (this.walls[cx][cy + 1] && cy < this.height - 2) {
                     walllist.push({ x: cx, y: cy + 1, cx: cx, cy: cy + 2 });
                 }
-                if (walls[cx][cy - 1] && cy > 1) {
+                if (this.walls[cx][cy - 1] && cy > 1) {
                     walllist.push({ x: cx, y: cy - 1, cx: cx, cy: cy - 2 });
                 }
             }
         }
-        return { walls: walls, starty: starty };
     };
-    MazeMap.prototype.reset = function () {
-        var sws = MazeMap.mazewalls(this.width, this.height);
-        this.walls = sws.walls;
-        this.starty = sws.starty;
-        _super.prototype.reset.call(this);
-    };
+    //reset() {
+    //    var sws = MazeMap.mazewalls(this.width, this.height);
+    //    this.walls = sws.walls;
+    //    this.starty = sws.starty;
+    //    super.reset();
+    //}
     MazeMap.prototype.generateRobotStart = function () {
         var rx = (Math.floor(Math.random() * Math.floor(this.width / 2)) * 2) + 1;
         var ry = (Math.floor(Math.random() * Math.floor(this.height / 2)) * 2) + 1;
         return { x: rx, y: ry };
     };
-    MazeMap.prototype.drawContent = function (ctx, cellwidth, cellheight) {
-        _super.prototype.drawContent.call(this, ctx, cellwidth, cellheight);
-        drawFinish(ctx, 0, this.starty * cellwidth, cellwidth, this.starty * cellwidth + cellheight);
+    //drawContent(ctx: CanvasRenderingContext2D, cellwidth: number, cellheight: number) {
+    //    super.drawContent(ctx, cellwidth, cellheight);
+    //    drawFinish(ctx, 0, this.starty * cellwidth, cellwidth, this.starty * cellwidth + cellheight);
+    //}
+    //hasWon(): boolean {
+    //    return this.robot.getX() == 0;
+    //}
+    MazeMap.prototype.getGoalZones = function () {
+        return [{ sx: 0, sy: this.starty, ex: 0, ey: this.starty }];
     };
-    MazeMap.prototype.hasWon = function () {
-        return this.robot.getX() == 0;
-    };
-    MazeMap.prototype.getName = function () {
-        return "Maze";
+    MazeMap.prototype.getTestSetups = function () {
+        var _this = this;
+        return [function () { _this.robot.setPos(_this.width - 6, 5); }, function () { _this.robot.setPos(_this.width - 8, Math.floor(_this.height / 2) + ((Math.floor(_this.height / 2) % 2) - 1)); }];
     };
     return MazeMap;
-}(WallMap));
+}(GoalMap));
 //# sourceMappingURL=Map.js.map

@@ -47,6 +47,13 @@ function MergeFieldStates(l: FieldState, r: FieldState): FieldState {
     return FieldState.Unknown;
 }
 
+function FieldStatesMatch(l: FieldState, r: FieldState): boolean {
+    if (l == FieldState.Unknown || r == FieldState.Unknown) {
+        return true;
+    }
+    return l == r;
+}
+
 class AWorldState {
     north: AFieldState = AFieldState.Empty;
     east: AFieldState = AFieldState.Empty;
@@ -220,16 +227,16 @@ function AWorldState_compress(aws: AWorldState[]): WorldState[] {
             for (var j = i + 1; j < ret.length; j++) {
                 var ws2: WorldState = ret[j];
                 var matches = 0;
-                if (ws.north == ws2.north) {
+                if (FieldStatesMatch(ws.north,ws2.north)) {
                     matches++;
                 }
-                if (ws.east == ws2.east) {
+                if (FieldStatesMatch(ws.east, ws2.east)) {
                     matches++;
                 }
-                if (ws.south == ws2.south) {
+                if (FieldStatesMatch(ws.south, ws2.south)) {
                     matches++;
                 }
-                if (ws.west == ws2.west) {
+                if (FieldStatesMatch(ws.west, ws2.west)) {
                     matches++;
                 }
                 if (matches >= 3) {
@@ -309,7 +316,7 @@ class PicoProgram {
                 }
                 var worldstates: WorldState[] = AWorldState_compress(rule.worldstates);
                 for (var h = 0; h < worldstates.length; h++) {
-                    ret.push(indices[state.name] + " " + WorldStateToPicoStr(worldstates[i]) + " -> " + ActionToStr(rule.action) + " " + indices[rule.state.name]);
+                    ret.push(indices[state.name] + " " + WorldStateToPicoStr(worldstates[h]) + " -> " + ActionToStr(rule.action) + " " + indices[rule.state.name]);
                 }
             }
             ret.push("");
@@ -325,7 +332,7 @@ class PicoProgram {
         var statenames: Array<string> = new Array<string>();
         var startstatename = null;
         for (var i = 0; i < robot.statenames.length; i++) {
-            if (robot.states[robot.statenames[i]] == robot.state) {
+            if (robot.states[robot.statenames[i]] == robot.initialstate) {
                 startstatename = robot.statenames[i];
             }
             var astate: AState = new AState(robot.statenames[i]);

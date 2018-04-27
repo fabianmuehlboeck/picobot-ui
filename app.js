@@ -173,7 +173,8 @@ var WorldPattern = /** @class */ (function () {
 var Pico = /** @class */ (function () {
     function Pico() {
         this.maps = [];
-        this.maps.push(new StartMap(25, 25, Pico.createCanvas()));
+        this.maps.push(new SpiralMap(25, 25, Pico.createCanvas()));
+        this.maps.push(new StartMap(15, 15, Pico.createCanvas()));
         this.maps.push(new DoorMap(25, 25, Pico.createCanvas()));
         this.maps.push(new MazeMap(25, 25, Pico.createCanvas()));
         var pico = this;
@@ -186,34 +187,26 @@ var Pico = /** @class */ (function () {
     };
     Pico.prototype.init = function () {
         var _this = this;
-        this.mapcontrols = new MapControls(document.getElementById("mapcanvas"), document.getElementById("mapdata"), document.getElementById("gui"), document.getElementById("code"), document.getElementById("help"));
+        this.mapcontrols = new MapControls(this, document.getElementById("mapcanvas"), document.getElementById("mapdata"), document.getElementById("gui"), document.getElementById("code"), document.getElementById("help"));
         this.header = document.getElementById("header");
         var leftbutton = document.createElement("button");
         leftbutton.classList.add("mapleft");
         leftbutton.addEventListener("click", function () {
-            var index = _this.maps.indexOf(_this.mapcontrols.getMap()) - 1;
-            while (index < 0) {
-                index += _this.maps.length;
-            }
-            _this.changeMap(_this.maps[index]);
+            _this.previousMap();
         });
         this.header.appendChild(leftbutton);
         var mapselectdiv = document.createElement("div");
         mapselectdiv.classList.add("mapselect");
         this.mapspan = document.createElement("span");
         mapselectdiv.appendChild(this.mapspan);
-        var mapselectbutton = document.createElement("button");
-        mapselectbutton.classList.add("mapselect");
-        mapselectdiv.appendChild(mapselectbutton);
+        //var mapselectbutton = document.createElement("button");
+        //mapselectbutton.classList.add("mapselect");
+        //mapselectdiv.appendChild(mapselectbutton);
         this.header.appendChild(mapselectdiv);
         var rightbutton = document.createElement("button");
         rightbutton.classList.add("mapright");
         rightbutton.addEventListener("click", function () {
-            var index = _this.maps.indexOf(_this.mapcontrols.getMap()) + 1;
-            while (index >= _this.maps.length) {
-                index -= _this.maps.length;
-            }
-            _this.changeMap(_this.maps[index]);
+            _this.nextMap();
         });
         this.header.appendChild(rightbutton);
         this.changeMap(this.maps[0]);
@@ -221,6 +214,20 @@ var Pico = /** @class */ (function () {
     Pico.prototype.changeMap = function (map) {
         this.mapcontrols.setMap(map);
         this.mapspan.innerText = map.getName();
+    };
+    Pico.prototype.nextMap = function () {
+        var index = this.maps.indexOf(this.mapcontrols.getMap()) + 1;
+        while (index >= this.maps.length) {
+            index -= this.maps.length;
+        }
+        this.changeMap(this.maps[index]);
+    };
+    Pico.prototype.previousMap = function () {
+        var index = this.maps.indexOf(this.mapcontrols.getMap()) - 1;
+        while (index < 0) {
+            index += this.maps.length;
+        }
+        this.changeMap(this.maps[index]);
     };
     return Pico;
 }());

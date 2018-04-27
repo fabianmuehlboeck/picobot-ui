@@ -45,6 +45,12 @@ function MergeFieldStates(l, r) {
     }
     return FieldState.Unknown;
 }
+function FieldStatesMatch(l, r) {
+    if (l == FieldState.Unknown || r == FieldState.Unknown) {
+        return true;
+    }
+    return l == r;
+}
 var AWorldState = /** @class */ (function () {
     function AWorldState() {
         this.north = AFieldState.Empty;
@@ -213,16 +219,16 @@ function AWorldState_compress(aws) {
             for (var j = i + 1; j < ret.length; j++) {
                 var ws2 = ret[j];
                 var matches = 0;
-                if (ws.north == ws2.north) {
+                if (FieldStatesMatch(ws.north, ws2.north)) {
                     matches++;
                 }
-                if (ws.east == ws2.east) {
+                if (FieldStatesMatch(ws.east, ws2.east)) {
                     matches++;
                 }
-                if (ws.south == ws2.south) {
+                if (FieldStatesMatch(ws.south, ws2.south)) {
                     matches++;
                 }
-                if (ws.west == ws2.west) {
+                if (FieldStatesMatch(ws.west, ws2.west)) {
                     matches++;
                 }
                 if (matches >= 3) {
@@ -292,7 +298,7 @@ var PicoProgram = /** @class */ (function () {
                 }
                 var worldstates = AWorldState_compress(rule.worldstates);
                 for (var h = 0; h < worldstates.length; h++) {
-                    ret.push(indices[state.name] + " " + WorldStateToPicoStr(worldstates[i]) + " -> " + ActionToStr(rule.action) + " " + indices[rule.state.name]);
+                    ret.push(indices[state.name] + " " + WorldStateToPicoStr(worldstates[h]) + " -> " + ActionToStr(rule.action) + " " + indices[rule.state.name]);
                 }
             }
             ret.push("");
@@ -307,7 +313,7 @@ var PicoProgram = /** @class */ (function () {
         var statenames = new Array();
         var startstatename = null;
         for (var i = 0; i < robot.statenames.length; i++) {
-            if (robot.states[robot.statenames[i]] == robot.state) {
+            if (robot.states[robot.statenames[i]] == robot.initialstate) {
                 startstatename = robot.statenames[i];
             }
             var astate = new AState(robot.statenames[i]);
