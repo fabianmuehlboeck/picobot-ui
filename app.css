@@ -22,6 +22,7 @@
     padding-left: 20px;
 }
 
+
 body {
     font-family: 'Segoe UI', sans-serif !important;
     margin: 0px;
@@ -526,7 +527,7 @@ a.controlleftbutton:hover {
 
 .runprogramdiv {
     width: 280px;
-    height: 180px;
+    height: 220px;
     display: inline-block;
     vertical-align: top;
 }
