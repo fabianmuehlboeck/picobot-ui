@@ -1171,8 +1171,8 @@ var ObstacleMap = /** @class */ (function (_super) {
         }
     };
     ObstacleMap.prototype.generateRobotStart = function () {
-        var rx = 1;
-        var ry = this.height - 2;
+        var rx = 2;
+        var ry = this.height - 4;
         return { x: rx, y: ry };
     };
     ObstacleMap.prototype.getGoalZones = function () {
