@@ -25,23 +25,22 @@ var State = /** @class */ (function () {
         namefield.maxLength = 30;
         namefield.value = this.name;
         namefield.addEventListener("change", function () {
-            if (namefield.value.length == 0) {
+            if (namefield.value.trim().length == 0) {
                 alert("State name cannot be empty!");
                 namefield.value = s.name;
                 namefield.selectionStart = 0;
                 namefield.selectionEnd = s.name.length;
                 namefield.focus();
             }
-            else if (namefield.value != name && parent.statenames.indexOf(namefield.value) >= 0) {
+            else if (namefield.value.trim() != name && parent.statenames.indexOf(namefield.value.trim()) >= 0) {
                 alert('There already is another state named "' + namefield.value + '"!');
-                namefield.value = s.name;
                 namefield.value = s.name;
                 namefield.selectionStart = 0;
                 namefield.selectionEnd = s.name.length;
                 namefield.focus();
             }
             else {
-                s.changeName(namefield.value);
+                s.changeName(namefield.value.trim());
             }
         });
         this.namefield = namefield;
@@ -109,7 +108,8 @@ var State = /** @class */ (function () {
                         break;
                     }
                 }
-            }
+            },
+            containment: this.div
         });
     }
     State.prototype.expand = function () {

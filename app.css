@@ -230,7 +230,7 @@ button.deletebutton:active:not(:disabled) {
 }
 
     #maintabs > div {
-        margin-bottom: 48px;
+        /*margin-bottom: 48px;*/
     }
 
 #gui {
