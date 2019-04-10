@@ -456,7 +456,7 @@ var PicoProgram = /** @class */ (function () {
             if (line.length == 0) {
                 continue;
             }
-            if (line.charAt(0) == "#") {
+            if (line.charAt(0) == "#") { //Comments
                 var parsed = false;
                 if ((line.substr(0, 9) == "## State " || line.substr(0, 8) == "##State ") && line.indexOf(":") >= 0) {
                     var parts = line.split(":", 2);
