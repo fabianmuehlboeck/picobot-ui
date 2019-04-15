@@ -1,247 +1,163 @@
-var Robot = /** @class */ (function () {
-    function Robot(x, y) {
-        this.initialstate = null;
-        this.states = {};
-        this.statenames = new Array();
-        var rbt = this;
-        this.statelisteners = [];
-        this.programdiv = document.createElement("div");
-        this.programdiv.classList.add("programdiv");
-        var rmc = this.programdiv.removeChild;
-        //this.programdiv.removeChild = function (node) {
-        //    rmc(node);
-        //    return node;
-        //}
-        this.x = x;
-        this.y = y;
-        this.statemenu = document.createElement("ul");
-        this.statemenu.classList.add("statemenu");
-        $(this.statemenu).menu({
-            select: function (event, ui) {
-                rbt.currentStateSelector.setState(rbt.states[ui.item[0].innerText]);
-                rbt.statemenu.parentNode.removeChild(rbt.statemenu);
-            }
-            //blur: function (event, ui) {
-            //    //rbt.statemenu.parentNode.removeChild(rbt.statemenu);
-            //    rbt = rbt;
-            //}
-        });
-        this.states = {};
-        this.statenames = [];
-        ;
-        this.stateselector = new StateSelector(this, null);
+var BasicRobot = /** @class */ (function () {
+    function BasicRobot(world) {
+        var _this = this;
+        this.isRunning = false;
+        this.currentStep = new InitStep(this, world);
+        var rm = new RulesManager(this);
+        var moveForwardFactory = new MoveForwardActionFactory();
+        var turnLeftFactory = new TurnLeftActionFactory();
+        var turnRightFactory = new TurnRightActionFactory();
+        rm.actionrepoul.appendChild(moveForwardFactory.actionli);
+        rm.actionrepoul.appendChild(turnLeftFactory.actionli);
+        rm.actionrepoul.appendChild(turnRightFactory.actionli);
+        this.rulesManager = rm;
+        var rundiv = document.createElement("div");
+        rundiv.classList.add("runcontrols");
+        var stepforwardbutton = document.createElement("button");
+        stepforwardbutton.classList.add("stepforwardbutton");
+        var stepbackbutton = document.createElement("button");
+        stepbackbutton.classList.add("stepbackbutton");
+        stepbackbutton.disabled = true;
+        var pausebutton = document.createElement("button");
+        pausebutton.classList.add("pausebutton");
+        pausebutton.disabled = true;
+        var tostartbutton = document.createElement("button");
+        tostartbutton.classList.add("tostartbutton");
+        tostartbutton.disabled = true;
+        var runbutton = document.createElement("button");
+        runbutton.classList.add("runbutton");
+        var fastforwardbutton = document.createElement("button");
+        fastforwardbutton.classList.add("fastforwardbutton");
+        var robot = this;
+        $(tostartbutton).on("click", function () { return _this.toStart(); });
+        $(stepforwardbutton).on("click", function () { return _this.stepNext(); });
+        $(stepbackbutton).on("click", function () { return _this.stepBack(); });
+        $(pausebutton).on("click", function () { return _this.pause(); });
+        $(runbutton).on("click", function () { return _this.run(); });
+        $(fastforwardbutton).on("click", function () { return _this.runfast(); });
+        rundiv.appendChild(tostartbutton);
+        rundiv.appendChild(stepbackbutton);
+        rundiv.appendChild(pausebutton);
+        rundiv.appendChild(stepforwardbutton);
+        rundiv.appendChild(runbutton);
+        rundiv.appendChild(fastforwardbutton);
+        this.toStartButton = tostartbutton;
+        this.backButton = stepbackbutton;
+        this.pauseButton = pausebutton;
+        this.stepButton = stepforwardbutton;
+        this.runButton = runbutton;
+        this.ffwdButton = fastforwardbutton;
+        this.runDiv = rundiv;
     }
-    Robot.prototype.registerStateListener = function (sel) {
-        this.statelisteners.push(sel);
+    BasicRobot.prototype.toBackground = function () {
+        this.guiDiv.removeChild(this.rulesManager.getActionRepoDiv());
+        this.guiDiv.removeChild(this.rulesManager.getRulesDiv());
     };
-    Robot.prototype.unregisterStateListener = function (sel) {
-        while (this.statelisteners.indexOf(sel) >= 0) {
-            this.statelisteners.splice(this.statelisteners.indexOf(sel), 1);
+    BasicRobot.prototype.toForeground = function (guiDiv, controlDiv, mapcanvas) {
+        this.guiDiv = guiDiv;
+        this.controlDiv = controlDiv;
+        this.currentStep.getWorld().draw(mapcanvas);
+        this.mapcanvas = mapcanvas;
+        guiDiv.appendChild(this.rulesManager.getRulesDiv());
+        guiDiv.appendChild(this.rulesManager.getActionRepoDiv());
+        controlDiv.appendChild(this.runDiv);
+    };
+    BasicRobot.prototype.getRules = function () { return this.rulesManager.getRules(); };
+    BasicRobot.prototype.addRule = function () {
+        var rule = new BasicRule();
+        return rule;
+    };
+    BasicRobot.prototype.getWorld = function () {
+        return this.currentStep.getWorld();
+    };
+    BasicRobot.prototype.setWorld = function (world) {
+        this.firstStep = new InitStep(this, world);
+        this.toStart();
+    };
+    BasicRobot.prototype.setCurrentStep = function (step) {
+        if (step != this.currentStep) {
+            this.currentStep.exit();
+            this.currentStep = step;
+            this.currentStep.enter();
         }
     };
-    Object.defineProperty(Robot.prototype, "state", {
-        get: function () { return this.stateselector.value; },
-        set: function (s) { this.stateselector.setState(s); },
-        enumerable: true,
-        configurable: true
-    });
-    ;
-    ;
-    Robot.prototype.setInitial = function (state) {
-        if (this.initialstate != null) {
-            this.initialstate.div.classList.remove("startstate");
+    BasicRobot.prototype.toStart = function () {
+        this.setCurrentStep(this.firstStep);
+        this.toStartButton.disabled = true;
+        this.backButton.disabled = true;
+        this.pauseButton.disabled = true;
+        this.stepButton.disabled = false;
+        this.runButton.disabled = false;
+        this.ffwdButton.disabled = false;
+        this.currentStep.getWorld().draw(this.mapcanvas);
+        return this.currentStep;
+    };
+    BasicRobot.prototype.stepBack = function () {
+        var next = this.currentStep.getPredecessor();
+        if (!next.hasPredecessor()) {
+            this.backButton.disabled = true;
+            this.toStartButton.disabled = true;
+            this.pauseButton.disabled = true;
         }
-        state.div.classList.add("startstate");
-        this.initialstate = state;
+        this.stepButton.disabled = false;
+        this.runButton.disabled = false;
+        this.ffwdButton.disabled = false;
+        this.setCurrentStep(next);
+        this.currentStep.getWorld().draw(this.mapcanvas);
+        return next;
     };
-    Robot.prototype.addState = function (name) {
-        if (name === void 0) { name = undefined; }
-        if (!name) {
-            var i = 1;
-            while (this.statenames.indexOf("State " + String(i)) >= 0) {
-                i++;
-            }
-            name = "State " + String(i);
+    BasicRobot.prototype.stepNext = function () {
+        var next = this.currentStep.getSuccessor();
+        if (next.isError() || !next.hasSuccessor()) {
+            this.stepButton.disabled = true;
+            this.runButton.disabled = true;
+            this.pauseButton.disabled = true;
+            this.ffwdButton.disabled = true;
         }
-        var state = new State(name, this);
-        this.states[name] = state;
-        this.statenames.push(name);
-        this.programdiv.appendChild(state.div);
-        this.statemenu.appendChild(state.menuItem);
-        if (this.state == null) {
-            this.state = state;
-            this.setInitial(state);
+        this.backButton.disabled = false;
+        this.toStartButton.disabled = false;
+        this.setCurrentStep(next);
+        this.currentStep.getWorld().draw(this.mapcanvas);
+        return next;
+    };
+    BasicRobot.prototype.pause = function () {
+        if (this.isRunning) {
+            this.isRunning = false;
+            window.clearInterval(this.runInterval);
         }
-        return state;
+        this.pauseButton.disabled = true;
+        this.runButton.disabled = !this.currentStep.hasSuccessor();
+        this.ffwdButton.disabled = !this.currentStep.hasSuccessor();
+        this.stepButton.disabled = !this.currentStep.hasSuccessor();
+        this.backButton.disabled = !this.currentStep.hasPredecessor();
+        this.toStartButton.disabled = !this.currentStep.hasPredecessor();
     };
-    Robot.prototype.reset = function () {
-        this.state = this.initialstate;
-    };
-    Robot.prototype.renameState = function (s, oldName) {
-        this.statenames.splice(this.statenames.indexOf(oldName), 1);
-        this.statenames.push(s.name);
-        delete this.states[oldName];
-        this.states[s.name] = s;
-        this.statelisteners.forEach(function (v, i, a) { v.notify(s, StateEvent.NameChange); });
-    };
-    Robot.prototype.removeState = function (s) {
-        this.statelisteners.forEach(function (v, i, a) { v.notify(s, StateEvent.Removed); });
-        delete this.states[s.name];
-        if (s == this.state) {
-            this.state = null;
-        }
-        if (s == this.initialstate) {
-            var index = this.statenames.indexOf(s.name);
-            if (index - 1 >= 0) {
-                this.setInitial(this.states[this.statenames[index - 1]]);
-            }
-            else if (this.statenames.length > index + 1) {
-                this.setInitial(this.states[this.statenames[index + 1]]);
-            }
-            else {
-                this.initialstate = null;
-            }
-        }
-        this.statenames.splice(this.statenames.indexOf(s.name), 1);
-        this.programdiv.removeChild(s.div);
-        this.statemenu.removeChild(s.menuItem);
-    };
-    Robot.prototype.getStateMenu = function (selector) {
-        if (this.statemenu.parentNode) {
-            this.statemenu.parentNode.removeChild(this.statemenu);
-        }
-        this.currentStateSelector = selector;
-        return this.statemenu;
-    };
-    Robot.prototype.setPos = function (x, y) {
-        this.x = x;
-        this.y = y;
-    };
-    Robot.prototype.setState = function (state) {
-        if (this.statenames.indexOf(state.name) >= 0 && this.states[state.name] == state) {
-            this.state = state;
-        }
-    };
-    Robot.prototype.vstep = function (map, ws, options, thenCont, elseCont, index) {
+    BasicRobot.prototype.runAtSpeed = function (speed) {
         var _this = this;
-        if (index === void 0) { index = 0; }
-        this.state.expand();
-        if (index >= this.state.rules.length) {
-            elseCont();
-        }
-        else {
-            var ly = $('html, body').scrollTop() + jQuery(window).height() - 120;
-            var jqr = $(this.state.rules[index].elem);
-            if (jqr.offset().top + jqr.outerHeight() > ly) {
-                var nst = $('html, body').scrollTop() + (jqr.offset().top + jqr.outerHeight() - ly);
-                $('html, body').animate({
-                    scrollTop: nst
-                }, 300).promise().always(function () {
-                    _this.state.rules[index].vmatches(ws, options, function () { _this.executeVStep(_this.state.rules[index], map, options, thenCont, elseCont); }, function () { _this.vstep(map, ws, options, thenCont, elseCont, index + 1); });
-                });
+        this.isRunning = true;
+        this.runButton.disabled = true;
+        this.stepButton.disabled = true;
+        this.ffwdButton.disabled = true;
+        this.backButton.disabled = true;
+        this.toStartButton.disabled = true;
+        this.pauseButton.disabled = false;
+        window.setInterval(function () {
+            if (_this.isRunning) {
+                var next = _this.currentStep.getSuccessor();
+                if (next.isError() || !next.hasSuccessor()) {
+                    _this.pause();
+                }
+                _this.setCurrentStep(next);
+                _this.currentStep.getWorld().draw(_this.mapcanvas);
             }
-            else {
-                this.state.rules[index].vmatches(ws, options, function () { _this.executeVStep(_this.state.rules[index], map, options, thenCont, elseCont); }, function () { _this.vstep(map, ws, options, thenCont, elseCont, index + 1); });
-            }
-        }
+        }, speed);
     };
-    Robot.prototype.executeVStep = function (rule, map, options, thenCont, elseCont) {
-        var _this = this;
-        var changedState = !(this.state == rule.getState());
-        var success = false;
-        var jq = $(rule.actionSelector.activeElem);
-        var bgcol = window.getComputedStyle(rule.actionSelector.activeElem, null).getPropertyValue("background-color");
-        switch (rule.getAction()) {
-            case Action.Stay:
-                success = changedState;
-                break;
-            case Action.North:
-                success = this.moveNorth(map, options);
-                break;
-            case Action.East:
-                success = this.moveEast(map, options);
-                break;
-            case Action.South:
-                success = this.moveSouth(map, options);
-                break;
-            case Action.West:
-                success = this.moveWest(map, options);
-                break;
-        }
-        var flashcol = (success ? "#00ff00" : "#ff0000");
-        jq.animate({ backgroundColor: flashcol }, { duration: 300, easing: "easeOutCirc" }).promise().always(function () {
-            map.draw();
-            jq.animate({ backgroundColor: bgcol }, { duration: 200, easing: "easeOutCirc" }).promise().always(function () {
-                jq.css("background-color", '');
-                bgcol = window.getComputedStyle(_this.state.namefield, null).getPropertyValue("background-color");
-                jq = $([rule.stateSelector.div, _this.stateselector.div, rule.getState().namefield]);
-                jq.animate({ backgroundColor: "#00ff00" }, { duration: 300, easing: "easeOutCirc" }).promise().always(function () {
-                    _this.setState(rule.getState());
-                    jq.animate({ backgroundColor: bgcol }, { duration: 200, easing: "easeOutCirc" }).promise().always(function () {
-                        if (success) {
-                            thenCont();
-                        }
-                        else {
-                            elseCont();
-                        }
-                    });
-                });
-            });
-        });
+    BasicRobot.prototype.run = function () {
+        this.runAtSpeed(200);
     };
-    Robot.prototype.step = function (map, ws, options) {
-        for (var i = 0; i < this.state.rules.length; i++) {
-            if (this.state.rules[i].matches(ws, options)) {
-                return this.executeStep(this.state.rules[i], map, options);
-            }
-        }
+    BasicRobot.prototype.runfast = function () {
+        this.runAtSpeed(20);
     };
-    Robot.prototype.executeStep = function (rule, map, options) {
-        var changedState = !(this.state == rule.getState());
-        this.state = rule.getState();
-        switch (rule.getAction()) {
-            case Action.Stay:
-                return changedState;
-            case Action.North:
-                return this.moveNorth(map, options);
-            case Action.East:
-                return this.moveEast(map, options);
-            case Action.South:
-                return this.moveSouth(map, options);
-            case Action.West:
-                return this.moveWest(map, options);
-        }
-    };
-    Robot.prototype.move = function (xnew, ynew, map, options) {
-        if (map.isValidPos(xnew, ynew)) {
-            this.x = xnew;
-            this.y = ynew;
-            return true;
-        }
-        return false;
-    };
-    Robot.prototype.moveNorth = function (map, options) {
-        var xnew = this.x;
-        var ynew = this.y - 1;
-        return this.move(xnew, ynew, map, options);
-    };
-    Robot.prototype.moveEast = function (map, options) {
-        var xnew = this.x + 1;
-        var ynew = this.y;
-        return this.move(xnew, ynew, map, options);
-    };
-    Robot.prototype.moveSouth = function (map, options) {
-        var xnew = this.x;
-        var ynew = this.y + 1;
-        return this.move(xnew, ynew, map, options);
-    };
-    Robot.prototype.moveWest = function (map, options) {
-        var xnew = this.x - 1;
-        var ynew = this.y;
-        return this.move(xnew, ynew, map, options);
-    };
-    Robot.prototype.getX = function () { return this.x; };
-    Robot.prototype.getY = function () { return this.y; };
-    return Robot;
+    return BasicRobot;
 }());
 //# sourceMappingURL=Robot.js.map

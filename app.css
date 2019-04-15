@@ -282,7 +282,7 @@ button.deletebutton:active:not(:disabled) {
 
 .startstate .stateheader button.startstatebutton {
     background-color: #00ff00;
-    border-style:ridge;
+    border-style: ridge;
 }
 
 button.expander:hover {
@@ -318,270 +318,6 @@ button.expander {
     height: 48px;
 }
 
-li.rule {
-    /*list-style: square inside url(updown.png);*/
-    list-style: none;
-    width: 1000px;
-    background-color: #A2998B;
-    margin-bottom: 5px;
-    vertical-align: middle;
-    border-style: ridge;
-    padding: 5px;
-}
-
-    li.rule .rulemapstodiv {
-        width:38px;
-        height:48px;
-        display:inline-block;
-        background-image:url(rightarrow.png);
-        vertical-align:middle;
-    }
-
-    li.rule a.grabimg {
-        cursor: grab;
-        padding: 12px;
-    }
-
-        li.rule a.grabimg img {
-            vertical-align: middle;
-        }
-
-    li.rule div {
-        display: inline-block;
-        vertical-align: middle;
-        height: 48px;
-    }
-
-    li.rule .ruleworldstate {
-        margin-right: 8px;
-        margin-left: 8px;
-    }
-
-    li.rule .ruleactiondiv {
-        background-color: #D8D2C9;
-        margin-right: 8px;
-        margin-left: 8px;
-    }
-
-    li.rule .rulestatediv {
-        background-color: #D8D2C9;
-        margin-right: 8px;
-        margin-left: 8px;
-    }
-
-    li.rule .ruleenddiv {
-        background-color: #D8D2C9;
-        margin-left: 8px;
-    }
-
-    li.rule canvas {
-        margin: 0px;
-    }
-
-.stateless li.rule {
-    width:480px;
-}
-
-.stateless .stateSelector {
-    display:none;
-}
-
-.stateless .stateheader {
-    display:none;
-}
-
-.stateless .editormenu .addstatebutton {
-    display:none;
-}
-
-.ui-menu {
-    z-index: 50;
-}
-
-.stateSelector {
-    vertical-align: middle;
-    font-size: 1.2em;
-    font-weight: bold;
-    font-style: normal;
-    width: 520px;
-}
-
-div.stateSelector span {
-    vertical-align: middle;
-    display: inline-block;
-    width: 420px;
-    cursor: default;
-    margin-left: 4px;
-}
-
-.stateSelector .changebutton {
-    height: 48px;
-    width: 48px;
-    border: none;
-    background: url("change.png");
-    vertical-align: middle;
-}
-
-.stateSelector .gotobutton {
-    height: 48px;
-    width: 48px;
-    border: none;
-    background: url("goto.png");
-    vertical-align: middle;
-}
-
-#mapdata {
-    width: 100%;
-    height: 300px;
-    position: absolute;
-    left: 0px;
-    top: 600px;
-}
-
-.controlteleportdiv {
-    height: 150px;
-    width: 150px;
-    display: inline-block;
-}
-
-    .controlteleportdiv > a {
-        display: block;
-        width: 48px;
-        height: 48px;
-        position: absolute;
-    }
-
-        .controlteleportdiv > a:hover {
-            cursor: pointer;
-        }
-
-    .controlteleportdiv > div {
-        display: block;
-        width: 48px;
-        height: 36px;
-        position: absolute;
-        left: 51px;
-        top: 51px;
-        text-align: center;
-        font-weight: bold;
-        padding-top: 12px;
-    }
-
-.controlupbutton {
-    left: 51px;
-    top: 1px;
-    background-image: url(north.png);
-}
-
-a.controlupbutton:hover {
-    background: url(north.png),#D7D7D7;
-}
-
-.controlrightbutton {
-    left: 101px;
-    top: 51px;
-    background-image: url(east.png);
-}
-
-a.controlrightbutton:hover {
-    background: url(east.png),#D7D7D7;
-}
-
-.controldownbutton {
-    top: 101px;
-    left: 51px;
-    background-image: url(south.png);
-}
-
-a.controldownbutton:hover {
-    background: url(south.png),#D7D7D7;
-}
-
-.controlleftbutton {
-    left: 1px;
-    top: 51px;
-    background-image: url(west.png);
-}
-
-a.controlleftbutton:hover {
-    background: url(west.png),#D7D7D7;
-}
-
-.worldstatediv {
-    width: 150px;
-    height: 150px;
-    display: inline-block;
-    text-align: center;
-    font-weight: bold;
-}
-
-    .worldstatediv div {
-        text-align: center;
-    }
-
-    .worldstatediv canvas {
-        width: 100px;
-        height: 100px;
-        border: 1px #000000 solid;
-    }
-
-.runprogramdiv {
-    width: 280px;
-    height: 220px;
-    display: inline-block;
-    vertical-align: top;
-}
-
-    .runprogramdiv > div {
-        display: inline-block;
-        width: 140px;
-        text-align: center;
-        font-weight: bold;
-    }
-
-    .runprogramdiv button {
-        display: block;
-        width: 100%;
-    }
-
-.worldstatecanvas {
-    background-color: #ffffff;
-}
-
-.controlrobotstatediv {
-    text-align: center;
-}
-
-    .controlrobotstatediv > div {
-        display: inline-block;
-        text-align: left;
-        background-color: #D8D2C9;
-    }
-
-.stateSelector span {
-    font-style: normal;
-}
-
-.runningbutton {
-    background-color: #00ff00;
-}
-
-div.scenariocontrol {
-    width: 100%;
-}
-
-.scenariocontrol button {
-    display: inline-block;
-    width: 50%;
-}
-
-.scenariocontrol label {
-    display: block;
-    padding-top: 0px;
-    padding-bottom: 0px;
-    color: #000000;
-}
-
 #header {
     text-align: center;
 }
@@ -613,9 +349,9 @@ div.scenariocontrol {
         vertical-align: middle;
         width: 300px;
         display: inline-block;
-        font-weight:bold;
-        font-style:normal;
-        font-size:2em;
+        font-weight: bold;
+        font-style: normal;
+        font-size: 2em;
     }
 
 .codecontrol {
@@ -624,12 +360,12 @@ div.scenariocontrol {
     height: 40px;
 }
 
-.codecontrol button {
-    background: #B31B1B;
-    color: #ffffff;
-    height: 36px;
-    margin: 2px;
-}
+    .codecontrol button {
+        background: #B31B1B;
+        color: #ffffff;
+        height: 36px;
+        margin: 2px;
+    }
 
 .picocode {
     display: block;
@@ -637,7 +373,7 @@ div.scenariocontrol {
     height: 500px;
     overflow-y: scroll;
     overflow-wrap: break-word;
-    overflow-x:hidden;
+    overflow-x: hidden;
 }
 
 .picoerrors {
@@ -646,6 +382,249 @@ div.scenariocontrol {
     height: 200px;
     overflow-y: scroll;
     overflow-wrap: break-word;
-    overflow-x:hidden;
-    
+    overflow-x: hidden;
 }
+
+/*New stuff*/
+
+.wallstateselector {
+    display: inline-block;
+    height: 48px;
+    width: 48px;
+    position: relative;
+}
+
+    .wallstateselector .wallstateselectiondiv {
+        position: absolute;
+        top: -48px;
+        z-index: 1000;
+    }
+
+    .wallstateselector button {
+        display: block;
+        width: 48px;
+        height: 48px;
+    }
+
+    .wallstateselector .wallstateany {
+        background-image: url(wsany.png);
+        background-size: 48px 48px;
+        background-position: center;
+    }
+
+    .wallstateselector .wallstatefree {
+        background-image: url(wsfree.png);
+        background-size: 48px 48px;
+        background-position: center;
+    }
+
+    .wallstateselector .wallstatewall {
+        background-image: url(wswall.png);
+        background-size: 48px 48px;
+        background-position: center;
+    }
+
+    .wallstateselector .active {
+        background-color: #63c86f;
+    }
+
+    .wallstateselector button:hover {
+        background-color: #3cef00;
+    }
+
+.robotsensor {
+    display: inline-block;
+    width: 144px;
+    height: 96px;
+    position: relative;
+}
+
+    .robotsensor .wallstateleft {
+        left: 0px;
+        top: 48px;
+        position: absolute;
+    }
+
+    .robotsensor .wallstatefront {
+        left: 48px;
+        top: 0px;
+        position: absolute;
+    }
+
+    .robotsensor .wallstateright {
+        left: 96px;
+        top: 48px;
+        position: absolute;
+    }
+
+    .robotsensor canvas {
+        display: inline-block;
+        margin: 0px;
+        position: absolute;
+        width: 48px;
+        height: 48px;
+        left: 48px;
+        top: 48px;
+    }
+
+.rule {
+    height: 112px;
+    list-style: none;
+    width: 100%;
+    box-sizing:border-box;
+    background-color: #A2998B;
+    margin-bottom: 5px;
+    vertical-align: middle;
+    border-style: ridge;
+    padding: 5px;
+    display: inline-flex;
+}
+
+    .rule .ruleconditions {
+        display: inline-block;
+        width: 160px;
+        text-align: center;
+    }
+
+    .rule .rulesplit {
+        display: inline-block;
+        width: 32px;
+    }
+
+    .rule .ruleactionlist {
+        display: inline-block;
+        width: 300px;
+        height: 100%;
+        background-color: #ffffff;
+    }
+
+    .rule .ruleactions li {
+        list-style:none;
+        width:250px;
+        position:relative;
+    }
+
+    .rule .ruleactions span {
+        vertical-align: middle;
+    }
+
+    .rule .ruleactions .actiondeletebutton {
+        display: inline-block;
+        width: 48px;
+        height: 48px;
+        background-image: url(delete.png);
+        background-size: 48px 48px;
+        vertical-align: middle;
+        position:absolute;
+        right:0px;
+    }
+
+.runcontrols {
+    background: #ffffff;
+}
+
+    .runcontrols .tostartbutton {
+        background-image: url(tostart.png);
+        background-size: 48px 48px;
+        display: inline-block;
+        width: 48px;
+        height: 48px;
+    }
+
+    .runcontrols .stepbackbutton {
+        background-image: url(stepback.png);
+        background-size: 48px 48px;
+        display: inline-block;
+        width: 48px;
+        height: 48px;
+    }
+
+    .runcontrols .pausebutton {
+        background-image: url(pause.png);
+        background-size: 48px 48px;
+        display: inline-block;
+        width: 48px;
+        height: 48px;
+    }
+
+    .runcontrols .stepforwardbutton {
+        background-image: url(step.png);
+        background-size: 48px 48px;
+        display: inline-block;
+        width: 48px;
+        height: 48px;
+    }
+
+    .runcontrols .runbutton {
+        background-image: url(play.png);
+        background-size: 48px 48px;
+        display: inline-block;
+        width: 48px;
+        height: 48px;
+    }
+
+    .runcontrols .fastforwardbutton {
+        background-image: url(fastforward.png);
+        background-size: 48px 48px;
+        display: inline-block;
+        width: 48px;
+        height: 48px;
+    }
+
+.guicontainer {
+    display: inline-flex;
+    flex-direction: row;
+}
+
+.rules {
+    display: inline-block;
+    width: 900px;
+    padding:10px;
+}
+
+.rules ul {
+    padding:0px;
+}
+
+    .rules img {
+        width: 48px;
+        height: 48px;
+        vertical-align: middle;
+    }
+
+.actionrepo {
+    width: 200px;
+    display: inline-block;
+    position: sticky;
+    top: 52px;
+    height:100%;
+    text-align:center;
+    right:0px;
+}
+
+.actionrepo>span {
+    font-size:2em;
+    font-weight:bold;
+    font-style:normal;
+}
+
+.actionrepo ul {
+    width:100%;
+    text-align:left;
+    padding:0px;
+}
+
+    .actionrepo li {
+        list-style: none;
+    }
+
+    .actionrepo img {
+        width: 48px;
+        height: 48px;
+        vertical-align: middle;
+    }
+
+    .actionrepo span {
+        vertical-align: middle;
+    }
+

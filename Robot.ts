@@ -1,271 +1,199 @@
-﻿
-class Robot {
-    programdiv: HTMLDivElement;
-    //state: State;
-    x: number;
-    y: number;
-    initialstate: State = null;
-    states: { [name: string]: State } = {};
-    statenames: Array<string> = new Array<string>();
-    stateselector: StateSelector;
+﻿interface IRobotProgram {
+    toBackground(): void;
+    toForeground(guiDiv: HTMLDivElement, controlDiv: HTMLDivElement, mapcanvas: HTMLCanvasElement): void;
+}
+interface IRobot<W extends IWorld<W>> extends IRobotProgram {
+    getRules(): Array<IRule<W>>;
+    addRule(): IRule<W>;
+}
 
-    statelisteners: Array<StateEventListener>;
+class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
+    currentStep: IStep<W>;
+    firstStep: IStep<W>;
+    rulesManager: RulesManager<W>;
+    guiDiv: HTMLDivElement;
+    controlDiv: HTMLDivElement;
+    runDiv: HTMLDivElement;
+    mapcanvas: HTMLCanvasElement;
 
-    statemenu: HTMLUListElement;
-    currentStateSelector: StateSelector;
+    toStartButton: HTMLButtonElement;
+    backButton: HTMLButtonElement;
+    pauseButton: HTMLButtonElement;
+    stepButton: HTMLButtonElement;
+    runButton: HTMLButtonElement;
+    ffwdButton: HTMLButtonElement;
+    constructor(world: W) {
+        this.currentStep = new InitStep(this, world);
+        var rm: RulesManager<W> = new RulesManager<W>(this);
+        var moveForwardFactory = new MoveForwardActionFactory<W>();
+        var turnLeftFactory = new TurnLeftActionFactory<W>();
+        var turnRightFactory = new TurnRightActionFactory<W>();
+        rm.actionrepoul.appendChild(moveForwardFactory.actionli);
+        rm.actionrepoul.appendChild(turnLeftFactory.actionli);
+        rm.actionrepoul.appendChild(turnRightFactory.actionli);
+        this.rulesManager = rm;
 
-    registerStateListener(sel: StateEventListener): void {
-        this.statelisteners.push(sel);
+        var rundiv = document.createElement("div");
+        rundiv.classList.add("runcontrols");
+        var stepforwardbutton = document.createElement("button");
+        stepforwardbutton.classList.add("stepforwardbutton");
+        var stepbackbutton = document.createElement("button");
+        stepbackbutton.classList.add("stepbackbutton");
+        stepbackbutton.disabled = true;
+        var pausebutton = document.createElement("button");
+        pausebutton.classList.add("pausebutton");
+        pausebutton.disabled = true;
+        var tostartbutton = document.createElement("button");
+        tostartbutton.classList.add("tostartbutton");
+        tostartbutton.disabled = true;
+        var runbutton = document.createElement("button");
+        runbutton.classList.add("runbutton");
+        var fastforwardbutton = document.createElement("button");
+        fastforwardbutton.classList.add("fastforwardbutton");
+
+        var robot = this;
+        $(tostartbutton).on("click", () => this.toStart());
+        $(stepforwardbutton).on("click", () => this.stepNext());
+        $(stepbackbutton).on("click", () => this.stepBack());
+        $(pausebutton).on("click", () => this.pause());
+        $(runbutton).on("click", () => this.run());
+        $(fastforwardbutton).on("click", () => this.runfast());
+
+        rundiv.appendChild(tostartbutton);
+        rundiv.appendChild(stepbackbutton);
+        rundiv.appendChild(pausebutton);
+        rundiv.appendChild(stepforwardbutton);
+        rundiv.appendChild(runbutton);
+        rundiv.appendChild(fastforwardbutton);
+
+        this.toStartButton = tostartbutton;
+        this.backButton = stepbackbutton;
+        this.pauseButton = pausebutton;
+        this.stepButton = stepforwardbutton;
+        this.runButton = runbutton;
+        this.ffwdButton = fastforwardbutton;
+
+        this.runDiv = rundiv;
     }
-    unregisterStateListener(sel: StateEventListener): void {
-        while (this.statelisteners.indexOf(sel) >= 0) {
-            this.statelisteners.splice(this.statelisteners.indexOf(sel), 1);
+
+    toBackground(): void {
+        this.guiDiv.removeChild(this.rulesManager.getActionRepoDiv());
+        this.guiDiv.removeChild(this.rulesManager.getRulesDiv());
+    }
+    toForeground(guiDiv: HTMLDivElement, controlDiv: HTMLDivElement, mapcanvas: HTMLCanvasElement): void {
+        this.guiDiv = guiDiv;
+        this.controlDiv = controlDiv;
+        this.currentStep.getWorld().draw(mapcanvas);
+        this.mapcanvas = mapcanvas;
+        guiDiv.appendChild(this.rulesManager.getRulesDiv());
+        guiDiv.appendChild(this.rulesManager.getActionRepoDiv());
+        controlDiv.appendChild(this.runDiv);
+    }
+    getRules(): Array<IRule<W>> { return this.rulesManager.getRules(); }
+    addRule(): IRule<W> {
+        var rule = new BasicRule<W>();
+        return rule;
+    }
+
+    getWorld(): W {
+        return this.currentStep.getWorld();
+    }
+    setWorld(world: W) {
+        this.firstStep = new InitStep<W>(this, world);
+        this.toStart();
+    }
+
+    setCurrentStep(step: IStep<W>): void {
+        if (step != this.currentStep) {
+            this.currentStep.exit();
+            this.currentStep = step;
+            this.currentStep.enter();
         }
     }
 
-    get state() : State { return this.stateselector.value; };
-    set state(s: State) { this.stateselector.setState(s); };
-    
-    constructor(x: number, y: number) {
-        var rbt = this;
-        this.statelisteners = [];
-        this.programdiv = document.createElement("div");
-        this.programdiv.classList.add("programdiv");
-        var rmc = this.programdiv.removeChild;
-        //this.programdiv.removeChild = function (node) {
-        //    rmc(node);
-        //    return node;
-        //}
-        this.x = x;
-        this.y = y;
-        this.statemenu = document.createElement("ul");
-        this.statemenu.classList.add("statemenu");
-        $(this.statemenu).menu({
-            select: function (event, ui) {
-                rbt.currentStateSelector.setState(rbt.states[ui.item[0].innerText]);
-                rbt.statemenu.parentNode.removeChild(rbt.statemenu);
-            }
-            //blur: function (event, ui) {
-            //    //rbt.statemenu.parentNode.removeChild(rbt.statemenu);
-            //    rbt = rbt;
-            //}
-        });
-        this.states = {};
-        this.statenames = [];
-        ;
-        this.stateselector = new StateSelector(this, null);
+    toStart(): IStep<W> {
+        this.setCurrentStep(this.firstStep);
+        this.toStartButton.disabled = true;
+        this.backButton.disabled = true;
+        this.pauseButton.disabled = true;
+        this.stepButton.disabled = false;
+        this.runButton.disabled = false;
+        this.ffwdButton.disabled = false;
+        this.currentStep.getWorld().draw(this.mapcanvas);
+        return this.currentStep;
     }
 
-    setInitial(state: State): void {
-        if (this.initialstate != null) {
-            this.initialstate.div.classList.remove("startstate");
+    stepBack(): IStep<W> {
+        var next = this.currentStep.getPredecessor();
+        if (!next.hasPredecessor()) {
+            this.backButton.disabled = true;
+            this.toStartButton.disabled = true;
+            this.pauseButton.disabled = true;
         }
-        state.div.classList.add("startstate");
-        this.initialstate = state;
+        this.stepButton.disabled = false;
+        this.runButton.disabled = false;
+        this.ffwdButton.disabled = false;
+        this.setCurrentStep(next);
+        this.currentStep.getWorld().draw(this.mapcanvas);
+        return next;
     }
 
-    addState(name: string = undefined) : State {
-        if (!name) {
-            var i = 1;
-            while (this.statenames.indexOf("State " + String(i)) >= 0) {
-                i++;
-            }
-            name = "State " + String(i);
+    stepNext(): IStep<W> {
+        var next = this.currentStep.getSuccessor();
+        if (next.isError() || !next.hasSuccessor()) {
+            this.stepButton.disabled = true;
+            this.runButton.disabled = true;
+            this.pauseButton.disabled = true;
+            this.ffwdButton.disabled = true;
         }
-        var state = new State(name, this);
-        this.states[name] = state;
-        this.statenames.push(name);
-        this.programdiv.appendChild(state.div);
-        this.statemenu.appendChild(state.menuItem);
-        if (this.state == null) {
-            this.state = state;
-            this.setInitial(state);
+        this.backButton.disabled = false;
+        this.toStartButton.disabled = false;
+        this.setCurrentStep(next);
+        this.currentStep.getWorld().draw(this.mapcanvas);
+        return next;
+    }
+
+    runInterval: number;
+    isRunning: boolean = false;
+
+    pause(): void {
+        if (this.isRunning) {
+            this.isRunning = false;
+            window.clearInterval(this.runInterval);
         }
-        return state;
+        this.pauseButton.disabled = true;
+        this.runButton.disabled = !this.currentStep.hasSuccessor();
+        this.ffwdButton.disabled = !this.currentStep.hasSuccessor();
+        this.stepButton.disabled = !this.currentStep.hasSuccessor();
+        this.backButton.disabled = !this.currentStep.hasPredecessor();
+        this.toStartButton.disabled = !this.currentStep.hasPredecessor();
     }
 
-    reset(): void {
-        this.state = this.initialstate;
-    }
-
-    renameState(s: State, oldName: string) {
-        this.statenames.splice(this.statenames.indexOf(oldName), 1);
-        this.statenames.push(s.name);
-        delete this.states[oldName];
-        this.states[s.name] = s;
-        this.statelisteners.forEach((v, i, a) => { v.notify(s, StateEvent.NameChange); });
-    }
-
-    removeState(s : State): void {
-        this.statelisteners.forEach((v, i, a) => { v.notify(s, StateEvent.Removed); });
-        delete this.states[s.name];
-        if (s == this.state) {
-            this.state = null;
-        }
-        if (s == this.initialstate) {
-            var index = this.statenames.indexOf(s.name);
-            if (index - 1 >= 0) {
-                this.setInitial(this.states[this.statenames[index - 1]]);
-            } else if (this.statenames.length > index + 1) {
-                this.setInitial(this.states[this.statenames[index + 1]]);
-            } else {
-                this.initialstate = null;
-            }
-        }
-        this.statenames.splice(this.statenames.indexOf(s.name), 1);
-        this.programdiv.removeChild(s.div);
-        this.statemenu.removeChild(s.menuItem);
-    }
-
-    getStateMenu(selector: StateSelector): HTMLUListElement {
-        if (this.statemenu.parentNode) {
-            this.statemenu.parentNode.removeChild(this.statemenu);
-        }
-        this.currentStateSelector = selector;
-        return this.statemenu;
-    }
-
-    setPos(x: number, y: number): void {
-        this.x = x;
-        this.y = y;
-    }
-
-    setState(state: State): void {
-        if (this.statenames.indexOf(state.name) >= 0 && this.states[state.name] == state) {
-            this.state = state;
-        }
-    }
-
-    vstep(map: IMap, ws: IWorldState, options: StepOptions, thenCont: () => void, elseCont: () => void, index: number = 0): void {
-        this.state.expand();
-        if (index >= this.state.rules.length) {
-            elseCont();
-        } else {
-            var ly = $('html, body').scrollTop() + jQuery(window).height() - 120;
-            var jqr = $(this.state.rules[index].elem);
-            if (jqr.offset().top + jqr.outerHeight() > ly) {
-                var nst = $('html, body').scrollTop() + (jqr.offset().top + jqr.outerHeight() - ly);
-                $('html, body').animate({
-                    scrollTop: nst
-                }, 300).promise().always(() => {
-                    this.state.rules[index].vmatches(ws, options,
-                        () => { this.executeVStep(this.state.rules[index], map, options, thenCont, elseCont); },
-                        () => { this.vstep(map, ws, options, thenCont, elseCont, index + 1); });
-                });
-            } else {
-                this.state.rules[index].vmatches(ws, options,
-                    () => { this.executeVStep(this.state.rules[index], map, options, thenCont, elseCont); },
-                    () => { this.vstep(map, ws, options, thenCont, elseCont, index + 1); });
-            }
-            
-        }
-    }
-
-    executeVStep(rule: Rule, map: IMap, options: StepOptions, thenCont: () => void, elseCont: () => void) : void {
-        var changedState: boolean = !(this.state == rule.getState());
-        var success: boolean = false;
-        var jq: JQuery<HTMLElement> = $(rule.actionSelector.activeElem);
-        var bgcol = window.getComputedStyle(rule.actionSelector.activeElem, null).getPropertyValue("background-color");
-        switch (rule.getAction()) {
-            case Action.Stay:
-                success = changedState;
-                break;
-            case Action.North:
-                success = this.moveNorth(map, options);
-                break;
-            case Action.East:
-                success = this.moveEast(map, options);
-                break;
-            case Action.South:
-                success = this.moveSouth(map, options);
-                break;
-            case Action.West:
-                success = this.moveWest(map, options);
-                break;
-        }
-        var flashcol = (success ? "#00ff00" : "#ff0000");
-        jq.animate({ backgroundColor: flashcol }, { duration: 300, easing: "easeOutCirc" }).promise().always(() => {
-            map.draw();
-             jq.animate({ backgroundColor: bgcol }, { duration: 200, easing: "easeOutCirc" }).promise().always(
-                () => {
-                    jq.css("background-color", '');
-                    bgcol = window.getComputedStyle(this.state.namefield, null).getPropertyValue("background-color");
-                    jq = $([rule.stateSelector.div, this.stateselector.div, rule.getState().namefield]);
-                    jq.animate({ backgroundColor: "#00ff00" }, { duration: 300, easing: "easeOutCirc" }).promise().always(() => {
-                        this.setState(rule.getState());
-                        jq.animate({ backgroundColor: bgcol }, { duration: 200, easing: "easeOutCirc" }).promise().always(
-                            () => {
-                                if (success) {
-                                    thenCont();
-                                }
-                                else {
-                                    elseCont();
-                                }
-                            })
-                    });
+    runAtSpeed(speed: number) {
+        this.isRunning = true;
+        this.runButton.disabled = true;
+        this.stepButton.disabled = true;
+        this.ffwdButton.disabled = true;
+        this.backButton.disabled = true;
+        this.toStartButton.disabled = true;
+        this.pauseButton.disabled = false;
+        window.setInterval(() => {
+            if (this.isRunning) {
+                var next = this.currentStep.getSuccessor();
+                if (next.isError() || !next.hasSuccessor()) {
+                    this.pause();
                 }
-            );
-        });
-    }
-
-    step(map: IMap, ws: IWorldState, options: StepOptions): boolean {
-        for (var i = 0; i < this.state.rules.length; i++) {
-            if (this.state.rules[i].matches(ws, options)) {
-                return this.executeStep(this.state.rules[i], map, options);
+                this.setCurrentStep(next);
+                this.currentStep.getWorld().draw(this.mapcanvas);
             }
-        }
+        }, speed);
     }
 
-    executeStep(rule: Rule, map: IMap, options: StepOptions): boolean {
-        var changedState: boolean = !(this.state == rule.getState());
-        this.state = rule.getState();
-        switch (rule.getAction()) {
-            case Action.Stay:
-                return changedState;
-            case Action.North:
-                return this.moveNorth(map, options);
-            case Action.East:
-                return this.moveEast(map, options);
-            case Action.South:
-                return this.moveSouth(map, options);
-            case Action.West:
-                return this.moveWest(map, options);
-        }
+    run(): void {
+        this.runAtSpeed(200);
     }
 
-    move(xnew: number, ynew: number, map: IMap, options: StepOptions): boolean {
-        if (map.isValidPos(xnew, ynew)) {
-            this.x = xnew;
-            this.y = ynew;
-            return true;
-        }
-        return false;
+    runfast(): void {
+        this.runAtSpeed(20);
     }
-
-    moveNorth(map: IMap, options: StepOptions): boolean {
-        var xnew = this.x;
-        var ynew = this.y - 1;
-        return this.move(xnew, ynew, map, options);
-    }
-
-    moveEast(map: IMap, options: StepOptions): boolean {
-        var xnew = this.x + 1;
-        var ynew = this.y;
-        return this.move(xnew, ynew, map, options);
-    }
-
-    moveSouth(map: IMap, options: StepOptions): boolean {
-        var xnew = this.x;
-        var ynew = this.y + 1;
-        return this.move(xnew, ynew, map, options);
-    }
-
-    moveWest(map: IMap, options: StepOptions): boolean {
-        var xnew = this.x - 1;
-        var ynew = this.y;
-        return this.move(xnew, ynew, map, options);
-    }
-
-    getX(): number { return this.x; }
-    getY(): number { return this.y; }
 }

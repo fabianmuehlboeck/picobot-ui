@@ -1,113 +1,149 @@
 ﻿
-class Rule {
-    elem: HTMLLIElement;
+interface IRule<W extends IWorld<W>> {
+    getCondition(): ICondition<W>;
+    getActions(): Array<IAction<W>>;
+    getElement(): HTMLLIElement;
+}
 
-    worldState: ControlWorldState;
-    actionSelector: ActionSelector;
-    stateSelector: StateSelector;
 
-    parent: State;
+class BasicRule<W extends IWorld<W>> implements IRule<W> {
+    ruleli: HTMLLIElement;
+    condition: SensorCondition<W>;
+    actionul: HTMLUListElement;
+    actions: HTMLElement[];
 
-    upbutton: HTMLButtonElement;
-    downbutton: HTMLButtonElement;
+    constructor() {
+        var ruleli: HTMLLIElement = document.createElement("li");
+        this.ruleli = ruleli;
+        ruleli.classList.add("rule");
+        var conditiondiv: HTMLDivElement = document.createElement("div");
+        conditiondiv.classList.add("ruleconditions");
+        var rulesplitdiv: HTMLDivElement = document.createElement("div");
+        rulesplitdiv.classList.add("rulesplit");
+        var actiondiv: HTMLDivElement = document.createElement("div");
+        actiondiv.classList.add("ruleactions");
+        var actionul: HTMLUListElement = document.createElement("ul");
+        this.actionul = actionul;
+        actionul.classList.add("ruleactionlist");
+        var condition: SensorCondition<W> = new SensorCondition<W>();
+        this.condition = condition;
+        ruleli.appendChild(conditiondiv);
+        ruleli.appendChild(rulesplitdiv);
+        ruleli.appendChild(actiondiv);
+        conditiondiv.appendChild(condition.getElement());
+        actiondiv.append(actionul);
+        $(actionul).sortable({ receive: (event, ui) => this.processReceive(event, ui), remove: (event, ui) => this.processRemove(event, ui), revert: "invalid" });
+        this.actions = [];
+    }
 
-    constructor(state: State) {
-        this.parent = state;
-        this.elem = document.createElement("li");
-        this.elem.classList.add("rule");
-        var r = this;
-
-        var movdiv = document.createElement("div");
-        movdiv.classList.add("rulemovebuttons");
-        var upbutton = document.createElement("button");
-        //upbutton.innerText = "Move rule up";
-        upbutton.onclick = function () {
-            state.moveUpRule(r);
+    indexOfElem(elem: HTMLElement): number {
+        for (var i = 0; i < this.actionul.childNodes.length; i++) {
+            if (elem == this.actionul.childNodes.item(i)) {
+                return i;
+            }
         }
-        upbutton.disabled = state.rules.length <= 2;
-        upbutton.className = "upbutton";
-        this.upbutton = upbutton;
-        movdiv.appendChild(upbutton);
+        return -1;
+    }
 
-        var downbutton = document.createElement("button");
-        //downbutton.innerText = "Move rule down";
-        downbutton.disabled = true;
-        downbutton.className = "downbutton";
-        downbutton.onclick = function () {
-            state.moveDownRule(r);
+    getElement(): HTMLLIElement { return this.ruleli; }
+
+    processReceive(event: JQueryEventObject, ui: JQueryUI.SortableUIParams): void {
+        $(this.actionul).find("li").css('width', '').css('height', '');
+    }
+    processRemove(event: JQueryEventObject, ui: JQueryUI.SortableUIParams): void {
+    }
+
+    getCondition(): ICondition<W> {
+        return this.condition;
+    }
+    getActions(): IAction<W>[] {
+        var ret: IAction < W > [] =[];
+        for (var i = 0; i < this.actionul.childElementCount; i++) {
+            var anyelem: any = this.actionul.childNodes.item(i);
+            ret.push(anyelem.Action);
         }
-        if (state.rules.length > 0) {
-            state.rules[state.rules.length - 1].downbutton.disabled = false;
-        }
-        this.downbutton = downbutton;
-        movdiv.appendChild(downbutton);
+        return ret;
+    }
+    
+}
 
-        //this.elem.appendChild(movdiv);
-        var grabimg = document.createElement("img");
-        grabimg.src = "updown.png";
-        var grablink = document.createElement("a");
-        grablink.className = "grabimg";
-        grablink.appendChild(grabimg);
-        this.elem.appendChild(grablink);
+class RulesManager<W extends IWorld<W>> {
+    rulesdiv: HTMLDivElement;
+    rulesul: HTMLUListElement;
+    actionrepodiv: HTMLDivElement;
+    actionrepoul: HTMLUListElement;
+    addrulebutton: HTMLButtonElement;
+    rules: IRule<W>[] = [];
 
-        var wsdiv = document.createElement("div");
-        wsdiv.classList.add("ruleworldstate");
-        var canvas = document.createElement("canvas");
-        canvas.width = 48;
-        canvas.height = 48;
-        wsdiv.appendChild(canvas);
-        this.worldState = new ControlWorldState(canvas);
-        this.elem.appendChild(wsdiv);
+    constructor(robot : IRobot<W>) {
+        var rulesdiv: HTMLDivElement = document.createElement("div");
+        var actionrepodiv: HTMLDivElement = document.createElement("div");
+        var rulesul: HTMLUListElement = document.createElement("ul");
+        var actionrepoul: HTMLUListElement = document.createElement("ul");
+        var addrulebutton: HTMLButtonElement = document.createElement("button");
+        var actionrepoheader: HTMLSpanElement = document.createElement("span");
+        actionrepoheader.innerText = "Actions";
+        actionrepodiv.appendChild(actionrepoheader);
 
-        var todiv = document.createElement("img");
-        todiv.classList.add("rulemapstodiv");
-        //todiv.appendChild(document.createTextNode("=>"));
-        this.elem.appendChild(todiv);
+        rulesdiv.classList.add("rules");
+        actionrepodiv.classList.add("actionrepo");
 
-        var actiondiv = document.createElement("div");
-        actiondiv.classList.add("ruleactiondiv");
-        this.actionSelector = new ActionSelector(actiondiv);
-        this.elem.appendChild(actiondiv);
+        this.rulesdiv = rulesdiv;
+        this.actionrepodiv = actionrepodiv;
+        this.rulesul = rulesul;
+        this.actionrepoul = actionrepoul;
+        this.addrulebutton = addrulebutton;
 
-        var statediv = document.createElement("div");
-        statediv.classList.add("rulestatediv");
-        this.stateSelector = new StateSelector(state.parent, state);
-        statediv.appendChild(this.stateSelector.div);
-        this.elem.appendChild(statediv);
+        rulesdiv.appendChild(rulesul);
+        rulesdiv.appendChild(addrulebutton);
+        actionrepodiv.appendChild(actionrepoul);
 
-        var enddiv = document.createElement("div");
-        enddiv.classList.add("ruleenddiv");
-        var delbutton = document.createElement("button");
-        //delbutton.innerText = "Delete rule";
-        delbutton.className = "deletebutton";
-        delbutton.addEventListener("click", function () {
-            r.parent.removeRule(r);
+        var plusimg = document.createElement("img");
+        plusimg.src = "plus.png";
+        addrulebutton.appendChild(plusimg);
+        var addruletext = document.createElement("span");
+        addruletext.innerText = "Add Rule";
+        addrulebutton.appendChild(addruletext);
+        addrulebutton.classList.add("addrulebutton");
+
+        var rm = this;
+
+        $(addrulebutton).on("click", function () {
+            var rule = robot.addRule();
+            rm.rules.push(rule);
+            rulesul.appendChild(rule.getElement());
+            $(".ruleactionlist").sortable({ connectWith: ".ruleactionlist" });
+            $(actionrepoul).find("li").draggable({ connectToSortable: ".ruleactionlist" });
         });
-        delbutton.title = "Delete Rule";
-        enddiv.appendChild(delbutton);
-        this.elem.appendChild(enddiv);
+
+        $(rulesul).sortable({
+            update: (event, ui) => {
+                var ruleelem = ui.item[0];
+                for (var i = 0; i < rm.rules.length; i++) {
+                    if (rm.rules[i].getElement() == ruleelem) {
+                        var rule = rm.rules[i];
+                        rm.rules.splice(i, 1);
+                        for (var j = 0; j < rm.rulesul.childElementCount; j++) {
+                            if (rm.rulesul.childNodes.item(j) == ruleelem) {
+                                rm.rules.splice(j, 0, rule);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        })
     }
 
-    getWorldState(): ControlWorldState {
-        return this.worldState;
+    getRulesDiv(): HTMLDivElement {
+        return this.rulesdiv;
+    }
+    getActionRepoDiv(): HTMLDivElement {
+        return this.actionrepodiv;
     }
 
-    getAction(): Action {
-        return this.actionSelector.action;
-    }
-
-    getState(): State {
-        return this.stateSelector.value;
-    }
-
-    delete(): void {
-    }
-
-    matches(ws: IWorldState, options: StepOptions) {
-        return ws.matches(this.worldState);
-    }
-
-    vmatches(ws: IWorldState, options: StepOptions, thenCont: () => void, elseCont: () => void) {
-        return ws.vmatches(this.worldState, thenCont, elseCont);
+    getRules(): IRule<W>[] {
+        return this.rules;
     }
 }

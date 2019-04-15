@@ -31,14 +31,21 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="Action.ts" />
     <TypeScriptCompile Include="app.ts" />
     <TypeScriptCompile Include="Code.ts" />
+    <TypeScriptCompile Include="Condition.ts" />
+    <TypeScriptCompile Include="Level.ts" />
     <TypeScriptCompile Include="Map.ts" />
+    <TypeScriptCompile Include="MapGenerator.ts" />
+    <TypeScriptCompile Include="Maze.ts" />
+    <TypeScriptCompile Include="MemoryLabel.ts" />
     <TypeScriptCompile Include="Robot.ts" />
     <TypeScriptCompile Include="Rule.ts" />
-    <TypeScriptCompile Include="State.ts" />
-    <TypeScriptCompile Include="StateSelector.ts" />
-    <TypeScriptCompile Include="WorldState.ts" />
+    <TypeScriptCompile Include="Run.ts" />
+    <TypeScriptCompile Include="util.ts" />
+    <TypeScriptCompile Include="WallState.ts" />
+    <TypeScriptCompile Include="World.ts" />
   </ItemGroup>
   <ItemGroup>
     <None Include="web.Debug.config">

@@ -1,89 +1,119 @@
-var Rule = /** @class */ (function () {
-    function Rule(state) {
-        this.parent = state;
-        this.elem = document.createElement("li");
-        this.elem.classList.add("rule");
-        var r = this;
-        var movdiv = document.createElement("div");
-        movdiv.classList.add("rulemovebuttons");
-        var upbutton = document.createElement("button");
-        //upbutton.innerText = "Move rule up";
-        upbutton.onclick = function () {
-            state.moveUpRule(r);
-        };
-        upbutton.disabled = state.rules.length <= 2;
-        upbutton.className = "upbutton";
-        this.upbutton = upbutton;
-        movdiv.appendChild(upbutton);
-        var downbutton = document.createElement("button");
-        //downbutton.innerText = "Move rule down";
-        downbutton.disabled = true;
-        downbutton.className = "downbutton";
-        downbutton.onclick = function () {
-            state.moveDownRule(r);
-        };
-        if (state.rules.length > 0) {
-            state.rules[state.rules.length - 1].downbutton.disabled = false;
-        }
-        this.downbutton = downbutton;
-        movdiv.appendChild(downbutton);
-        //this.elem.appendChild(movdiv);
-        var grabimg = document.createElement("img");
-        grabimg.src = "updown.png";
-        var grablink = document.createElement("a");
-        grablink.className = "grabimg";
-        grablink.appendChild(grabimg);
-        this.elem.appendChild(grablink);
-        var wsdiv = document.createElement("div");
-        wsdiv.classList.add("ruleworldstate");
-        var canvas = document.createElement("canvas");
-        canvas.width = 48;
-        canvas.height = 48;
-        wsdiv.appendChild(canvas);
-        this.worldState = new ControlWorldState(canvas);
-        this.elem.appendChild(wsdiv);
-        var todiv = document.createElement("img");
-        todiv.classList.add("rulemapstodiv");
-        //todiv.appendChild(document.createTextNode("=>"));
-        this.elem.appendChild(todiv);
+var BasicRule = /** @class */ (function () {
+    function BasicRule() {
+        var _this = this;
+        var ruleli = document.createElement("li");
+        this.ruleli = ruleli;
+        ruleli.classList.add("rule");
+        var conditiondiv = document.createElement("div");
+        conditiondiv.classList.add("ruleconditions");
+        var rulesplitdiv = document.createElement("div");
+        rulesplitdiv.classList.add("rulesplit");
         var actiondiv = document.createElement("div");
-        actiondiv.classList.add("ruleactiondiv");
-        this.actionSelector = new ActionSelector(actiondiv);
-        this.elem.appendChild(actiondiv);
-        var statediv = document.createElement("div");
-        statediv.classList.add("rulestatediv");
-        this.stateSelector = new StateSelector(state.parent, state);
-        statediv.appendChild(this.stateSelector.div);
-        this.elem.appendChild(statediv);
-        var enddiv = document.createElement("div");
-        enddiv.classList.add("ruleenddiv");
-        var delbutton = document.createElement("button");
-        //delbutton.innerText = "Delete rule";
-        delbutton.className = "deletebutton";
-        delbutton.addEventListener("click", function () {
-            r.parent.removeRule(r);
-        });
-        delbutton.title = "Delete Rule";
-        enddiv.appendChild(delbutton);
-        this.elem.appendChild(enddiv);
+        actiondiv.classList.add("ruleactions");
+        var actionul = document.createElement("ul");
+        this.actionul = actionul;
+        actionul.classList.add("ruleactionlist");
+        var condition = new SensorCondition();
+        this.condition = condition;
+        ruleli.appendChild(conditiondiv);
+        ruleli.appendChild(rulesplitdiv);
+        ruleli.appendChild(actiondiv);
+        conditiondiv.appendChild(condition.getElement());
+        actiondiv.append(actionul);
+        $(actionul).sortable({ receive: function (event, ui) { return _this.processReceive(event, ui); }, remove: function (event, ui) { return _this.processRemove(event, ui); }, revert: "invalid" });
+        this.actions = [];
     }
-    Rule.prototype.getWorldState = function () {
-        return this.worldState;
+    BasicRule.prototype.indexOfElem = function (elem) {
+        for (var i = 0; i < this.actionul.childNodes.length; i++) {
+            if (elem == this.actionul.childNodes.item(i)) {
+                return i;
+            }
+        }
+        return -1;
     };
-    Rule.prototype.getAction = function () {
-        return this.actionSelector.action;
+    BasicRule.prototype.getElement = function () { return this.ruleli; };
+    BasicRule.prototype.processReceive = function (event, ui) {
+        $(this.actionul).find("li").css('width', '').css('height', '');
     };
-    Rule.prototype.getState = function () {
-        return this.stateSelector.value;
+    BasicRule.prototype.processRemove = function (event, ui) {
     };
-    Rule.prototype.delete = function () {
+    BasicRule.prototype.getCondition = function () {
+        return this.condition;
     };
-    Rule.prototype.matches = function (ws, options) {
-        return ws.matches(this.worldState);
+    BasicRule.prototype.getActions = function () {
+        var ret = [];
+        for (var i = 0; i < this.actionul.childElementCount; i++) {
+            var anyelem = this.actionul.childNodes.item(i);
+            ret.push(anyelem.Action);
+        }
+        return ret;
     };
-    Rule.prototype.vmatches = function (ws, options, thenCont, elseCont) {
-        return ws.vmatches(this.worldState, thenCont, elseCont);
+    return BasicRule;
+}());
+var RulesManager = /** @class */ (function () {
+    function RulesManager(robot) {
+        this.rules = [];
+        var rulesdiv = document.createElement("div");
+        var actionrepodiv = document.createElement("div");
+        var rulesul = document.createElement("ul");
+        var actionrepoul = document.createElement("ul");
+        var addrulebutton = document.createElement("button");
+        var actionrepoheader = document.createElement("span");
+        actionrepoheader.innerText = "Actions";
+        actionrepodiv.appendChild(actionrepoheader);
+        rulesdiv.classList.add("rules");
+        actionrepodiv.classList.add("actionrepo");
+        this.rulesdiv = rulesdiv;
+        this.actionrepodiv = actionrepodiv;
+        this.rulesul = rulesul;
+        this.actionrepoul = actionrepoul;
+        this.addrulebutton = addrulebutton;
+        rulesdiv.appendChild(rulesul);
+        rulesdiv.appendChild(addrulebutton);
+        actionrepodiv.appendChild(actionrepoul);
+        var plusimg = document.createElement("img");
+        plusimg.src = "plus.png";
+        addrulebutton.appendChild(plusimg);
+        var addruletext = document.createElement("span");
+        addruletext.innerText = "Add Rule";
+        addrulebutton.appendChild(addruletext);
+        addrulebutton.classList.add("addrulebutton");
+        var rm = this;
+        $(addrulebutton).on("click", function () {
+            var rule = robot.addRule();
+            rm.rules.push(rule);
+            rulesul.appendChild(rule.getElement());
+            $(".ruleactionlist").sortable({ connectWith: ".ruleactionlist" });
+            $(actionrepoul).find("li").draggable({ connectToSortable: ".ruleactionlist" });
+        });
+        $(rulesul).sortable({
+            update: function (event, ui) {
+                var ruleelem = ui.item[0];
+                for (var i = 0; i < rm.rules.length; i++) {
+                    if (rm.rules[i].getElement() == ruleelem) {
+                        var rule = rm.rules[i];
+                        rm.rules.splice(i, 1);
+                        for (var j = 0; j < rm.rulesul.childElementCount; j++) {
+                            if (rm.rulesul.childNodes.item(j) == ruleelem) {
+                                rm.rules.splice(j, 0, rule);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        });
+    }
+    RulesManager.prototype.getRulesDiv = function () {
+        return this.rulesdiv;
     };
-    return Rule;
+    RulesManager.prototype.getActionRepoDiv = function () {
+        return this.actionrepodiv;
+    };
+    RulesManager.prototype.getRules = function () {
+        return this.rules;
+    };
+    return RulesManager;
 }());
 //# sourceMappingURL=Rule.js.map
