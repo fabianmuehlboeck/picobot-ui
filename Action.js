@@ -206,14 +206,15 @@ var MemoryActionFactory = /** @class */ (function (_super) {
     function MemoryActionFactory(memory) {
         var _this = _super.call(this, ["memory", memory.getName().replace(" ", "").toLowerCase()], "memory.png", memory.getName()) || this;
         _this.memory = memory;
+        var span = ($(_this.actionli).find("span")[0]);
+        var input = document.createElement("input");
+        input.type = "text";
+        input.maxLength = 15;
+        input.onkeyup = function () { _this.text = input.value; memory.setName(input.value); };
+        input.value = span.innerText;
+        _this.actionli.insertBefore(input, span);
+        _this.actionli.removeChild(span);
         return _this;
-        //var span: HTMLSpanElement = <HTMLSpanElement><any>($(this.actionli).find("span")[0]);
-        //var input: HTMLInputElement = document.createElement("input");
-        //input.type = "text";
-        //input.maxLength = 15;
-        //input.onchange = () => { memory.setName(input.value) };
-        //this.actionli.insertBefore(input, span);
-        //this.actionli.removeChild(span);
     }
     MemoryActionFactory.prototype.makeAction = function (li) {
         $(li).draggable({ connectToSortable: ".memorydroppable", revert: "invalid" });

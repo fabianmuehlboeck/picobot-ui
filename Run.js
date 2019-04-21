@@ -79,10 +79,14 @@ var RuleMatchStep = /** @class */ (function (_super) {
     };
     RuleMatchStep.prototype.isError = function () { return false; };
     RuleMatchStep.prototype.enter = function () {
-        this.condition.enter(this.failures);
+        if (this.condition) {
+            this.condition.enter(this.failures);
+        }
     };
     RuleMatchStep.prototype.exit = function () {
-        this.condition.exit(this.failures);
+        if (this.condition) {
+            this.condition.exit(this.failures);
+        }
     };
     return RuleMatchStep;
 }(AStep));
@@ -120,8 +124,16 @@ var RuleActionStep = /** @class */ (function (_super) {
             return new RuleMatchStep(this.robot, this.world, this, 0);
         }
     };
-    RuleActionStep.prototype.enter = function () { this.action.enter(this.runnable); };
-    RuleActionStep.prototype.exit = function () { this.action.exit(); };
+    RuleActionStep.prototype.enter = function () {
+        if (this.action) {
+            this.action.enter(this.runnable);
+        }
+    };
+    RuleActionStep.prototype.exit = function () {
+        if (this.action) {
+            this.action.exit();
+        }
+    };
     RuleActionStep.prototype.isError = function () { return false; };
     return RuleActionStep;
 }(AStep));

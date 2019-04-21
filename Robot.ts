@@ -24,6 +24,7 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
     ffwdButton: HTMLButtonElement;
     constructor(world: W) {
         this.currentStep = new InitStep(this, world);
+        this.firstStep = this.currentStep;
         var rm: RulesManager<W> = new RulesManager<W>(this);
         var moveForwardFactory = new MoveForwardActionFactory<W>();
         var turnLeftFactory = new TurnLeftActionFactory<W>();

@@ -16,6 +16,7 @@ var BasicRobot = /** @class */ (function () {
         var _this = this;
         this.isRunning = false;
         this.currentStep = new InitStep(this, world);
+        this.firstStep = this.currentStep;
         var rm = new RulesManager(this);
         var moveForwardFactory = new MoveForwardActionFactory();
         var turnLeftFactory = new TurnLeftActionFactory();

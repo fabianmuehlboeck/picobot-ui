@@ -25,7 +25,6 @@ class BasicRule<W extends IWorld<W>> implements IRule<W> {
         var actionul: HTMLUListElement = document.createElement("ul");
         this.actionul = actionul;
         actionul.classList.add("ruleactionlist");
-        actionul.classList.add("memorydroppable");
         var condition: ICondition<W> = this.makeCondition();
         this.condition = condition;
         ruleli.appendChild(conditiondiv);
@@ -35,6 +34,10 @@ class BasicRule<W extends IWorld<W>> implements IRule<W> {
         actiondiv.append(actionul);
         $(actionul).sortable({ receive: (event, ui) => this.processReceive(event, ui), remove: (event, ui) => this.processRemove(event, ui), revert: "invalid" });
         this.actions = [];
+        var ruledeletebutton = document.createElement("button");
+        ruledeletebutton.classList.add("ruledeletebutton");
+        this.ruleli.appendChild(ruledeletebutton);
+        $(ruledeletebutton).on("click", () => this.ruleli.parentNode.removeChild(this.ruleli));
     }
 
     makeCondition(): ICondition<W> {
@@ -77,6 +80,7 @@ class MemoryRule<W extends IWorld<W>> extends BasicRule<W> {
     memcondition: MemoryCondition<W>;
     constructor() {
         super();
+        this.actionul.classList.add("memorydroppable");
         $(this.memcondition.memoryul).sortable({ receive: (event, ui) => this.processMemoryReceive(event, ui), remove: (event, ui) => this.processMemoryRemove(event, ui), revert: "invalid" });
     }
 
@@ -98,7 +102,7 @@ class RulesManager<W extends IWorld<W>> {
     actionrepodiv: HTMLDivElement;
     actionrepoul: HTMLUListElement;
     addrulebutton: HTMLButtonElement;
-    rules: IRule<W>[] = [];
+    //rules: IRule<W>[] = [];
 
     constructor(robot : IRobot<W>) {
         var rulesdiv: HTMLDivElement = document.createElement("div");
@@ -135,7 +139,9 @@ class RulesManager<W extends IWorld<W>> {
 
         $(addrulebutton).on("click", function () {
             var rule = robot.addRule();
-            rm.rules.push(rule);
+            var anyrule = <any>rule.getElement();
+            anyrule.Rule = rule;
+            //rm.rules.push(rule);
             rulesul.appendChild(rule.getElement());
             $(".ruleactionlist").sortable({ connectWith: ".ruleactionlist" });
             $(actionrepoul).find("li").draggable({ connectToSortable: ".ruleactionlist" });
@@ -144,23 +150,26 @@ class RulesManager<W extends IWorld<W>> {
         });
 
         $(rulesul).sortable({
-            update: (event, ui) => {
-                var ruleelem = ui.item[0];
-                for (var i = 0; i < rm.rules.length; i++) {
-                    if (rm.rules[i].getElement() == ruleelem) {
-                        var rule = rm.rules[i];
-                        rm.rules.splice(i, 1);
-                        for (var j = 0; j < rm.rulesul.childElementCount; j++) {
-                            if (rm.rulesul.childNodes.item(j) == ruleelem) {
-                                rm.rules.splice(j, 0, rule);
-                                break;
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-        })
+            revert:"invalid"
+        });
+        //$(rulesul).sortable({
+        //    update: (event, ui) => {
+        //        var ruleelem = ui.item[0];
+        //        for (var i = 0; i < rm.rules.length; i++) {
+        //            if (rm.rules[i].getElement() == ruleelem) {
+        //                var rule = rm.rules[i];
+        //                rm.rules.splice(i, 1);
+        //                for (var j = 0; j < rm.rulesul.childElementCount; j++) {
+        //                    if (rm.rulesul.childNodes.item(j) == ruleelem) {
+        //                        rm.rules.splice(j, 0, rule);
+        //                        break;
+        //                    }
+        //                }
+        //                break;
+        //            }
+        //        }
+        //    }
+        //});
     }
 
     getRulesDiv(): HTMLDivElement {
@@ -171,6 +180,11 @@ class RulesManager<W extends IWorld<W>> {
     }
 
     getRules(): IRule<W>[] {
-        return this.rules;
+        var ret: IRule<W>[] = [];
+        for (var i = 0; i < this.rulesul.childNodes.length; i++) {
+            var anyrule = <any>this.rulesul.childNodes.item(i);
+            ret.push(<IRule < W >> anyrule.Rule);
+        }
+        return ret;
     }
 }

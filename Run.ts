@@ -82,10 +82,14 @@ class RuleMatchStep<W extends IWorld<W>> extends AStep<W> {
     }
     isError(): boolean { return false; }
     enter(): void {
-        this.condition.enter(this.failures);
+        if (this.condition) {
+            this.condition.enter(this.failures);
+        }
     }
     exit(): void {
-        this.condition.exit(this.failures);
+        if (this.condition) {
+            this.condition.exit(this.failures);
+        }
     }
 }
 class RuleActionStep<W extends IWorld<W>> extends AStep<W> {
@@ -122,8 +126,16 @@ class RuleActionStep<W extends IWorld<W>> extends AStep<W> {
             return new RuleMatchStep<W>(this.robot, this.world, this, 0);
         }
     }
-    enter(): void { this.action.enter(this.runnable); }
-    exit(): void { this.action.exit(); }
+    enter(): void {
+        if (this.action) {
+            this.action.enter(this.runnable);
+        }
+    }
+    exit(): void {
+        if (this.action) {
+            this.action.exit();
+        }
+    }
     isError(): boolean { return false; }
 }
 class ErrorStep<W extends IWorld<W>> extends AStep<W> {

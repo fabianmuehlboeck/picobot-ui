@@ -5,7 +5,7 @@
     background-color: transparent;
     height: 50px;
     width: 600px;
-    z-index: 100;
+    z-index: 4000;
 }
 
 #footer {
@@ -51,6 +51,7 @@ canvas {
     padding: 2px !important;
     padding-left: 642px !important;
     padding-bottom: 0px !important;
+    z-index:3000;
 }
 
 .ui-tabs-panel {
@@ -397,7 +398,7 @@ button.expander {
     .wallstateselector .wallstateselectiondiv {
         position: absolute;
         top: -48px;
-        z-index: 1000;
+        z-index: 5000;
     }
 
     .wallstateselector button {
@@ -478,17 +479,50 @@ button.expander {
     border-style: ridge;
     padding: 5px;
     display: inline-flex;
+    position:relative;
+    cursor:grab;
 }
 
     .rule .ruleconditions {
         display: inline-block;
         /*width: 160px;*/
         text-align: center;
+        vertical-align:middle;
     }
+
+        .rule .ruleconditions ul {
+            text-align: left;
+        }
+
+        .rule .ruleconditions li {
+            list-style: none;
+            width: 280px;
+            position: relative;
+            cursor: grab;
+        }
+
+            .rule .ruleconditions li .actiondeletebutton {
+                display: inline-block;
+                width: 48px;
+                height: 48px;
+                background-image: url(delete.png);
+                background-size: 48px 48px;
+                vertical-align: middle;
+                position: absolute;
+                right: 0px;
+            }
+
+            .rule .ruleconditions li span {
+                vertical-align: middle;
+            }
 
     .rule .rulesplit {
         display: inline-block;
         width: 32px;
+        background-image:url("do.png");
+        background-repeat:no-repeat;
+        background-size:contain;
+        background-position:center;
     }
 
     .rule .ruleactionlist {
@@ -496,13 +530,27 @@ button.expander {
         width: 300px;
         height: 100%;
         background-color: #ffffff;
-        overflow-y:scroll;
+        overflow-y: scroll;
     }
+
+        .rule .ruleactionlist:empty {
+            background-image: url("actionsonlylabel.png");
+            background-size: 180px;
+            background-position: left center;
+            background-repeat: no-repeat;
+        }
+        .rule .memorydroppable:empty {
+            background-image: url("actionslabel.png");
+            background-size: 270px;
+            background-position: left center;
+            background-repeat: no-repeat;
+        }
 
     .rule .ruleactions li {
         list-style: none;
-        width: 250px;
+        width: 280px;
         position: relative;
+        cursor: grab;
     }
 
     .rule .ruleactions span {
@@ -518,6 +566,19 @@ button.expander {
         vertical-align: middle;
         position: absolute;
         right: 0px;
+    }
+
+    .rule .ruledeletebutton {
+        display: inline-block;
+        width: 48px;
+        height: 96px;
+        background-image: url(delete.png);
+        background-size: 48px 48px;
+        background-position: center;
+        background-repeat: no-repeat;
+        vertical-align: middle;
+        position: absolute;
+        right: 5px;
     }
 
 .runcontrols {
@@ -617,6 +678,7 @@ button.expander {
 
     .actionrepo li {
         list-style: none;
+        cursor: grab;
     }
 
     .actionrepo img {
@@ -630,25 +692,33 @@ button.expander {
     }
 
     .actionrepo input {
-        width: 96px;
-        font-size: 24px;
+        width: 140px;
+        font-size: 20px;
+        border: 0px;
     }
 
 .memoryconditiondiv {
-    display:inline-flex;
+    display: inline-flex;
 }
 
-.memoryconditiondiv .memoryconddiv {
-    width:300px;
-    height:96px;
-    display:inline-block;
-    margin-left:16px;
-}
+    .memoryconditiondiv .memoryconddiv {
+        width: 300px;
+        height: 96px;
+        display: inline-block;
+        margin-left: 16px;
+    }
 
-.memoryconditiondiv .memorycondlist {
-    width:100%;
-    height:100%;
-    display:inline-block;
-    background:#ffffff;
-    overflow-y:scroll;
-}
+    .memoryconditiondiv .memorycondlist {
+        width: 100%;
+        height: 100%;
+        display: inline-block;
+        background: #ffffff;
+        overflow-y: scroll;
+    }
+
+        .memoryconditiondiv .memorycondlist:empty {
+            background-image: url("memoryconditionslabel.png");
+            background-size: 280px;
+            background-position: left center;
+            background-repeat: no-repeat;
+        }

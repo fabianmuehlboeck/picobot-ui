@@ -225,13 +225,14 @@ class MemoryActionFactory<W extends IWorld<W>> extends AActionFactory<W> {
     constructor(memory: MemoryLabel) {
         super(["memory", memory.getName().replace(" ", "").toLowerCase()], "memory.png", memory.getName());
         this.memory = memory;
-        //var span: HTMLSpanElement = <HTMLSpanElement><any>($(this.actionli).find("span")[0]);
-        //var input: HTMLInputElement = document.createElement("input");
-        //input.type = "text";
-        //input.maxLength = 15;
-        //input.onchange = () => { memory.setName(input.value) };
-        //this.actionli.insertBefore(input, span);
-        //this.actionli.removeChild(span);
+        var span: HTMLSpanElement = <HTMLSpanElement><any>($(this.actionli).find("span")[0]);
+        var input: HTMLInputElement = document.createElement("input");
+        input.type = "text";
+        input.maxLength = 15;
+        input.onkeyup = () => { this.text = input.value; memory.setName(input.value) };
+        input.value = span.innerText;
+        this.actionli.insertBefore(input, span);
+        this.actionli.removeChild(span);
     }
     makeAction(li: HTMLLIElement): IAction<W> {
         $(li).draggable({ connectToSortable: ".memorydroppable", revert: "invalid" });

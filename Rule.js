@@ -26,7 +26,6 @@ var BasicRule = /** @class */ (function () {
         var actionul = document.createElement("ul");
         this.actionul = actionul;
         actionul.classList.add("ruleactionlist");
-        actionul.classList.add("memorydroppable");
         var condition = this.makeCondition();
         this.condition = condition;
         ruleli.appendChild(conditiondiv);
@@ -36,6 +35,10 @@ var BasicRule = /** @class */ (function () {
         actiondiv.append(actionul);
         $(actionul).sortable({ receive: function (event, ui) { return _this.processReceive(event, ui); }, remove: function (event, ui) { return _this.processRemove(event, ui); }, revert: "invalid" });
         this.actions = [];
+        var ruledeletebutton = document.createElement("button");
+        ruledeletebutton.classList.add("ruledeletebutton");
+        this.ruleli.appendChild(ruledeletebutton);
+        $(ruledeletebutton).on("click", function () { return _this.ruleli.parentNode.removeChild(_this.ruleli); });
     }
     BasicRule.prototype.makeCondition = function () {
         return new SensorCondition();
@@ -71,6 +74,7 @@ var MemoryRule = /** @class */ (function (_super) {
     __extends(MemoryRule, _super);
     function MemoryRule() {
         var _this = _super.call(this) || this;
+        _this.actionul.classList.add("memorydroppable");
         $(_this.memcondition.memoryul).sortable({ receive: function (event, ui) { return _this.processMemoryReceive(event, ui); }, remove: function (event, ui) { return _this.processMemoryRemove(event, ui); }, revert: "invalid" });
         return _this;
     }
@@ -86,8 +90,8 @@ var MemoryRule = /** @class */ (function (_super) {
     return MemoryRule;
 }(BasicRule));
 var RulesManager = /** @class */ (function () {
+    //rules: IRule<W>[] = [];
     function RulesManager(robot) {
-        this.rules = [];
         var rulesdiv = document.createElement("div");
         var actionrepodiv = document.createElement("div");
         var rulesul = document.createElement("ul");
@@ -116,7 +120,9 @@ var RulesManager = /** @class */ (function () {
         var rm = this;
         $(addrulebutton).on("click", function () {
             var rule = robot.addRule();
-            rm.rules.push(rule);
+            var anyrule = rule.getElement();
+            anyrule.Rule = rule;
+            //rm.rules.push(rule);
             rulesul.appendChild(rule.getElement());
             $(".ruleactionlist").sortable({ connectWith: ".ruleactionlist" });
             $(actionrepoul).find("li").draggable({ connectToSortable: ".ruleactionlist" });
@@ -124,23 +130,26 @@ var RulesManager = /** @class */ (function () {
             $(".memorycondlist").sortable({ connectWith: ".memorycondlist" });
         });
         $(rulesul).sortable({
-            update: function (event, ui) {
-                var ruleelem = ui.item[0];
-                for (var i = 0; i < rm.rules.length; i++) {
-                    if (rm.rules[i].getElement() == ruleelem) {
-                        var rule = rm.rules[i];
-                        rm.rules.splice(i, 1);
-                        for (var j = 0; j < rm.rulesul.childElementCount; j++) {
-                            if (rm.rulesul.childNodes.item(j) == ruleelem) {
-                                rm.rules.splice(j, 0, rule);
-                                break;
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
+            revert: "invalid"
         });
+        //$(rulesul).sortable({
+        //    update: (event, ui) => {
+        //        var ruleelem = ui.item[0];
+        //        for (var i = 0; i < rm.rules.length; i++) {
+        //            if (rm.rules[i].getElement() == ruleelem) {
+        //                var rule = rm.rules[i];
+        //                rm.rules.splice(i, 1);
+        //                for (var j = 0; j < rm.rulesul.childElementCount; j++) {
+        //                    if (rm.rulesul.childNodes.item(j) == ruleelem) {
+        //                        rm.rules.splice(j, 0, rule);
+        //                        break;
+        //                    }
+        //                }
+        //                break;
+        //            }
+        //        }
+        //    }
+        //});
     }
     RulesManager.prototype.getRulesDiv = function () {
         return this.rulesdiv;
@@ -149,7 +158,12 @@ var RulesManager = /** @class */ (function () {
         return this.actionrepodiv;
     };
     RulesManager.prototype.getRules = function () {
-        return this.rules;
+        var ret = [];
+        for (var i = 0; i < this.rulesul.childNodes.length; i++) {
+            var anyrule = this.rulesul.childNodes.item(i);
+            ret.push(anyrule.Rule);
+        }
+        return ret;
     };
     return RulesManager;
 }());
