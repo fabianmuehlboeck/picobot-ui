@@ -79,6 +79,7 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
     toBackground(): void {
         this.guiDiv.removeChild(this.rulesManager.getActionRepoDiv());
         this.guiDiv.removeChild(this.rulesManager.getRulesDiv());
+        this.controlDiv.removeChild(this.runDiv);
     }
     toForeground(guiDiv: HTMLDivElement, controlDiv: HTMLDivElement, mapcanvas: HTMLCanvasElement): void {
         this.guiDiv = guiDiv;
@@ -195,5 +196,32 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
 
     runfast(): void {
         this.runAtSpeed(20);
+    }
+}
+
+class MemoryRobot<W extends IWorld<W>> extends BasicRobot<W> {
+    constructor(world: W) {
+        super(world);
+        var memory1 = new MemoryActionFactory<W>(new MemoryLabel("Memory 1"));
+        var memory2 = new MemoryActionFactory<W>(new MemoryLabel("Memory 2"));
+        var memory3 = new MemoryActionFactory<W>(new MemoryLabel("Memory 3"));
+        var memory4 = new MemoryActionFactory<W>(new MemoryLabel("Memory 4"));
+        var memory5 = new MemoryActionFactory<W>(new MemoryLabel("Memory 5"));
+        var memory6 = new MemoryActionFactory<W>(new MemoryLabel("Memory 6"));
+        var memory7 = new MemoryActionFactory<W>(new MemoryLabel("Memory 7"));
+        var memory8 = new MemoryActionFactory<W>(new MemoryLabel("Memory 8"));
+        this.rulesManager.actionrepoul.appendChild(memory1.getElement());
+        this.rulesManager.actionrepoul.appendChild(memory2.getElement());
+        this.rulesManager.actionrepoul.appendChild(memory3.getElement());
+        this.rulesManager.actionrepoul.appendChild(memory4.getElement());
+        this.rulesManager.actionrepoul.appendChild(memory5.getElement());
+        this.rulesManager.actionrepoul.appendChild(memory6.getElement());
+        this.rulesManager.actionrepoul.appendChild(memory7.getElement());
+        this.rulesManager.actionrepoul.appendChild(memory8.getElement());
+    }
+
+    addRule(): IRule<W> {
+        var rule = new MemoryRule<W>();
+        return rule;
     }
 }

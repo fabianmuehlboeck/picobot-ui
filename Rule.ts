@@ -8,7 +8,7 @@ interface IRule<W extends IWorld<W>> {
 
 class BasicRule<W extends IWorld<W>> implements IRule<W> {
     ruleli: HTMLLIElement;
-    condition: SensorCondition<W>;
+    condition: ICondition<W>;
     actionul: HTMLUListElement;
     actions: HTMLElement[];
 
@@ -25,7 +25,8 @@ class BasicRule<W extends IWorld<W>> implements IRule<W> {
         var actionul: HTMLUListElement = document.createElement("ul");
         this.actionul = actionul;
         actionul.classList.add("ruleactionlist");
-        var condition: SensorCondition<W> = new SensorCondition<W>();
+        actionul.classList.add("memorydroppable");
+        var condition: ICondition<W> = this.makeCondition();
         this.condition = condition;
         ruleli.appendChild(conditiondiv);
         ruleli.appendChild(rulesplitdiv);
@@ -36,14 +37,18 @@ class BasicRule<W extends IWorld<W>> implements IRule<W> {
         this.actions = [];
     }
 
-    indexOfElem(elem: HTMLElement): number {
-        for (var i = 0; i < this.actionul.childNodes.length; i++) {
-            if (elem == this.actionul.childNodes.item(i)) {
-                return i;
-            }
-        }
-        return -1;
+    makeCondition(): ICondition<W> {
+        return new SensorCondition<W>();
     }
+
+    //indexOfElem(elem: HTMLElement): number {
+    //    for (var i = 0; i < this.actionul.childNodes.length; i++) {
+    //        if (elem == this.actionul.childNodes.item(i)) {
+    //            return i;
+    //        }
+    //    }
+    //    return -1;
+    //}
 
     getElement(): HTMLLIElement { return this.ruleli; }
 
@@ -65,6 +70,26 @@ class BasicRule<W extends IWorld<W>> implements IRule<W> {
         return ret;
     }
     
+}
+
+class MemoryRule<W extends IWorld<W>> extends BasicRule<W> {
+
+    memcondition: MemoryCondition<W>;
+    constructor() {
+        super();
+        $(this.memcondition.memoryul).sortable({ receive: (event, ui) => this.processMemoryReceive(event, ui), remove: (event, ui) => this.processMemoryRemove(event, ui), revert: "invalid" });
+    }
+
+    makeCondition(): ICondition<W> {
+        this.memcondition = new MemoryCondition<W>();
+        return this.memcondition;
+    }
+
+    processMemoryReceive(event: JQueryEventObject, ui: JQueryUI.SortableUIParams): void {
+        $(this.memcondition.memoryul).find("li").css('width', '').css('height', '');
+    }
+    processMemoryRemove(event: JQueryEventObject, ui: JQueryUI.SortableUIParams): void {
+    }
 }
 
 class RulesManager<W extends IWorld<W>> {
@@ -114,6 +139,8 @@ class RulesManager<W extends IWorld<W>> {
             rulesul.appendChild(rule.getElement());
             $(".ruleactionlist").sortable({ connectWith: ".ruleactionlist" });
             $(actionrepoul).find("li").draggable({ connectToSortable: ".ruleactionlist" });
+            $(actionrepoul).find(".memory").draggable({ connectToSortable: ".memorydroppable" });
+            $(".memorycondlist").sortable({ connectWith: ".memorycondlist" });
         });
 
         $(rulesul).sortable({

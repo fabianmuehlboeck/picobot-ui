@@ -26,6 +26,22 @@ var AWorld = /** @class */ (function () {
         this.y = y;
         this.memories = memories;
     }
+    AWorld.prototype.remembers = function (memories, memul) {
+        var tempmems = this.memories.map(function (l) { return l; });
+        var ret = [];
+        while (memories.length > 0) {
+            var index = tempmems.indexOf(memories[0].memory);
+            if (index < 0) {
+                ret.push(new ElementConditionFailure(memories[0].actionli));
+                memories.splice(0, 1);
+                tempmems.splice(index, 1);
+            }
+        }
+        if (tempmems.length > 0) {
+            ret.push(new ElementConditionFailure(memul));
+        }
+        return ret;
+    };
     AWorld.prototype.turnLeft = function () {
         switch (this.direction) {
             case Direction.East:

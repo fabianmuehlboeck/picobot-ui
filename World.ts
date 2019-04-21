@@ -5,7 +5,8 @@ interface IWorld<W extends IWorld<W>> {
     turnLeft(): W;
     turnRight(): W;
     moveForward(): W;
-    remember(memory: IMemoryLabel): W;
+    remember(memory: MemoryLabel): W;
+    remembers(memories: Memory<W>[], memul: HTMLUListElement): IConditionFailure[];
     clearMemory(): W;
 
     getX(): number;
@@ -25,15 +26,32 @@ abstract class AWorld<W extends IWorld<W>> implements IWorld<W> {
     direction: Direction;
     x: number;
     y: number;
-    memories: Array<IMemoryLabel>;
+    memories: Array<MemoryLabel>;
 
-    abstract copyWith(direction: Direction, x: number, y: number, memories: Array<IMemoryLabel>): W;
+    abstract copyWith(direction: Direction, x: number, y: number, memories: Array<MemoryLabel>): W;
 
-    constructor(direction: Direction, x: number, y: number, memories: Array<IMemoryLabel>) {
+    constructor(direction: Direction, x: number, y: number, memories: Array<MemoryLabel>) {
         this.direction = direction;
         this.x = x;
         this.y = y;
         this.memories = memories;
+    }
+
+    remembers(memories: Memory<W>[], memul: HTMLUListElement): IConditionFailure[] {
+        var tempmems = this.memories.map((l) => l);
+        var ret: IConditionFailure[] = [];
+        while (memories.length > 0) {
+            var index = tempmems.indexOf(memories[0].memory);
+            if (index < 0) {
+                ret.push(new ElementConditionFailure(memories[0].actionli));
+                memories.splice(0, 1);
+                tempmems.splice(index, 1);
+            }
+        }
+        if (tempmems.length > 0) {
+            ret.push(new ElementConditionFailure(memul));
+        }
+        return ret;
     }
 
     turnLeft(): W {
@@ -82,9 +100,9 @@ abstract class AWorld<W extends IWorld<W>> implements IWorld<W> {
         }
         throw new Error("Can't move forward.");
     }
-    remember(memory: IMemoryLabel): W {
+    remember(memory: MemoryLabel): W {
         if (this.memories.indexOf(memory) < 0) {
-            var newmems = Array<IMemoryLabel>();
+            var newmems = Array<MemoryLabel>();
             for (let l of this.memories) {
                 newmems.push(l);
             }
@@ -94,7 +112,7 @@ abstract class AWorld<W extends IWorld<W>> implements IWorld<W> {
         return this.copyWith(this.direction, this.x, this.y, this.memories);
     }
     clearMemory(): W {
-        return this.copyWith(this.direction, this.x, this.y, new Array<IMemoryLabel>());
+        return this.copyWith(this.direction, this.x, this.y, new Array<MemoryLabel>());
     }
     getX(): number {
         return this.x;

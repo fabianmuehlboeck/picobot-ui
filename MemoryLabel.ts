@@ -1,15 +1,24 @@
 ﻿
-enum Color { Red, Green, Blue, Yellow, Purple, Pink, Brown, Orange };
 
-class IMemoryLabel {
+class MemoryLabel {
     name: string;
-    color: Color;
+    nameChangeHandlers: ((string) => void)[] = [];
 
     getName(): string { return this.name; }
-    getColor(): Color { return this.color; }
 
-    setName(name: string) { this.name = name; }
-    setColor(color: Color) { this.color = color; }
+    setName(name: string) {
+        this.name = name; this.nameChangeHandlers.forEach((handler) => { handler(name); });
+    }
 
-    constructor(name: string, color: Color) { this.name = name; this.color = color; }
+    constructor(name: string) { this.name = name; }
+
+    addNameChangeHandler(handler: (string) => void): void {
+        this.nameChangeHandlers.push(handler);
+    }
+    removeNameChangeHandler(handler: (string) => void): void {
+        var index = this.nameChangeHandlers.indexOf(handler);
+        if (index >= 0) {
+            this.nameChangeHandlers.splice(index, 1);
+        }
+    }
 }

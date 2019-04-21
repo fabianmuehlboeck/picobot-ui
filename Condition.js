@@ -18,10 +18,9 @@ var ElementConditionFailure = /** @class */ (function () {
     ElementConditionFailure.prototype.getAnimateables = function () { return [this.element]; };
     return ElementConditionFailure;
 }());
-var SensorCondition = /** @class */ (function (_super) {
-    __extends(SensorCondition, _super);
+var SensorCondition = /** @class */ (function () {
     function SensorCondition() {
-        return _super.call(this) || this;
+        this.sensor = new RobotSensorSelector();
     }
     SensorCondition.prototype.check = function (world) {
         var x = world.getX();
@@ -29,47 +28,47 @@ var SensorCondition = /** @class */ (function (_super) {
         var dir = world.getDirection();
         var map = world.getMap();
         var ret = [];
-        switch (this.frontSensor.state) {
+        switch (this.sensor.frontSensor.state) {
             case WallState.Any:
                 break;
             case WallState.Free:
                 if (map.isWall(x + dirXadjust(dir), y + dirYadjust(dir))) {
-                    ret.push(new ElementConditionFailure(this.frontSensor.button));
+                    ret.push(new ElementConditionFailure(this.sensor.frontSensor.button));
                 }
                 break;
             case WallState.Wall:
                 if (!map.isWall(x + dirXadjust(dir), y + dirYadjust(dir))) {
-                    ret.push(new ElementConditionFailure(this.frontSensor.button));
+                    ret.push(new ElementConditionFailure(this.sensor.frontSensor.button));
                 }
                 break;
         }
         var ldir = dirTurnLeft(dir);
-        switch (this.leftSensor.state) {
+        switch (this.sensor.leftSensor.state) {
             case WallState.Any:
                 break;
             case WallState.Free:
                 if (map.isWall(x + dirXadjust(ldir), y + dirYadjust(ldir))) {
-                    ret.push(new ElementConditionFailure(this.leftSensor.button));
+                    ret.push(new ElementConditionFailure(this.sensor.leftSensor.button));
                 }
                 break;
             case WallState.Wall:
                 if (!map.isWall(x + dirXadjust(ldir), y + dirYadjust(ldir))) {
-                    ret.push(new ElementConditionFailure(this.leftSensor.button));
+                    ret.push(new ElementConditionFailure(this.sensor.leftSensor.button));
                 }
                 break;
         }
         var rdir = dirTurnRight(dir);
-        switch (this.rightSensor.state) {
+        switch (this.sensor.rightSensor.state) {
             case WallState.Any:
                 break;
             case WallState.Free:
                 if (map.isWall(x + dirXadjust(rdir), y + dirYadjust(rdir))) {
-                    ret.push(new ElementConditionFailure(this.rightSensor.button));
+                    ret.push(new ElementConditionFailure(this.sensor.rightSensor.button));
                 }
                 break;
             case WallState.Wall:
                 if (!map.isWall(x + dirXadjust(rdir), y + dirYadjust(rdir))) {
-                    ret.push(new ElementConditionFailure(this.rightSensor.button));
+                    ret.push(new ElementConditionFailure(this.sensor.rightSensor.button));
                 }
                 break;
         }
@@ -85,7 +84,7 @@ var SensorCondition = /** @class */ (function (_super) {
             $(elems).stop(true).animate({ backgroundColor: "#ff0000" }, 100);
         }
         else {
-            $([this.frontSensor.button, this.leftSensor.button, this.rightSensor.button]).stop(true).animate({ backgroundColor: "#00ff00" }, 100);
+            $([this.sensor.frontSensor.button, this.sensor.leftSensor.button, this.sensor.rightSensor.button]).stop(true).animate({ backgroundColor: "#00ff00" }, 100);
         }
     };
     SensorCondition.prototype.exit = function (failures) {
@@ -98,9 +97,43 @@ var SensorCondition = /** @class */ (function (_super) {
             $(elems).stop(true).animate({ backgroundColor: "" }, 100);
         }
         else {
-            $([this.frontSensor.button, this.leftSensor.button, this.rightSensor.button]).stop(true).animate({ backgroundColor: "" }, 100);
+            $([this.sensor.frontSensor.button, this.sensor.leftSensor.button, this.sensor.rightSensor.button]).stop(true).animate({ backgroundColor: "" }, 100);
         }
     };
+    SensorCondition.prototype.getElement = function () {
+        return this.sensor.getElement();
+    };
     return SensorCondition;
-}(RobotSensorSelector));
+}());
+var MemoryCondition = /** @class */ (function (_super) {
+    __extends(MemoryCondition, _super);
+    function MemoryCondition() {
+        var _this = _super.call(this) || this;
+        _this.element = document.createElement("div");
+        _this.memorydiv = document.createElement("div");
+        _this.memoryul = document.createElement("ul");
+        _this.memorydiv.appendChild(_this.memoryul);
+        _this.element.appendChild(_super.prototype.getElement.call(_this));
+        _this.element.appendChild(_this.memorydiv);
+        _this.memoryul.classList.add("memorycondlist");
+        _this.memoryul.classList.add("memorydroppable");
+        _this.memorydiv.classList.add("memoryconddiv");
+        _this.element.classList.add("memoryconditiondiv");
+        return _this;
+    }
+    MemoryCondition.prototype.check = function (world) {
+        var ret = _super.prototype.check.call(this, world);
+        var memories = [];
+        for (var i = 0; i < this.memoryul.childNodes.length; i++) {
+            var memory = ((this.memoryul.childNodes.item(i)).Action);
+            memories.push(memory);
+        }
+        ret = ret.concat(world.remembers(memories, this.memoryul));
+        return ret;
+    };
+    MemoryCondition.prototype.getElement = function () {
+        return this.element;
+    };
+    return MemoryCondition;
+}(SensorCondition));
 //# sourceMappingURL=Condition.js.map

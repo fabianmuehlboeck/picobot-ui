@@ -41,6 +41,14 @@ var MazeMapGenerator = /** @class */ (function (_super) {
     };
     return MazeMapGenerator;
 }(AMapGenerator));
+var MazeCell = /** @class */ (function () {
+    function MazeCell() {
+        this.outerwalls = [];
+        this.neighbors = [];
+        this.inMaze = false;
+    }
+    return MazeCell;
+}());
 var MazeMap = /** @class */ (function (_super) {
     __extends(MazeMap, _super);
     function MazeMap(width, height) {
@@ -52,61 +60,68 @@ var MazeMap = /** @class */ (function (_super) {
                 }
             }
         }
-        var vertical = Math.random() * 2 >= 1;
-        var farside = Math.random() * 2 >= 1;
-        var inmaze = emptybools(_this.width, _this.height);
-        var walllist = [];
-        if (vertical) {
-            _this.startx = farside ? _this.width - 1 : 0;
-            _this.starty = Math.floor(Math.random() * Math.floor(_this.height / 2)) * 2 + 1;
-            inmaze[farside ? _this.width - 2 : 1][_this.starty] = true;
-            if (_this.starty > 1) {
-                walllist.push({ x: farside ? _this.width - 2 : 1, y: _this.starty - 1, cx: farside ? _this.width - 2 : 1, cy: _this.starty - 2 });
+        var cells = _this.initCells(width, height);
+        var outercells = [];
+        for (var _i = 0, cells_1 = cells; _i < cells_1.length; _i++) {
+            var cell = cells_1[_i];
+            if (cell.outerwalls.length > 0) {
+                outercells.push(cell);
             }
-            if (_this.starty < _this.height - 2) {
-                walllist.push({ x: farside ? _this.width - 2 : 1, y: _this.starty + 1, cx: farside ? _this.width - 2 : 1, cy: _this.starty + 2 });
-            }
-            walllist.push({ x: farside ? _this.width - 3 : 2, y: _this.starty, cx: farside ? _this.width - 4 : 3, cy: _this.starty });
         }
-        else {
-            _this.startx = Math.floor(Math.random() * Math.floor(_this.width / 2)) * 2 + 1;
-            _this.starty = farside ? _this.height - 1 : 0;
-            inmaze[_this.startx][farside ? _this.height - 2 : 1] = true;
-            if (_this.startx > 1) {
-                walllist.push({ x: _this.startx - 1, y: farside ? _this.height - 2 : 1, cx: _this.startx - 2, cy: farside ? _this.height - 2 : 1 });
-            }
-            if (_this.startx < _this.width - 2) {
-                walllist.push({ x: _this.startx + 1, y: farside ? _this.height - 2 : 1, cx: _this.startx + 2, cy: farside ? _this.height - 2 : 1 });
-            }
-            walllist.push({ x: _this.startx, y: farside ? _this.height - 3 : 2, cx: _this.startx, cy: farside ? _this.height - 4 : 3 });
-        }
+        var startcell = outercells[Math.floor(Math.random() * outercells.length)];
+        var startwall = startcell.outerwalls[Math.floor(Math.random() * startcell.outerwalls.length)];
+        _this.startx = startwall.wallx;
+        _this.starty = startwall.wally;
         _this.walls[_this.startx][_this.starty] = false;
-        while (walllist.length > 0) {
-            var index = Math.floor(Math.random() * walllist.length);
-            var x = walllist[index].x;
-            var y = walllist[index].y;
-            var cx = walllist[index].cx;
-            var cy = walllist[index].cy;
-            walllist.splice(index, 1);
-            if (!inmaze[cx][cy]) {
-                inmaze[cx][cy] = true;
-                _this.walls[x][y] = false;
-                if (_this.walls[cx + 1][cy] && cx < _this.width - 2) {
-                    walllist.push({ x: cx + 1, y: cy, cx: cx + 2, cy: cy });
-                }
-                if (_this.walls[cx - 1][cy] && cx > 1) {
-                    walllist.push({ x: cx - 1, y: cy, cx: cx - 2, cy: cy });
-                }
-                if (_this.walls[cx][cy + 1] && cy < _this.height - 2) {
-                    walllist.push({ x: cx, y: cy + 1, cx: cx, cy: cy + 2 });
-                }
-                if (_this.walls[cx][cy - 1] && cy > 1) {
-                    walllist.push({ x: cx, y: cy - 1, cx: cx, cy: cy - 2 });
-                }
+        startcell.inMaze = true;
+        var wallist = startcell.neighbors;
+        while (wallist.length > 0) {
+            var index = Math.floor(Math.random() * wallist.length);
+            var next = wallist[index];
+            wallist.splice(index, 1);
+            if (next.cell.inMaze) {
+                continue;
             }
+            wallist = wallist.concat(next.cell.neighbors);
+            next.cell.inMaze = true;
+            _this.walls[next.wallx][next.wally] = false;
         }
         return _this;
     }
+    MazeMap.prototype.initCells = function (width, height) {
+        var lastCol = null;
+        var cells = [];
+        for (var x = 1; x < width; x += 2) {
+            var currentCol = [];
+            for (var y = 1; y < height; y += 2) {
+                var cell = new MazeCell();
+                cells.push(cell);
+                if (x > 1) {
+                    lastCol[currentCol.length].neighbors.push({ cell: cell, wallx: x - 1, wally: y });
+                    cell.neighbors.push({ cell: lastCol[currentCol.length], wallx: x - 1, wally: y });
+                }
+                if (y > 1) {
+                    currentCol[currentCol.length - 1].neighbors.push({ cell: cell, wallx: x, wally: y - 1 });
+                    cell.neighbors.push({ cell: currentCol[currentCol.length - 1], wallx: x, wally: y - 1 });
+                }
+                if (x == 1) {
+                    cell.outerwalls.push({ wallx: 0, wally: y });
+                }
+                if (y == 1) {
+                    cell.outerwalls.push({ wallx: x, wally: 0 });
+                }
+                if (x >= width - 2) {
+                    cell.outerwalls.push({ wallx: width - 1, wally: y });
+                }
+                if (y >= height - 2) {
+                    cell.outerwalls.push({ wallx: x, wally: height - 1 });
+                }
+                currentCol.push(cell);
+            }
+            lastCol = currentCol;
+        }
+        return cells;
+    };
     MazeMap.prototype.getGoalZones = function () {
         return [{ sx: this.startx, sy: this.starty, ex: this.startx, ey: this.starty }];
     };

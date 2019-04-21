@@ -14,7 +14,7 @@ abstract class ALevel<W extends IWorld<W>> implements ILevel {
     }
 
     toBackground(): void {
-        
+        this.getRobot().toBackground();
     }
     toForeground(mapcanvas: HTMLCanvasElement, controlDiv: HTMLDivElement, guiDiv: HTMLDivElement): boolean {
         this.mapcanvas = mapcanvas;

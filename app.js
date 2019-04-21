@@ -15,6 +15,7 @@ var Pico = /** @class */ (function () {
     function Pico() {
         this.levels = [];
         this.levels.push(new MazeLevel());
+        this.levels.push(new HardMazeLevel());
     }
     Pico.createCanvas = function () {
         var canvas = document.createElement("canvas");
@@ -52,6 +53,10 @@ var Pico = /** @class */ (function () {
         this.changeLevel(this.levels[0]);
     };
     Pico.prototype.changeLevel = function (level) {
+        if (this.currentLevel) {
+            this.currentLevel.toBackground();
+        }
+        this.currentLevel = level;
         this.mapspan.innerText = level.getName();
         level.toForeground(this.mapcanvas, this.controldiv, this.guidiv);
     };

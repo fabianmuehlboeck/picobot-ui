@@ -1,3 +1,16 @@
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    }
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var BasicRobot = /** @class */ (function () {
     function BasicRobot(world) {
         var _this = this;
@@ -52,6 +65,7 @@ var BasicRobot = /** @class */ (function () {
     BasicRobot.prototype.toBackground = function () {
         this.guiDiv.removeChild(this.rulesManager.getActionRepoDiv());
         this.guiDiv.removeChild(this.rulesManager.getRulesDiv());
+        this.controlDiv.removeChild(this.runDiv);
     };
     BasicRobot.prototype.toForeground = function (guiDiv, controlDiv, mapcanvas) {
         this.guiDiv = guiDiv;
@@ -160,4 +174,32 @@ var BasicRobot = /** @class */ (function () {
     };
     return BasicRobot;
 }());
+var MemoryRobot = /** @class */ (function (_super) {
+    __extends(MemoryRobot, _super);
+    function MemoryRobot(world) {
+        var _this = _super.call(this, world) || this;
+        var memory1 = new MemoryActionFactory(new MemoryLabel("Memory 1"));
+        var memory2 = new MemoryActionFactory(new MemoryLabel("Memory 2"));
+        var memory3 = new MemoryActionFactory(new MemoryLabel("Memory 3"));
+        var memory4 = new MemoryActionFactory(new MemoryLabel("Memory 4"));
+        var memory5 = new MemoryActionFactory(new MemoryLabel("Memory 5"));
+        var memory6 = new MemoryActionFactory(new MemoryLabel("Memory 6"));
+        var memory7 = new MemoryActionFactory(new MemoryLabel("Memory 7"));
+        var memory8 = new MemoryActionFactory(new MemoryLabel("Memory 8"));
+        _this.rulesManager.actionrepoul.appendChild(memory1.getElement());
+        _this.rulesManager.actionrepoul.appendChild(memory2.getElement());
+        _this.rulesManager.actionrepoul.appendChild(memory3.getElement());
+        _this.rulesManager.actionrepoul.appendChild(memory4.getElement());
+        _this.rulesManager.actionrepoul.appendChild(memory5.getElement());
+        _this.rulesManager.actionrepoul.appendChild(memory6.getElement());
+        _this.rulesManager.actionrepoul.appendChild(memory7.getElement());
+        _this.rulesManager.actionrepoul.appendChild(memory8.getElement());
+        return _this;
+    }
+    MemoryRobot.prototype.addRule = function () {
+        var rule = new MemoryRule();
+        return rule;
+    };
+    return MemoryRobot;
+}(BasicRobot));
 //# sourceMappingURL=Robot.js.map

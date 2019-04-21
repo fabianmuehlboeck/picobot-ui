@@ -12,7 +12,7 @@ class MazeLevel extends ALevel<MazeWorld> {
         var map: MazeMap = this.generator.getStandardMap();
         var x: number = (Math.floor(Math.random() * ((map.getWidth() - 1) / 2)) * 2) + 1;
         var y: number = (Math.floor(Math.random() * ((map.getHeight() - 1) / 2)) * 2) + 1;
-        return new MazeWorld(randomDirection(), x, y, new Array<IMemoryLabel>(), map);
+        return new MazeWorld(randomDirection(), x, y, new Array<MemoryLabel>(), map);
     }
     getRobot(): IRobot<MazeWorld> {
         return this.robot;
@@ -29,9 +29,51 @@ class MazeMapGenerator extends AMapGenerator<MazeMap> {
 
 }
 
+class MazeCell {
+    outerwalls: { wallx: number, wally: number }[] = [];
+    neighbors: { cell: MazeCell, wallx: number, wally: number }[] = [];
+    inMaze: boolean = false;
+}
+
 class MazeMap extends AGoalMap {
     startx: number;
     starty: number;
+
+    initCells(width: number, height: number): MazeCell[] {
+        var lastCol: MazeCell[] = null;
+        var cells: MazeCell[] = [];
+        for (var x = 1; x < width; x += 2) {
+            var currentCol: MazeCell[] = [];
+            for (var y = 1; y < height; y += 2) {
+                var cell = new MazeCell();
+                cells.push(cell);
+                if (x > 1) {
+                    lastCol[currentCol.length].neighbors.push({ cell: cell, wallx: x - 1, wally: y });
+                    cell.neighbors.push({ cell: lastCol[currentCol.length], wallx: x - 1, wally: y });
+                }
+                if (y > 1) {
+                    currentCol[currentCol.length - 1].neighbors.push({ cell: cell, wallx: x, wally: y - 1 });
+                    cell.neighbors.push({ cell: currentCol[currentCol.length - 1], wallx: x, wally: y - 1 });
+                }
+                if (x == 1) {
+                    cell.outerwalls.push({ wallx: 0, wally: y });
+                }
+                if (y == 1) {
+                    cell.outerwalls.push({ wallx: x, wally: 0 });
+                }
+                if (x >= width-2) {
+                    cell.outerwalls.push({ wallx: width-1, wally: y });
+                }
+                if (y >= height-2) {
+                    cell.outerwalls.push({ wallx: x, wally: height-1 });
+                }
+                currentCol.push(cell);
+            }
+            lastCol = currentCol;
+        }
+        return cells;
+    }
+
     constructor(width: number, height: number) {
         super(width, height);
         for (var x = 0; x < this.width; x++) {
@@ -41,61 +83,32 @@ class MazeMap extends AGoalMap {
                 }
             }
         }
-        var vertical: boolean = Math.random() * 2 >= 1;
-        var farside: boolean = Math.random() * 2 >= 1;
-        var inmaze: boolean[][] = emptybools(this.width, this.height);
-        var walllist: Array<{ x: number, y: number, cx: number, cy: number }> = [];
-        if (vertical) {
-            this.startx = farside ? this.width - 1 : 0;
-            this.starty = Math.floor(Math.random() * Math.floor(this.height / 2)) * 2 + 1;
-            inmaze[farside ? this.width - 2 : 1][this.starty] = true;
-
-            if (this.starty > 1) {
-                walllist.push({ x: farside ? this.width - 2 : 1, y: this.starty - 1, cx: farside ? this.width - 2 : 1, cy: this.starty - 2 });
+        var cells: MazeCell[] = this.initCells(width, height);
+        var outercells: MazeCell[] = [];
+        for (let cell of cells) {
+            if (cell.outerwalls.length > 0) {
+                outercells.push(cell);
             }
-            if (this.starty < this.height - 2) {
-                walllist.push({ x: farside ? this.width - 2 : 1, y: this.starty + 1, cx: farside ? this.width - 2 : 1, cy: this.starty + 2 });
-            }
-            walllist.push({ x: farside ? this.width - 3 : 2, y: this.starty, cx: farside ? this.width - 4 : 3, cy: this.starty });
-
-        } else {
-            this.startx = Math.floor(Math.random() * Math.floor(this.width / 2)) * 2 + 1;
-            this.starty = farside ? this.height - 1 : 0;
-            inmaze[this.startx][farside ? this.height - 2 : 1] = true;
-
-            if (this.startx > 1) {
-                walllist.push({ x: this.startx - 1, y: farside ? this.height - 2 : 1, cx: this.startx - 2, cy: farside ? this.height - 2 : 1});
-            }
-            if (this.startx < this.width - 2) {
-                walllist.push({ x: this.startx + 1, y: farside ? this.height - 2 : 1, cx: this.startx + 2, cy: farside ? this.height - 2 : 1 });
-            }
-            walllist.push({ x: this.startx, y:  farside? this.height - 3 : 2, cx: this.startx, cy: farside ? this.height - 4 : 3 });
         }
+        var startcell = outercells[Math.floor(Math.random() * outercells.length)];
+        var startwall = startcell.outerwalls[Math.floor(Math.random() * startcell.outerwalls.length)];
+        this.startx = startwall.wallx;
+        this.starty = startwall.wally;
         this.walls[this.startx][this.starty] = false;
-        
-        while (walllist.length > 0) {
-            var index = Math.floor(Math.random() * walllist.length);
-            var x = walllist[index].x;
-            var y = walllist[index].y;
-            var cx = walllist[index].cx;
-            var cy = walllist[index].cy;
-            walllist.splice(index, 1);
-            if (!inmaze[cx][cy]) {
-                inmaze[cx][cy] = true;
-                this.walls[x][y] = false;
-                if (this.walls[cx + 1][cy] && cx < this.width - 2) {
-                    walllist.push({ x: cx + 1, y: cy, cx: cx + 2, cy: cy });
-                }
-                if (this.walls[cx - 1][cy] && cx > 1) {
-                    walllist.push({ x: cx - 1, y: cy, cx: cx - 2, cy: cy });
-                }
-                if (this.walls[cx][cy + 1] && cy < this.height - 2) {
-                    walllist.push({ x: cx, y: cy + 1, cx: cx, cy: cy + 2 });
-                }
-                if (this.walls[cx][cy - 1] && cy > 1) {
-                    walllist.push({ x: cx, y: cy - 1, cx: cx, cy: cy - 2 });
-                }
+
+        startcell.inMaze = true;
+        var wallist = startcell.neighbors;
+
+        while (wallist.length > 0) {
+            var index = Math.floor(Math.random() * wallist.length);
+            var next = wallist[index];
+            wallist.splice(index, 1);
+            if (next.cell.inMaze) {
+                continue;
             }
+            wallist = wallist.concat(next.cell.neighbors);
+            next.cell.inMaze = true;
+            this.walls[next.wallx][next.wally] = false;
         }
     }
     getGoalZones(): { sx: number; sy: number; ex: number; ey: number; }[] {
@@ -105,12 +118,12 @@ class MazeMap extends AGoalMap {
 
 class MazeWorld extends GoalWorld<MazeWorld> {
     map: MazeMap;
-    constructor(direction: Direction, x: number, y: number, memories: IMemoryLabel[], map: MazeMap) {
+    constructor(direction: Direction, x: number, y: number, memories: MemoryLabel[], map: MazeMap) {
         super(direction, x, y, memories);
         this.map = map;
     }
 
-    copyWith(direction: Direction, x: number, y: number, memories: IMemoryLabel[]): MazeWorld {
+    copyWith(direction: Direction, x: number, y: number, memories: MemoryLabel[]): MazeWorld {
         return new MazeWorld(direction, x, y, memories, this.map);
     }
     getGoalMap(): GoalMap { return this.map; }

@@ -35,6 +35,7 @@
     <TypeScriptCompile Include="app.ts" />
     <TypeScriptCompile Include="Code.ts" />
     <TypeScriptCompile Include="Condition.ts" />
+    <TypeScriptCompile Include="HardMaze.ts" />
     <TypeScriptCompile Include="Level.ts" />
     <TypeScriptCompile Include="Map.ts" />
     <TypeScriptCompile Include="MapGenerator.ts" />

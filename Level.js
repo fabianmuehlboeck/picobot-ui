@@ -2,6 +2,7 @@ var ALevel = /** @class */ (function () {
     function ALevel() {
     }
     ALevel.prototype.toBackground = function () {
+        this.getRobot().toBackground();
     };
     ALevel.prototype.toForeground = function (mapcanvas, controlDiv, guiDiv) {
         this.mapcanvas = mapcanvas;

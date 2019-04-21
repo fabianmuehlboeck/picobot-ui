@@ -33,6 +33,7 @@ class Pico {
     constructor() {
         this.levels = [];
         this.levels.push(new MazeLevel());
+        this.levels.push(new HardMazeLevel());
     }
     
     init(): void {
@@ -72,7 +73,11 @@ class Pico {
         this.changeLevel(this.levels[0]);
     }
 
-    changeLevel(level : ILevel) {
+    changeLevel(level: ILevel) {
+        if (this.currentLevel) {
+            this.currentLevel.toBackground();
+        }
+        this.currentLevel = level;
         this.mapspan.innerText = level.getName();
         level.toForeground(this.mapcanvas, this.controldiv, this.guidiv);
     }
