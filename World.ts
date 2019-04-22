@@ -40,13 +40,15 @@ abstract class AWorld<W extends IWorld<W>> implements IWorld<W> {
     remembers(memories: Memory<W>[], memul: HTMLUListElement): IConditionFailure[] {
         var tempmems = this.memories.map((l) => l);
         var ret: IConditionFailure[] = [];
-        while (memories.length > 0) {
+        while (memories.length > 0 ) {
             var index = tempmems.indexOf(memories[0].memory);
             if (index < 0) {
                 ret.push(new ElementConditionFailure(memories[0].actionli));
-                memories.splice(0, 1);
+            }
+            else {
                 tempmems.splice(index, 1);
             }
+            memories.splice(0, 1);
         }
         if (tempmems.length > 0) {
             ret.push(new ElementConditionFailure(memul));

@@ -74,7 +74,7 @@ class RuleMatchStep<W extends IWorld<W>> extends AStep<W> {
     computeSuccessor(): IStep<W> {
         if (!this.totalFailure) {
             if (this.failures.length == 0) {
-                return new RuleActionStep<W>(this.robot, this.world, this, this.rule, 0);
+                return new RuleActionStep<W>(this.robot, this.world.clearMemory(), this, this.rule, 0);
             }
             return new RuleMatchStep<W>(this.robot, this.world, this, this.ruleIndex + 1);
         }

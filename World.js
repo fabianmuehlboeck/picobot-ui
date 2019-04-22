@@ -33,9 +33,11 @@ var AWorld = /** @class */ (function () {
             var index = tempmems.indexOf(memories[0].memory);
             if (index < 0) {
                 ret.push(new ElementConditionFailure(memories[0].actionli));
-                memories.splice(0, 1);
+            }
+            else {
                 tempmems.splice(index, 1);
             }
+            memories.splice(0, 1);
         }
         if (tempmems.length > 0) {
             ret.push(new ElementConditionFailure(memul));

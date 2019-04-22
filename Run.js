@@ -71,7 +71,7 @@ var RuleMatchStep = /** @class */ (function (_super) {
     RuleMatchStep.prototype.computeSuccessor = function () {
         if (!this.totalFailure) {
             if (this.failures.length == 0) {
-                return new RuleActionStep(this.robot, this.world, this, this.rule, 0);
+                return new RuleActionStep(this.robot, this.world.clearMemory(), this, this.rule, 0);
             }
             return new RuleMatchStep(this.robot, this.world, this, this.ruleIndex + 1);
         }
