@@ -91,4 +91,19 @@ function dirYadjust(dir) {
             return 0;
     }
 }
+function wallStateToString(ws) {
+    switch (ws) {
+        case WallState.Any: return "A";
+        case WallState.Free: return "F";
+        case WallState.Wall: return "W";
+    }
+}
+function stringToWallState(s) {
+    switch (s) {
+        case "A": return WallState.Any;
+        case "F": return WallState.Free;
+        case "W": return WallState.Wall;
+        default: throw new Error("Invalid Wall State");
+    }
+}
 //# sourceMappingURL=util.js.map

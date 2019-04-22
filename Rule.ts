@@ -3,8 +3,20 @@ interface IRule<W extends IWorld<W>> {
     getCondition(): ICondition<W>;
     getActions(): Array<IAction<W>>;
     getElement(): HTMLLIElement;
+    loadFromText(stream: StringStream, robot: IRobot<W>): void;
+    toText(): string;
 }
 
+function addActionDeleteButton(actionli: HTMLElement) {
+    var delbutton = document.createElement("button");
+    delbutton.classList.add("actiondeletebutton");
+    $(delbutton).on("click", function () {
+        actionli.parentElement.removeChild(actionli);
+        var anyelem: any = actionli;
+        anyelem.Action.delete();
+    });
+    actionli.appendChild(delbutton);
+}
 
 class BasicRule<W extends IWorld<W>> implements IRule<W> {
     ruleli: HTMLLIElement;
@@ -65,14 +77,36 @@ class BasicRule<W extends IWorld<W>> implements IRule<W> {
         return this.condition;
     }
     getActions(): IAction<W>[] {
-        var ret: IAction < W > [] =[];
+        var ret: IAction<W>[] = [];
         for (var i = 0; i < this.actionul.childElementCount; i++) {
             var anyelem: any = this.actionul.childNodes.item(i);
             ret.push(anyelem.Action);
         }
         return ret;
     }
-    
+
+    toText(): string {
+        var ret: string = "";
+        ret += this.getCondition().toText();
+        for (let action of this.getActions()) {
+            ret += action.toText() + ";";
+        }
+        return ret + "#";
+    }
+    loadFromText(stream: StringStream, robot: IRobot<W>): void {
+        this.condition.loadFromText(stream, robot);
+        this.loadActions(stream, robot);
+    }
+    loadActions(stream: StringStream, robot: IRobot<W>): void {
+        var actions = stream.readUntil("#");
+        for (let a of actions.split(";")) {
+            if (a.length > 0) {
+                var actionli = robot.getFactory(a).construct();
+                addActionDeleteButton(actionli);
+                this.actionul.appendChild(actionli);
+            }
+        }
+    }
 }
 
 class MemoryRule<W extends IWorld<W>> extends BasicRule<W> {
@@ -104,7 +138,7 @@ class RulesManager<W extends IWorld<W>> {
     addrulebutton: HTMLButtonElement;
     //rules: IRule<W>[] = [];
 
-    constructor(robot : IRobot<W>) {
+    constructor(robot: IRobot<W>) {
         var rulesdiv: HTMLDivElement = document.createElement("div");
         var actionrepodiv: HTMLDivElement = document.createElement("div");
         var rulesul: HTMLUListElement = document.createElement("ul");
@@ -139,18 +173,11 @@ class RulesManager<W extends IWorld<W>> {
 
         $(addrulebutton).on("click", function () {
             var rule = robot.addRule();
-            var anyrule = <any>rule.getElement();
-            anyrule.Rule = rule;
-            //rm.rules.push(rule);
-            rulesul.appendChild(rule.getElement());
-            $(".ruleactionlist").sortable({ connectWith: ".ruleactionlist" });
-            $(actionrepoul).find("li").draggable({ connectToSortable: ".ruleactionlist" });
-            $(actionrepoul).find(".memory").draggable({ connectToSortable: ".memorydroppable" });
-            $(".memorycondlist").sortable({ connectWith: ".memorycondlist" });
+            rm.addRule(rule);
         });
 
         $(rulesul).sortable({
-            revert:"invalid"
+            revert: "invalid"
         });
         //$(rulesul).sortable({
         //    update: (event, ui) => {
@@ -172,6 +199,53 @@ class RulesManager<W extends IWorld<W>> {
         //});
     }
 
+    clear(): void {
+        while (this.rulesul.childNodes.length > 0) {
+            this.rulesul.removeChild(this.rulesul.childNodes.item(0));
+        }
+    }
+
+    addRule(rule: IRule<W>): void {
+        var anyrule = <any>rule.getElement();
+        anyrule.Rule = rule;
+        //rm.rules.push(rule);
+        this.rulesul.appendChild(rule.getElement());
+        $(".ruleactionlist").sortable({ connectWith: ".ruleactionlist" });
+        $(this.actionrepoul).find("li").draggable({ connectToSortable: ".ruleactionlist" });
+        $(this.actionrepoul).find(".memory").draggable({ connectToSortable: ".memorydroppable" });
+        $(".memorycondlist").sortable({ connectWith: ".memorycondlist" });
+    }
+
+    toText(): string {
+        var ret: string = "";
+        for (let rule of this.getRules()) {
+            ret += rule.toText();
+        }
+        return ret;
+    }
+    loadFromText(stream: StringStream, robot: IRobot<W>): void {
+        while (!stream.atEnd()) {
+            var rule = robot.addRule();
+            rule.loadFromText(stream, robot);
+            this.addRule(rule);
+        }
+    }
+    //static ruleFromText<W extends IWorld<W>>(stream: StringStream, robot: IRobot<W>): IRule<W> {
+    //    var tag = stream.peekFront(2);
+    //    stream.move(2);
+    //    switch (tag) {robot.addRule();
+    //        case "BR":
+    //            var basicRule = new BasicRule<W>();
+    //            basicRule.loadFromText(stream, robot);
+    //            return basicRule;
+    //        case "MR":
+    //            var memoryRule = new MemoryRule<W>();
+    //            memoryRule.loadFromText(stream, robot);
+    //            return memoryRule;
+    //        default: throw new Error("Unknown Rule Type");
+    //    }
+    //}
+
     getRulesDiv(): HTMLDivElement {
         return this.rulesdiv;
     }
@@ -183,7 +257,7 @@ class RulesManager<W extends IWorld<W>> {
         var ret: IRule<W>[] = [];
         for (var i = 0; i < this.rulesul.childNodes.length; i++) {
             var anyrule = <any>this.rulesul.childNodes.item(i);
-            ret.push(<IRule < W >> anyrule.Rule);
+            ret.push(<IRule<W>>anyrule.Rule);
         }
         return ret;
     }

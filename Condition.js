@@ -103,6 +103,17 @@ var SensorCondition = /** @class */ (function () {
     SensorCondition.prototype.getElement = function () {
         return this.sensor.getElement();
     };
+    SensorCondition.prototype.toText = function () {
+        return wallStateToString(this.sensor.leftSensor.getState()) + wallStateToString(this.sensor.frontSensor.getState()) + wallStateToString(this.sensor.rightSensor.getState());
+    };
+    SensorCondition.prototype.loadFromText = function (stream, robot) {
+        this.sensor.leftSensor.changeState(stringToWallState(stream.peekFront(1)));
+        stream.move(1);
+        this.sensor.frontSensor.changeState(stringToWallState(stream.peekFront(1)));
+        stream.move(1);
+        this.sensor.rightSensor.changeState(stringToWallState(stream.peekFront(1)));
+        stream.move(1);
+    };
     return SensorCondition;
 }());
 var MemoryCondition = /** @class */ (function (_super) {
@@ -133,6 +144,26 @@ var MemoryCondition = /** @class */ (function (_super) {
     };
     MemoryCondition.prototype.getElement = function () {
         return this.element;
+    };
+    MemoryCondition.prototype.toText = function () {
+        var ret = _super.prototype.toText.call(this);
+        for (var i = 0; i < this.memoryul.childNodes.length; i++) {
+            var memory = ((this.memoryul.childNodes.item(i)).Action);
+            ret += memory.memory.getId() + ";";
+        }
+        return ret + "|";
+    };
+    MemoryCondition.prototype.loadFromText = function (stream, robot) {
+        _super.prototype.loadFromText.call(this, stream, robot);
+        var mems = stream.readUntil("|");
+        for (var _i = 0, _a = mems.split(";"); _i < _a.length; _i++) {
+            var m = _a[_i];
+            if (m.length > 0) {
+                var memli = robot.getFactory(m).construct();
+                addActionDeleteButton(memli);
+                this.memoryul.appendChild(memli);
+            }
+        }
     };
     return MemoryCondition;
 }(SensorCondition));

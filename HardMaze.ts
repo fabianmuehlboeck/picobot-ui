@@ -5,7 +5,7 @@ class HardMazeLevel extends ALevel<HardMazeWorld> {
     constructor() {
         super();
         this.generator = new HardMazeMapGenerator();
-        this.robot = new MemoryRobot<HardMazeWorld>(this.resetWorld());
+        this.robot = new MemoryRobot<HardMazeWorld>(this, this.resetWorld());
     }
     getName(): string { return "Tricky Maze"; }
     resetWorld(): HardMazeWorld {

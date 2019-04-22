@@ -44,6 +44,7 @@
     <TypeScriptCompile Include="Robot.ts" />
     <TypeScriptCompile Include="Rule.ts" />
     <TypeScriptCompile Include="Run.ts" />
+    <TypeScriptCompile Include="StringStream.ts" />
     <TypeScriptCompile Include="util.ts" />
     <TypeScriptCompile Include="WallState.ts" />
     <TypeScriptCompile Include="World.ts" />

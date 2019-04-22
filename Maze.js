@@ -16,7 +16,7 @@ var MazeLevel = /** @class */ (function (_super) {
     function MazeLevel() {
         var _this = _super.call(this) || this;
         _this.generator = new MazeMapGenerator();
-        _this.robot = new BasicRobot(_this.resetWorld());
+        _this.robot = new BasicRobot(_this, _this.resetWorld());
         return _this;
     }
     MazeLevel.prototype.getName = function () { return "Maze"; };

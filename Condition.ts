@@ -8,6 +8,8 @@ interface ICondition<W extends IWorld<W>> {
     enter(failures: Array<IConditionFailure>): void;
     exit(failures: Array<IConditionFailure>): void;
     getElement(): HTMLDivElement;
+    toText(): string;
+    loadFromText(stream: StringStream, robot: IRobot<W>): void;
 }
 
 
@@ -103,6 +105,17 @@ class SensorCondition<W extends IWorld<W>> implements ICondition<W> {
     getElement(): HTMLDivElement {
         return this.sensor.getElement();
     }
+    toText(): string {
+        return wallStateToString(this.sensor.leftSensor.getState()) + wallStateToString(this.sensor.frontSensor.getState()) + wallStateToString(this.sensor.rightSensor.getState());
+    }
+    loadFromText(stream: StringStream, robot: IRobot<W>): void {
+        this.sensor.leftSensor.changeState(stringToWallState(stream.peekFront(1)));
+        stream.move(1);
+        this.sensor.frontSensor.changeState(stringToWallState(stream.peekFront(1)));
+        stream.move(1);
+        this.sensor.rightSensor.changeState(stringToWallState(stream.peekFront(1)));
+        stream.move(1);
+    }
 }
 
 class MemoryCondition<W extends IWorld<W>> extends SensorCondition<W> {
@@ -134,5 +147,24 @@ class MemoryCondition<W extends IWorld<W>> extends SensorCondition<W> {
     }
     getElement(): HTMLDivElement {
         return this.element;
+    }
+    toText(): string {
+        var ret: string = super.toText();
+        for (var i = 0; i < this.memoryul.childNodes.length; i++) {
+            var memory = <Memory<W>>((<any>(this.memoryul.childNodes.item(i))).Action);
+            ret += memory.memory.getId() + ";";
+        }
+        return ret+"|";
+    }
+    loadFromText(stream: StringStream, robot: IRobot<W>): void {
+        super.loadFromText(stream, robot);
+        var mems = stream.readUntil("|");
+        for (let m of mems.split(";")) {
+            if (m.length > 0) {
+                var memli = robot.getFactory(m).construct();
+                addActionDeleteButton(memli);
+                this.memoryul.appendChild(memli);
+            }
+        }
     }
 }

@@ -11,6 +11,16 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+function addActionDeleteButton(actionli) {
+    var delbutton = document.createElement("button");
+    delbutton.classList.add("actiondeletebutton");
+    $(delbutton).on("click", function () {
+        actionli.parentElement.removeChild(actionli);
+        var anyelem = actionli;
+        anyelem.Action.delete();
+    });
+    actionli.appendChild(delbutton);
+}
 var BasicRule = /** @class */ (function () {
     function BasicRule() {
         var _this = this;
@@ -68,6 +78,30 @@ var BasicRule = /** @class */ (function () {
         }
         return ret;
     };
+    BasicRule.prototype.toText = function () {
+        var ret = "";
+        ret += this.getCondition().toText();
+        for (var _i = 0, _a = this.getActions(); _i < _a.length; _i++) {
+            var action = _a[_i];
+            ret += action.toText() + ";";
+        }
+        return ret + "#";
+    };
+    BasicRule.prototype.loadFromText = function (stream, robot) {
+        this.condition.loadFromText(stream, robot);
+        this.loadActions(stream, robot);
+    };
+    BasicRule.prototype.loadActions = function (stream, robot) {
+        var actions = stream.readUntil("#");
+        for (var _i = 0, _a = actions.split(";"); _i < _a.length; _i++) {
+            var a = _a[_i];
+            if (a.length > 0) {
+                var actionli = robot.getFactory(a).construct();
+                addActionDeleteButton(actionli);
+                this.actionul.appendChild(actionli);
+            }
+        }
+    };
     return BasicRule;
 }());
 var MemoryRule = /** @class */ (function (_super) {
@@ -120,14 +154,7 @@ var RulesManager = /** @class */ (function () {
         var rm = this;
         $(addrulebutton).on("click", function () {
             var rule = robot.addRule();
-            var anyrule = rule.getElement();
-            anyrule.Rule = rule;
-            //rm.rules.push(rule);
-            rulesul.appendChild(rule.getElement());
-            $(".ruleactionlist").sortable({ connectWith: ".ruleactionlist" });
-            $(actionrepoul).find("li").draggable({ connectToSortable: ".ruleactionlist" });
-            $(actionrepoul).find(".memory").draggable({ connectToSortable: ".memorydroppable" });
-            $(".memorycondlist").sortable({ connectWith: ".memorycondlist" });
+            rm.addRule(rule);
         });
         $(rulesul).sortable({
             revert: "invalid"
@@ -151,6 +178,51 @@ var RulesManager = /** @class */ (function () {
         //    }
         //});
     }
+    RulesManager.prototype.clear = function () {
+        while (this.rulesul.childNodes.length > 0) {
+            this.rulesul.removeChild(this.rulesul.childNodes.item(0));
+        }
+    };
+    RulesManager.prototype.addRule = function (rule) {
+        var anyrule = rule.getElement();
+        anyrule.Rule = rule;
+        //rm.rules.push(rule);
+        this.rulesul.appendChild(rule.getElement());
+        $(".ruleactionlist").sortable({ connectWith: ".ruleactionlist" });
+        $(this.actionrepoul).find("li").draggable({ connectToSortable: ".ruleactionlist" });
+        $(this.actionrepoul).find(".memory").draggable({ connectToSortable: ".memorydroppable" });
+        $(".memorycondlist").sortable({ connectWith: ".memorycondlist" });
+    };
+    RulesManager.prototype.toText = function () {
+        var ret = "";
+        for (var _i = 0, _a = this.getRules(); _i < _a.length; _i++) {
+            var rule = _a[_i];
+            ret += rule.toText();
+        }
+        return ret;
+    };
+    RulesManager.prototype.loadFromText = function (stream, robot) {
+        while (!stream.atEnd()) {
+            var rule = robot.addRule();
+            rule.loadFromText(stream, robot);
+            this.addRule(rule);
+        }
+    };
+    //static ruleFromText<W extends IWorld<W>>(stream: StringStream, robot: IRobot<W>): IRule<W> {
+    //    var tag = stream.peekFront(2);
+    //    stream.move(2);
+    //    switch (tag) {robot.addRule();
+    //        case "BR":
+    //            var basicRule = new BasicRule<W>();
+    //            basicRule.loadFromText(stream, robot);
+    //            return basicRule;
+    //        case "MR":
+    //            var memoryRule = new MemoryRule<W>();
+    //            memoryRule.loadFromText(stream, robot);
+    //            return memoryRule;
+    //        default: throw new Error("Unknown Rule Type");
+    //    }
+    //}
     RulesManager.prototype.getRulesDiv = function () {
         return this.rulesdiv;
     };

@@ -5,11 +5,14 @@ interface IAction<W extends IWorld<W>> {
     enter(success: boolean): void;
     exit(): void;
     delete(): void;
+    toText(): string;
 }
 
 abstract class AAction<W extends IWorld<W>> implements IAction<W> {
     actionli: HTMLLIElement;
-    constructor(actionli: HTMLLIElement) {
+    actionid: string;
+    constructor(actionid: string, actionli: HTMLLIElement) {
+        this.actionid = actionid;
         this.actionli = actionli;
     }
     enter(success: boolean): void {
@@ -21,20 +24,26 @@ abstract class AAction<W extends IWorld<W>> implements IAction<W> {
     delete(): void { }
     abstract runnable(world: W): boolean;
     abstract run(world: W): W;
+    toText() { return this.actionid; }
 }
 
 interface IActionFactory<W extends IWorld<W>> {
     getElement(): HTMLLIElement;
+    getId(): string;
+    construct(): HTMLLIElement;
 }
 
 abstract class AActionFactory<W extends IWorld<W>> implements IActionFactory<W> {
-
+    actionid: string;
     actionli: HTMLLIElement;
     text: string;
     imgname: string;
     clsnames: string[];
 
-    constructor(clsnames: string[], imgname: string, text: string) {
+    getId() : string { return this.actionid; }
+
+    constructor(actionid: string, clsnames: string[], imgname: string, text: string) {
+        this.actionid = actionid;
         this.clsnames = clsnames;
         this.imgname = imgname;
         this.text = text;
@@ -57,14 +66,7 @@ abstract class AActionFactory<W extends IWorld<W>> implements IActionFactory<W> 
             //    anyelem.Action = construct(<HTMLLIElement>ui.helper[0]);
             //},
             stop: function (event, ui) {
-                var delbutton = document.createElement("button");
-                delbutton.classList.add("actiondeletebutton");
-                $(delbutton).on("click", function () {
-                    ui.helper[0].parentElement.removeChild(ui.helper[0]);
-                    var anyelem: any = ui.helper[0];
-                    anyelem.Action.delete();
-                });
-                ui.helper[0].appendChild(delbutton);
+                addActionDeleteButton(ui.helper[0]);
             }
         });
     }
@@ -93,7 +95,7 @@ class MoveForwardAction<W extends IWorld<W>> extends AAction<W> {
     actionli: HTMLLIElement;
 
     constructor(actionli: HTMLLIElement) {
-        super(actionli);
+        super("FWD", actionli);
     }
 
     runnable(world: W): boolean {
@@ -123,7 +125,7 @@ class MoveForwardAction<W extends IWorld<W>> extends AAction<W> {
 class MoveForwardActionFactory<W extends IWorld<W>> extends AActionFactory<W> {
 
     constructor() {
-        super(["actionmoveforward"], "forward.png", "Forward");
+        super("FWD", ["actionmoveforward"], "forward.png", "Forward");
     }
     makeAction(li: HTMLLIElement): IAction<W> { return new MoveForwardAction(li); }
 }
@@ -132,7 +134,7 @@ class TurnLeftAction<W extends IWorld<W>> extends AAction<W> {
     actionli: HTMLLIElement;
 
     constructor(actionli: HTMLLIElement) {
-        super(actionli);
+        super("TNL", actionli);
     }
     runnable(world: W): boolean {
         return true;
@@ -145,7 +147,7 @@ class TurnLeftAction<W extends IWorld<W>> extends AAction<W> {
 class TurnLeftActionFactory<W extends IWorld<W>> extends AActionFactory<W> {
 
     constructor() {
-        super(["actionturnleft"], "turnleft.png", "Turn Left");
+        super("TNL", ["actionturnleft"], "turnleft.png", "Turn Left");
     }
     makeAction(li: HTMLLIElement): IAction<W> { return new TurnLeftAction(li); }
 }
@@ -154,7 +156,7 @@ class TurnRightAction<W extends IWorld<W>> extends AAction<W> {
     actionli: HTMLLIElement;
 
     constructor(actionli: HTMLLIElement) {
-        super(actionli);
+        super("TNR", actionli);
     }
     runnable(world: W): boolean {
         return true;
@@ -167,29 +169,29 @@ class TurnRightAction<W extends IWorld<W>> extends AAction<W> {
 class TurnRightActionFactory<W extends IWorld<W>> extends AActionFactory<W> {
 
     constructor() {
-        super(["actionturnright"], "turnright.png", "Turn Right");
+        super("TNR", ["actionturnright"], "turnright.png", "Turn Right");
     }
     makeAction(li: HTMLLIElement): IAction<W> { return new TurnRightAction(li); }
 }
 
-class RememberAction<W extends IWorld<W>> extends AAction<W> {
-    constructor(actionli: HTMLLIElement) {
-        super(actionli);
-    }
-    memory: MemoryLabel;
-    runnable(world: W): boolean {
-        return true;
-    }
-    run(world: W): W {
-        return world.remember(this.memory);
-    }
-}
+//class RememberAction<W extends IWorld<W>> extends AAction<W> {
+//    constructor(actionli: HTMLLIElement) {
+//        super(actionli);
+//    }
+//    memory: MemoryLabel;
+//    runnable(world: W): boolean {
+//        return true;
+//    }
+//    run(world: W): W {
+//        return world.remember(this.memory);
+//    }
+//}
 
 class Memory<W extends IWorld<W>> extends AAction<W>  {
     memory: MemoryLabel;
     nameChangeHandler: (string) => void;
     constructor(memory: MemoryLabel, actionli: HTMLLIElement) {
-        super(actionli);
+        super("M"+memory.getId(), actionli);
         this.memory = memory;
         var span: HTMLSpanElement = <HTMLSpanElement><any>($(this.actionli).find("span")[0]);
         //var input: HTMLInputElement = <HTMLInputElement><any>($(actionli).find("input")[0]);
@@ -223,7 +225,7 @@ class Memory<W extends IWorld<W>> extends AAction<W>  {
 class MemoryActionFactory<W extends IWorld<W>> extends AActionFactory<W> {
     memory: MemoryLabel;
     constructor(memory: MemoryLabel) {
-        super(["memory", memory.getName().replace(" ", "").toLowerCase()], "memory.png", memory.getName());
+        super("M"+memory.getId(), ["memory", memory.getName().replace(" ", "").toLowerCase()], "memory.png", memory.getName());
         this.memory = memory;
         var span: HTMLSpanElement = <HTMLSpanElement><any>($(this.actionli).find("span")[0]);
         var input: HTMLInputElement = document.createElement("input");

@@ -5,7 +5,12 @@
 interface IRobot<W extends IWorld<W>> extends IRobotProgram {
     getRules(): Array<IRule<W>>;
     addRule(): IRule<W>;
+    getFactory(key: string): IActionFactory<W>;
+    loadFromText(stream: StringStream) : void;
+    toText(): string;
 }
+
+
 
 class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
     currentStep: IStep<W>;
@@ -15,6 +20,7 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
     controlDiv: HTMLDivElement;
     runDiv: HTMLDivElement;
     mapcanvas: HTMLCanvasElement;
+    rulesDiv: HTMLDivElement;
 
     toStartButton: HTMLButtonElement;
     backButton: HTMLButtonElement;
@@ -22,17 +28,27 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
     stepButton: HTMLButtonElement;
     runButton: HTMLButtonElement;
     ffwdButton: HTMLButtonElement;
-    constructor(world: W) {
+
+    factories: StringMap<IActionFactory<W>> = {};
+    level: ILevel;
+
+    constructor(level: ILevel, world: W) {
+        this.level = level;
         this.currentStep = new InitStep(this, world);
         this.firstStep = this.currentStep;
         var rm: RulesManager<W> = new RulesManager<W>(this);
         var moveForwardFactory = new MoveForwardActionFactory<W>();
         var turnLeftFactory = new TurnLeftActionFactory<W>();
         var turnRightFactory = new TurnRightActionFactory<W>();
-        rm.actionrepoul.appendChild(moveForwardFactory.actionli);
-        rm.actionrepoul.appendChild(turnLeftFactory.actionli);
-        rm.actionrepoul.appendChild(turnRightFactory.actionli);
         this.rulesManager = rm;
+
+        this.addFactory(moveForwardFactory);
+        this.addFactory(turnLeftFactory);
+        this.addFactory(turnRightFactory);
+        
+        //rm.actionrepoul.appendChild(moveForwardFactory.actionli);
+        //rm.actionrepoul.appendChild(turnLeftFactory.actionli);
+        //rm.actionrepoul.appendChild(turnRightFactory.actionli);
 
         var rundiv = document.createElement("div");
         rundiv.classList.add("runcontrols");
@@ -75,11 +91,40 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
         this.ffwdButton = fastforwardbutton;
 
         this.runDiv = rundiv;
+
+        this.rulesDiv = document.createElement("div");
+        var menuDiv = document.createElement("div");
+        menuDiv.classList.add("robotmenu");
+        this.rulesDiv.appendChild(menuDiv);
+        this.rulesDiv.appendChild(this.rulesManager.getRulesDiv());
+
+        var savebutton = document.createElement("button");
+        savebutton.innerText = "Save";
+        var loadbutton = document.createElement("button");
+        loadbutton.innerText = "Load";
+        loadbutton.disabled = (localStorage.getItem("mapcode:" + robot.level.getName()) == null);
+        $(savebutton).on("click", function () {
+            localStorage.setItem("mapcode:" + robot.level.getName(), robot.toText());
+            loadbutton.disabled = false;
+        });
+        menuDiv.appendChild(savebutton);
+        $(loadbutton).on("click", function () {
+            robot.rulesManager.clear();
+            robot.loadFromText(new StringStream(localStorage.getItem("mapcode:" + robot.level.getName())));
+        });
+        menuDiv.appendChild(loadbutton);
+    }
+
+    addFactory(factory: IActionFactory<W>): void {
+        if (!this.factories[factory.getId()]) {
+            this.rulesManager.actionrepoul.appendChild(factory.getElement());
+            this.factories[factory.getId()] = factory;
+        }
     }
 
     toBackground(): void {
+        this.guiDiv.removeChild(this.rulesDiv);
         this.guiDiv.removeChild(this.rulesManager.getActionRepoDiv());
-        this.guiDiv.removeChild(this.rulesManager.getRulesDiv());
         this.controlDiv.removeChild(this.runDiv);
     }
     toForeground(guiDiv: HTMLDivElement, controlDiv: HTMLDivElement, mapcanvas: HTMLCanvasElement): void {
@@ -87,7 +132,7 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
         this.controlDiv = controlDiv;
         this.currentStep.getWorld().draw(mapcanvas);
         this.mapcanvas = mapcanvas;
-        guiDiv.appendChild(this.rulesManager.getRulesDiv());
+        guiDiv.appendChild(this.rulesDiv);
         guiDiv.appendChild(this.rulesManager.getActionRepoDiv());
         controlDiv.appendChild(this.runDiv);
     }
@@ -111,6 +156,10 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
             this.currentStep = step;
             this.currentStep.enter();
         }
+    }
+
+    getFactory(key: string): IActionFactory<W> {
+        return this.factories[key];
     }
 
     toStart(): IStep<W> {
@@ -198,31 +247,44 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
     runfast(): void {
         this.runAtSpeed(20);
     }
+    toText(): string { return this.rulesManager.toText(); }
+    loadFromText(stream: StringStream): void { this.rulesManager.loadFromText(stream, this); };
 }
 
 class MemoryRobot<W extends IWorld<W>> extends BasicRobot<W> {
-    constructor(world: W) {
-        super(world);
-        var memory1 = new MemoryActionFactory<W>(new MemoryLabel("Memory 1"));
-        var memory2 = new MemoryActionFactory<W>(new MemoryLabel("Memory 2"));
-        var memory3 = new MemoryActionFactory<W>(new MemoryLabel("Memory 3"));
-        var memory4 = new MemoryActionFactory<W>(new MemoryLabel("Memory 4"));
-        var memory5 = new MemoryActionFactory<W>(new MemoryLabel("Memory 5"));
-        var memory6 = new MemoryActionFactory<W>(new MemoryLabel("Memory 6"));
-        var memory7 = new MemoryActionFactory<W>(new MemoryLabel("Memory 7"));
-        var memory8 = new MemoryActionFactory<W>(new MemoryLabel("Memory 8"));
-        this.rulesManager.actionrepoul.appendChild(memory1.getElement());
-        this.rulesManager.actionrepoul.appendChild(memory2.getElement());
-        this.rulesManager.actionrepoul.appendChild(memory3.getElement());
-        this.rulesManager.actionrepoul.appendChild(memory4.getElement());
-        this.rulesManager.actionrepoul.appendChild(memory5.getElement());
-        this.rulesManager.actionrepoul.appendChild(memory6.getElement());
-        this.rulesManager.actionrepoul.appendChild(memory7.getElement());
-        this.rulesManager.actionrepoul.appendChild(memory8.getElement());
+    memories: MemoryLabel[];
+    constructor(level : ILevel, world: W) {
+        super(level, world);
+        this.memories = [new MemoryLabel("m1", "Memory 1"),
+            new MemoryLabel("m2", "Memory 2"),
+            new MemoryLabel("m3", "Memory 3"),
+            new MemoryLabel("m4", "Memory 4"),
+            new MemoryLabel("m5", "Memory 5"),
+            new MemoryLabel("m6", "Memory 6"),
+            new MemoryLabel("m7", "Memory 7"),
+            new MemoryLabel("m8", "Memory 8")]
+        this.memories.forEach((mem) => this.addFactory(new MemoryActionFactory<W>(mem)));
     }
 
     addRule(): IRule<W> {
         var rule = new MemoryRule<W>();
         return rule;
     }
+
+    toText(): string {
+        var ret = "";
+        for (let mem of this.memories) {
+            ret += mem.getName().replace("|", "||") + "#|#";
+        }
+        return ret + super.toText();
+    }
+
+    loadFromText(stream: StringStream): void {
+        for (var i = 0; i < this.memories.length; i++) {
+            var name = stream.readUntil("#|#");
+            this.memories[i].setName(name.replace("||", "|"));
+            $(this.getFactory(this.memories[i].getId()).getElement()).find("input").val(this.memories[i].getName());
+        }
+        super.loadFromText(stream);
+    };
 }

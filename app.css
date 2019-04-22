@@ -662,6 +662,8 @@ button.expander {
     height: 100%;
     text-align: center;
     right: 0px;
+    border: 4px #B31B1B solid;
+    border-right:0px;
 }
 
     .actionrepo > span {
@@ -722,3 +724,8 @@ button.expander {
             background-position: left center;
             background-repeat: no-repeat;
         }
+
+.robotmenu {
+    background: #B31B1B;
+    height:32px;
+}

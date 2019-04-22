@@ -12,19 +12,24 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 var BasicRobot = /** @class */ (function () {
-    function BasicRobot(world) {
+    function BasicRobot(level, world) {
         var _this = this;
+        this.factories = {};
         this.isRunning = false;
+        this.level = level;
         this.currentStep = new InitStep(this, world);
         this.firstStep = this.currentStep;
         var rm = new RulesManager(this);
         var moveForwardFactory = new MoveForwardActionFactory();
         var turnLeftFactory = new TurnLeftActionFactory();
         var turnRightFactory = new TurnRightActionFactory();
-        rm.actionrepoul.appendChild(moveForwardFactory.actionli);
-        rm.actionrepoul.appendChild(turnLeftFactory.actionli);
-        rm.actionrepoul.appendChild(turnRightFactory.actionli);
         this.rulesManager = rm;
+        this.addFactory(moveForwardFactory);
+        this.addFactory(turnLeftFactory);
+        this.addFactory(turnRightFactory);
+        //rm.actionrepoul.appendChild(moveForwardFactory.actionli);
+        //rm.actionrepoul.appendChild(turnLeftFactory.actionli);
+        //rm.actionrepoul.appendChild(turnRightFactory.actionli);
         var rundiv = document.createElement("div");
         rundiv.classList.add("runcontrols");
         var stepforwardbutton = document.createElement("button");
@@ -62,10 +67,36 @@ var BasicRobot = /** @class */ (function () {
         this.runButton = runbutton;
         this.ffwdButton = fastforwardbutton;
         this.runDiv = rundiv;
+        this.rulesDiv = document.createElement("div");
+        var menuDiv = document.createElement("div");
+        menuDiv.classList.add("robotmenu");
+        this.rulesDiv.appendChild(menuDiv);
+        this.rulesDiv.appendChild(this.rulesManager.getRulesDiv());
+        var savebutton = document.createElement("button");
+        savebutton.innerText = "Save";
+        var loadbutton = document.createElement("button");
+        loadbutton.innerText = "Load";
+        loadbutton.disabled = (localStorage.getItem("mapcode:" + robot.level.getName()) == null);
+        $(savebutton).on("click", function () {
+            localStorage.setItem("mapcode:" + robot.level.getName(), robot.toText());
+            loadbutton.disabled = false;
+        });
+        menuDiv.appendChild(savebutton);
+        $(loadbutton).on("click", function () {
+            robot.rulesManager.clear();
+            robot.loadFromText(new StringStream(localStorage.getItem("mapcode:" + robot.level.getName())));
+        });
+        menuDiv.appendChild(loadbutton);
     }
+    BasicRobot.prototype.addFactory = function (factory) {
+        if (!this.factories[factory.getId()]) {
+            this.rulesManager.actionrepoul.appendChild(factory.getElement());
+            this.factories[factory.getId()] = factory;
+        }
+    };
     BasicRobot.prototype.toBackground = function () {
+        this.guiDiv.removeChild(this.rulesDiv);
         this.guiDiv.removeChild(this.rulesManager.getActionRepoDiv());
-        this.guiDiv.removeChild(this.rulesManager.getRulesDiv());
         this.controlDiv.removeChild(this.runDiv);
     };
     BasicRobot.prototype.toForeground = function (guiDiv, controlDiv, mapcanvas) {
@@ -73,7 +104,7 @@ var BasicRobot = /** @class */ (function () {
         this.controlDiv = controlDiv;
         this.currentStep.getWorld().draw(mapcanvas);
         this.mapcanvas = mapcanvas;
-        guiDiv.appendChild(this.rulesManager.getRulesDiv());
+        guiDiv.appendChild(this.rulesDiv);
         guiDiv.appendChild(this.rulesManager.getActionRepoDiv());
         controlDiv.appendChild(this.runDiv);
     };
@@ -95,6 +126,9 @@ var BasicRobot = /** @class */ (function () {
             this.currentStep = step;
             this.currentStep.enter();
         }
+    };
+    BasicRobot.prototype.getFactory = function (key) {
+        return this.factories[key];
     };
     BasicRobot.prototype.toStart = function () {
         this.setCurrentStep(this.firstStep);
@@ -173,34 +207,47 @@ var BasicRobot = /** @class */ (function () {
     BasicRobot.prototype.runfast = function () {
         this.runAtSpeed(20);
     };
+    BasicRobot.prototype.toText = function () { return this.rulesManager.toText(); };
+    BasicRobot.prototype.loadFromText = function (stream) { this.rulesManager.loadFromText(stream, this); };
+    ;
     return BasicRobot;
 }());
 var MemoryRobot = /** @class */ (function (_super) {
     __extends(MemoryRobot, _super);
-    function MemoryRobot(world) {
-        var _this = _super.call(this, world) || this;
-        var memory1 = new MemoryActionFactory(new MemoryLabel("Memory 1"));
-        var memory2 = new MemoryActionFactory(new MemoryLabel("Memory 2"));
-        var memory3 = new MemoryActionFactory(new MemoryLabel("Memory 3"));
-        var memory4 = new MemoryActionFactory(new MemoryLabel("Memory 4"));
-        var memory5 = new MemoryActionFactory(new MemoryLabel("Memory 5"));
-        var memory6 = new MemoryActionFactory(new MemoryLabel("Memory 6"));
-        var memory7 = new MemoryActionFactory(new MemoryLabel("Memory 7"));
-        var memory8 = new MemoryActionFactory(new MemoryLabel("Memory 8"));
-        _this.rulesManager.actionrepoul.appendChild(memory1.getElement());
-        _this.rulesManager.actionrepoul.appendChild(memory2.getElement());
-        _this.rulesManager.actionrepoul.appendChild(memory3.getElement());
-        _this.rulesManager.actionrepoul.appendChild(memory4.getElement());
-        _this.rulesManager.actionrepoul.appendChild(memory5.getElement());
-        _this.rulesManager.actionrepoul.appendChild(memory6.getElement());
-        _this.rulesManager.actionrepoul.appendChild(memory7.getElement());
-        _this.rulesManager.actionrepoul.appendChild(memory8.getElement());
+    function MemoryRobot(level, world) {
+        var _this = _super.call(this, level, world) || this;
+        _this.memories = [new MemoryLabel("m1", "Memory 1"),
+            new MemoryLabel("m2", "Memory 2"),
+            new MemoryLabel("m3", "Memory 3"),
+            new MemoryLabel("m4", "Memory 4"),
+            new MemoryLabel("m5", "Memory 5"),
+            new MemoryLabel("m6", "Memory 6"),
+            new MemoryLabel("m7", "Memory 7"),
+            new MemoryLabel("m8", "Memory 8")];
+        _this.memories.forEach(function (mem) { return _this.addFactory(new MemoryActionFactory(mem)); });
         return _this;
     }
     MemoryRobot.prototype.addRule = function () {
         var rule = new MemoryRule();
         return rule;
     };
+    MemoryRobot.prototype.toText = function () {
+        var ret = "";
+        for (var _i = 0, _a = this.memories; _i < _a.length; _i++) {
+            var mem = _a[_i];
+            ret += mem.getName().replace("|", "||") + "#|#";
+        }
+        return ret + _super.prototype.toText.call(this);
+    };
+    MemoryRobot.prototype.loadFromText = function (stream) {
+        for (var i = 0; i < this.memories.length; i++) {
+            var name = stream.readUntil("#|#");
+            this.memories[i].setName(name.replace("||", "|"));
+            $(this.getFactory(this.memories[i].getId()).getElement()).find("input").val(this.memories[i].getName());
+        }
+        _super.prototype.loadFromText.call(this, stream);
+    };
+    ;
     return MemoryRobot;
 }(BasicRobot));
 //# sourceMappingURL=Robot.js.map

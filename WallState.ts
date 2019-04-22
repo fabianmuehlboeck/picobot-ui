@@ -32,10 +32,13 @@ class WallStateSelector {
         });
         this.wallButton = wallButton;
         var button = document.createElement("button");
-        $(button).on("click", function () {
+        $(button).on("focus", function () {
             $(wss.selectionDiv).show("clip", {}, 200);
         });
-        $(button).focusout(function () {
+        $(button).blur(function (fe) {
+            if (fe.relatedTarget == wss.freeButton || fe.relatedTarget == wss.anyButton || fe.relatedTarget == wss.wallButton) {
+                return;
+            }
             $(wss.selectionDiv).hide("clip", {}, 200);
         });
 
@@ -84,6 +87,7 @@ class WallStateSelector {
                 this.button.className = "wallstatewall";
                 break;
         }
+        $(this.selectionDiv).hide("clip", {}, 200);
         if (this.onChangeState != null) {
             this.onChangeState(oldstate, this.state);
         }

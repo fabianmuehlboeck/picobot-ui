@@ -16,7 +16,7 @@ var HardMazeLevel = /** @class */ (function (_super) {
     function HardMazeLevel() {
         var _this = _super.call(this) || this;
         _this.generator = new HardMazeMapGenerator();
-        _this.robot = new MemoryRobot(_this.resetWorld());
+        _this.robot = new MemoryRobot(_this, _this.resetWorld());
         return _this;
     }
     HardMazeLevel.prototype.getName = function () { return "Tricky Maze"; };

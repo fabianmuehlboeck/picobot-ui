@@ -12,7 +12,8 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 var AAction = /** @class */ (function () {
-    function AAction(actionli) {
+    function AAction(actionid, actionli) {
+        this.actionid = actionid;
         this.actionli = actionli;
     }
     AAction.prototype.enter = function (success) {
@@ -22,11 +23,13 @@ var AAction = /** @class */ (function () {
         $(this.actionli).stop(true).animate({ backgroundColor: "" }, 100);
     };
     AAction.prototype.delete = function () { };
+    AAction.prototype.toText = function () { return this.actionid; };
     return AAction;
 }());
 var AActionFactory = /** @class */ (function () {
-    function AActionFactory(clsnames, imgname, text) {
+    function AActionFactory(actionid, clsnames, imgname, text) {
         var _this = this;
+        this.actionid = actionid;
         this.clsnames = clsnames;
         this.imgname = imgname;
         this.text = text;
@@ -48,17 +51,11 @@ var AActionFactory = /** @class */ (function () {
             //    anyelem.Action = construct(<HTMLLIElement>ui.helper[0]);
             //},
             stop: function (event, ui) {
-                var delbutton = document.createElement("button");
-                delbutton.classList.add("actiondeletebutton");
-                $(delbutton).on("click", function () {
-                    ui.helper[0].parentElement.removeChild(ui.helper[0]);
-                    var anyelem = ui.helper[0];
-                    anyelem.Action.delete();
-                });
-                ui.helper[0].appendChild(delbutton);
+                addActionDeleteButton(ui.helper[0]);
             }
         });
     }
+    AActionFactory.prototype.getId = function () { return this.actionid; };
     AActionFactory.prototype.construct = function () {
         var actionli = document.createElement("li");
         this.clsnames.forEach(function (clsname) { actionli.classList.add(clsname); });
@@ -79,7 +76,7 @@ var AActionFactory = /** @class */ (function () {
 var MoveForwardAction = /** @class */ (function (_super) {
     __extends(MoveForwardAction, _super);
     function MoveForwardAction(actionli) {
-        return _super.call(this, actionli) || this;
+        return _super.call(this, "FWD", actionli) || this;
     }
     MoveForwardAction.prototype.runnable = function (world) {
         var newx = world.getX();
@@ -108,7 +105,7 @@ var MoveForwardAction = /** @class */ (function (_super) {
 var MoveForwardActionFactory = /** @class */ (function (_super) {
     __extends(MoveForwardActionFactory, _super);
     function MoveForwardActionFactory() {
-        return _super.call(this, ["actionmoveforward"], "forward.png", "Forward") || this;
+        return _super.call(this, "FWD", ["actionmoveforward"], "forward.png", "Forward") || this;
     }
     MoveForwardActionFactory.prototype.makeAction = function (li) { return new MoveForwardAction(li); };
     return MoveForwardActionFactory;
@@ -116,7 +113,7 @@ var MoveForwardActionFactory = /** @class */ (function (_super) {
 var TurnLeftAction = /** @class */ (function (_super) {
     __extends(TurnLeftAction, _super);
     function TurnLeftAction(actionli) {
-        return _super.call(this, actionli) || this;
+        return _super.call(this, "TNL", actionli) || this;
     }
     TurnLeftAction.prototype.runnable = function (world) {
         return true;
@@ -129,7 +126,7 @@ var TurnLeftAction = /** @class */ (function (_super) {
 var TurnLeftActionFactory = /** @class */ (function (_super) {
     __extends(TurnLeftActionFactory, _super);
     function TurnLeftActionFactory() {
-        return _super.call(this, ["actionturnleft"], "turnleft.png", "Turn Left") || this;
+        return _super.call(this, "TNL", ["actionturnleft"], "turnleft.png", "Turn Left") || this;
     }
     TurnLeftActionFactory.prototype.makeAction = function (li) { return new TurnLeftAction(li); };
     return TurnLeftActionFactory;
@@ -137,7 +134,7 @@ var TurnLeftActionFactory = /** @class */ (function (_super) {
 var TurnRightAction = /** @class */ (function (_super) {
     __extends(TurnRightAction, _super);
     function TurnRightAction(actionli) {
-        return _super.call(this, actionli) || this;
+        return _super.call(this, "TNR", actionli) || this;
     }
     TurnRightAction.prototype.runnable = function (world) {
         return true;
@@ -150,28 +147,27 @@ var TurnRightAction = /** @class */ (function (_super) {
 var TurnRightActionFactory = /** @class */ (function (_super) {
     __extends(TurnRightActionFactory, _super);
     function TurnRightActionFactory() {
-        return _super.call(this, ["actionturnright"], "turnright.png", "Turn Right") || this;
+        return _super.call(this, "TNR", ["actionturnright"], "turnright.png", "Turn Right") || this;
     }
     TurnRightActionFactory.prototype.makeAction = function (li) { return new TurnRightAction(li); };
     return TurnRightActionFactory;
 }(AActionFactory));
-var RememberAction = /** @class */ (function (_super) {
-    __extends(RememberAction, _super);
-    function RememberAction(actionli) {
-        return _super.call(this, actionli) || this;
-    }
-    RememberAction.prototype.runnable = function (world) {
-        return true;
-    };
-    RememberAction.prototype.run = function (world) {
-        return world.remember(this.memory);
-    };
-    return RememberAction;
-}(AAction));
+//class RememberAction<W extends IWorld<W>> extends AAction<W> {
+//    constructor(actionli: HTMLLIElement) {
+//        super(actionli);
+//    }
+//    memory: MemoryLabel;
+//    runnable(world: W): boolean {
+//        return true;
+//    }
+//    run(world: W): W {
+//        return world.remember(this.memory);
+//    }
+//}
 var Memory = /** @class */ (function (_super) {
     __extends(Memory, _super);
     function Memory(memory, actionli) {
-        var _this = _super.call(this, actionli) || this;
+        var _this = _super.call(this, "M" + memory.getId(), actionli) || this;
         _this.memory = memory;
         var span = ($(_this.actionli).find("span")[0]);
         //var input: HTMLInputElement = <HTMLInputElement><any>($(actionli).find("input")[0]);
@@ -204,7 +200,7 @@ var Memory = /** @class */ (function (_super) {
 var MemoryActionFactory = /** @class */ (function (_super) {
     __extends(MemoryActionFactory, _super);
     function MemoryActionFactory(memory) {
-        var _this = _super.call(this, ["memory", memory.getName().replace(" ", "").toLowerCase()], "memory.png", memory.getName()) || this;
+        var _this = _super.call(this, "M" + memory.getId(), ["memory", memory.getName().replace(" ", "").toLowerCase()], "memory.png", memory.getName()) || this;
         _this.memory = memory;
         var span = ($(_this.actionli).find("span")[0]);
         var input = document.createElement("input");

@@ -96,3 +96,24 @@ function dirYadjust(dir: Direction): number {
             return 0;
     }
 }
+
+function wallStateToString(ws: WallState): string {
+    switch (ws) {
+        case WallState.Any: return "A";
+        case WallState.Free: return "F";
+        case WallState.Wall: return "W";
+    }
+}
+
+function stringToWallState(s: string): WallState {
+    switch (s) {
+        case "A": return WallState.Any;
+        case "F": return WallState.Free;
+        case "W": return WallState.Wall;
+        default: throw new Error("Invalid Wall State");
+    }
+}
+
+interface StringMap<T> {
+    [K: string]: T;
+}
