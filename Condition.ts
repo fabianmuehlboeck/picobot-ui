@@ -152,7 +152,7 @@ class MemoryCondition<W extends IWorld<W>> extends SensorCondition<W> {
         var ret: string = super.toText();
         for (var i = 0; i < this.memoryul.childNodes.length; i++) {
             var memory = <Memory<W>>((<any>(this.memoryul.childNodes.item(i))).Action);
-            ret += memory.memory.getId() + ";";
+            ret += "M"+memory.memory.getId() + ";";
         }
         return ret+"|";
     }

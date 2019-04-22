@@ -149,7 +149,7 @@ var MemoryCondition = /** @class */ (function (_super) {
         var ret = _super.prototype.toText.call(this);
         for (var i = 0; i < this.memoryul.childNodes.length; i++) {
             var memory = ((this.memoryul.childNodes.item(i)).Action);
-            ret += memory.memory.getId() + ";";
+            ret += "M" + memory.memory.getId() + ";";
         }
         return ret + "|";
     };

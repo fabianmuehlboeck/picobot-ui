@@ -243,7 +243,7 @@ var MemoryRobot = /** @class */ (function (_super) {
         for (var i = 0; i < this.memories.length; i++) {
             var name = stream.readUntil("#|#");
             this.memories[i].setName(name.replace("||", "|"));
-            $(this.getFactory(this.memories[i].getId()).getElement()).find("input").val(this.memories[i].getName());
+            $(this.getFactory("M" + this.memories[i].getId()).getElement()).find("input").val(this.memories[i].getName());
         }
         _super.prototype.loadFromText.call(this, stream);
     };
