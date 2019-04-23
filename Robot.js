@@ -184,8 +184,25 @@ var BasicRobot = /** @class */ (function () {
             }
             if (testmapindex < testmaps.length) {
                 if (_this.currentStep.hasSuccessor()) {
-                    _this.setCurrentStep(_this.currentStep.getSuccessor());
-                    _this.currentStep.getWorld().draw(_this.mapcanvas);
+                    var steps = 0;
+                    var curx = _this.currentStep.getWorld().getX();
+                    var cury = _this.currentStep.getWorld().getY();
+                    var curdir = _this.currentStep.getWorld().getDirection();
+                    while (_this.currentStep.hasSuccessor() && steps < 1000 && curx == _this.currentStep.getWorld().getX() && cury == _this.currentStep.getWorld().getY() && curdir == _this.currentStep.getWorld().getDirection()) {
+                        _this.setCurrentStep(_this.currentStep.getSuccessor());
+                        _this.currentStep.getWorld().draw(_this.mapcanvas);
+                        steps++;
+                    }
+                    if (steps == 1000) {
+                        window.clearInterval(_this.runInterval);
+                        _this.isTesting = false;
+                        testbanner.parentNode.removeChild(testbanner);
+                        var dialogdiv = document.createElement("div");
+                        dialogdiv.innerText = "Test ran too long without any movement!";
+                        document.body.appendChild(dialogdiv);
+                        $(dialogdiv).dialog({ modal: true, close: function () { dialogdiv.parentNode.removeChild(dialogdiv); } });
+                        _this.updateButtons();
+                    }
                 }
                 else {
                     if (_this.currentStep.isError()) {

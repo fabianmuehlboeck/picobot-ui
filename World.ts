@@ -195,6 +195,30 @@ abstract class VacuumWorld<W extends IWorld<W>> extends AWorld<W> {
     abstract getVacuumMap(): AVacuumMap;
     getMap(): IMap { return this.getVacuumMap(); }
 
+    drawWorldBackground(ctx: CanvasRenderingContext2D, cellwidth: number, cellheight: number) {
+        for (var x = 0; x < this.getMap().getWidth(); x++) {
+            for (var y = 0; y < this.getMap().getHeight(); y++) {
+                if (this.vacuumed[x][y]) {
+                    ctx.fillStyle = "#BBBBBB";
+                    ctx.fillRect(x * cellwidth, y * cellheight, cellwidth, cellheight);
+                }
+            }
+        }
+    }
+
+    abstract copyWithVacuumed(direction: Direction, x: number, y: number, memories: MemoryLabel[], vacuumed: boolean[][]) : W;
+    copyWith(direction: Direction, x: number, y: number, memories: MemoryLabel[]): W {
+        var newvac: boolean[][] = [];
+        for (var vx = 0; vx < this.vacuumed.length; vx++) {
+            newvac.push([]);
+            for (var vy = 0; vy < this.vacuumed[vx].length; vy++) {
+                newvac[vx].push(this.vacuumed[vx][vy]);
+            }
+        }
+        newvac[x][y] = true;
+        return this.copyWithVacuumed(direction, x, y, memories, newvac);
+    }
+
     isFinal(): boolean {
         for (var x = 0; x < this.getMap().getWidth(); x++) {
             for (var y = 0; y < this.getMap().getHeight(); y++) {

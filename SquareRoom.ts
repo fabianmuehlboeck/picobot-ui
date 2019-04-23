@@ -61,27 +61,9 @@ class SquareRoomWorld extends VacuumWorld<SquareRoomWorld> {
         this.map = map;
     }
 
-    copyWith(direction: Direction, x: number, y: number, memories: MemoryLabel[]): SquareRoomWorld {
-        var newvac: boolean[][] = [];
-        for (var vx = 0; vx < this.vacuumed.length; vx++) {
-            newvac.push([]);
-            for (var vy = 0; vy < this.vacuumed[vx].length; vy++) {
-                newvac[vx].push(this.vacuumed[vx][vy]);
-            }
-        }
-        newvac[x][y] = true;
-        return new SquareRoomWorld(direction, x, y, memories, this.map, newvac);
+    copyWithVacuumed(direction: Direction, x: number, y: number, memories: MemoryLabel[], vacuumed: boolean[][]): SquareRoomWorld {
+        return new SquareRoomWorld(direction, x, y, memories, this.map, vacuumed);
     }
     getVacuumMap(): AVacuumMap { return this.map; }
-    drawWorldBackground(ctx: CanvasRenderingContext2D, cellwidth: number, cellheight: number) {
-        for (var x = 0; x < this.getMap().getWidth(); x++) {
-            for (var y = 0; y < this.getMap().getHeight(); y++) {
-                if (this.vacuumed[x][y]) {
-                    ctx.fillStyle = "#BBBBBB";
-                    ctx.fillRect(x * cellwidth, y * cellheight, cellwidth, cellheight);
-                }
-            }
-        }
-    }
 
 }

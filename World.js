@@ -182,6 +182,27 @@ var VacuumWorld = /** @class */ (function (_super) {
         return _this;
     }
     VacuumWorld.prototype.getMap = function () { return this.getVacuumMap(); };
+    VacuumWorld.prototype.drawWorldBackground = function (ctx, cellwidth, cellheight) {
+        for (var x = 0; x < this.getMap().getWidth(); x++) {
+            for (var y = 0; y < this.getMap().getHeight(); y++) {
+                if (this.vacuumed[x][y]) {
+                    ctx.fillStyle = "#BBBBBB";
+                    ctx.fillRect(x * cellwidth, y * cellheight, cellwidth, cellheight);
+                }
+            }
+        }
+    };
+    VacuumWorld.prototype.copyWith = function (direction, x, y, memories) {
+        var newvac = [];
+        for (var vx = 0; vx < this.vacuumed.length; vx++) {
+            newvac.push([]);
+            for (var vy = 0; vy < this.vacuumed[vx].length; vy++) {
+                newvac[vx].push(this.vacuumed[vx][vy]);
+            }
+        }
+        newvac[x][y] = true;
+        return this.copyWithVacuumed(direction, x, y, memories, newvac);
+    };
     VacuumWorld.prototype.isFinal = function () {
         for (var x = 0; x < this.getMap().getWidth(); x++) {
             for (var y = 0; y < this.getMap().getHeight(); y++) {

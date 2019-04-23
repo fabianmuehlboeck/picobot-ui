@@ -220,8 +220,25 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
             }
             if (testmapindex < testmaps.length) {
                 if (this.currentStep.hasSuccessor()) {
-                    this.setCurrentStep(this.currentStep.getSuccessor());
-                    this.currentStep.getWorld().draw(this.mapcanvas);
+                    var steps = 0;
+                    var curx = this.currentStep.getWorld().getX();
+                    var cury = this.currentStep.getWorld().getY();
+                    var curdir = this.currentStep.getWorld().getDirection();
+                    while (this.currentStep.hasSuccessor() && steps < 1000 && curx == this.currentStep.getWorld().getX() && cury == this.currentStep.getWorld().getY() && curdir == this.currentStep.getWorld().getDirection()) {
+                        this.setCurrentStep(this.currentStep.getSuccessor());
+                        this.currentStep.getWorld().draw(this.mapcanvas);
+                        steps++;
+                    }
+                    if (steps == 1000) {
+                        window.clearInterval(this.runInterval);
+                        this.isTesting = false;
+                        testbanner.parentNode.removeChild(testbanner);
+                        var dialogdiv = document.createElement("div");
+                        dialogdiv.innerText = "Test ran too long without any movement!";
+                        document.body.appendChild(dialogdiv);
+                        $(dialogdiv).dialog({ modal: true, close: function () { dialogdiv.parentNode.removeChild(dialogdiv); } });
+                        this.updateButtons();
+                    }
                 } else {
                     if (this.currentStep.isError()) {
                         window.clearInterval(this.runInterval);

@@ -35,6 +35,7 @@
     <TypeScriptCompile Include="app.ts" />
     <TypeScriptCompile Include="Code.ts" />
     <TypeScriptCompile Include="Condition.ts" />
+    <TypeScriptCompile Include="DiamondRoom.ts" />
     <TypeScriptCompile Include="HardMaze.ts" />
     <TypeScriptCompile Include="Level.ts" />
     <TypeScriptCompile Include="Map.ts" />
@@ -44,6 +45,7 @@
     <TypeScriptCompile Include="Robot.ts" />
     <TypeScriptCompile Include="Rule.ts" />
     <TypeScriptCompile Include="Run.ts" />
+    <TypeScriptCompile Include="Spiral.ts" />
     <TypeScriptCompile Include="SquareRoom.ts" />
     <TypeScriptCompile Include="StringStream.ts" />
     <TypeScriptCompile Include="util.ts" />

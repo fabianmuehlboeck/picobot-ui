@@ -73,28 +73,10 @@ var SquareRoomWorld = /** @class */ (function (_super) {
         _this.map = map;
         return _this;
     }
-    SquareRoomWorld.prototype.copyWith = function (direction, x, y, memories) {
-        var newvac = [];
-        for (var vx = 0; vx < this.vacuumed.length; vx++) {
-            newvac.push([]);
-            for (var vy = 0; vy < this.vacuumed[vx].length; vy++) {
-                newvac[vx].push(this.vacuumed[vx][vy]);
-            }
-        }
-        newvac[x][y] = true;
-        return new SquareRoomWorld(direction, x, y, memories, this.map, newvac);
+    SquareRoomWorld.prototype.copyWithVacuumed = function (direction, x, y, memories, vacuumed) {
+        return new SquareRoomWorld(direction, x, y, memories, this.map, vacuumed);
     };
     SquareRoomWorld.prototype.getVacuumMap = function () { return this.map; };
-    SquareRoomWorld.prototype.drawWorldBackground = function (ctx, cellwidth, cellheight) {
-        for (var x = 0; x < this.getMap().getWidth(); x++) {
-            for (var y = 0; y < this.getMap().getHeight(); y++) {
-                if (this.vacuumed[x][y]) {
-                    ctx.fillStyle = "#BBBBBB";
-                    ctx.fillRect(x * cellwidth, y * cellheight, cellwidth, cellheight);
-                }
-            }
-        }
-    };
     return SquareRoomWorld;
 }(VacuumWorld));
 //# sourceMappingURL=SquareRoom.js.map

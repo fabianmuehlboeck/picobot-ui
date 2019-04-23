@@ -32,8 +32,10 @@ class Pico {
 
     constructor() {
         this.levels = [];
-        this.levels.push(new SquareRoomLevel());
+        this.levels.push(new SpiralLevel());
         this.levels.push(new MazeLevel());
+        this.levels.push(new SquareRoomLevel());
+        this.levels.push(new DiamondRoomLevel());
         this.levels.push(new HardMazeLevel());
     }
 
