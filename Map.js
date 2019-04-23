@@ -76,4 +76,11 @@ var AGoalMap = /** @class */ (function (_super) {
     };
     return AGoalMap;
 }(AMap));
+var AVacuumMap = /** @class */ (function (_super) {
+    __extends(AVacuumMap, _super);
+    function AVacuumMap() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return AVacuumMap;
+}(AMap));
 //# sourceMappingURL=Map.js.map

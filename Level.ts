@@ -26,4 +26,5 @@ abstract class ALevel<W extends IWorld<W>> implements ILevel {
     abstract getName(): string;
     abstract resetWorld(): W;
     abstract getRobot(): IRobot<W>;
+    abstract getTestMaps(): W[];
 }

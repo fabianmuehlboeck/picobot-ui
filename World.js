@@ -123,6 +123,8 @@ var AWorld = /** @class */ (function () {
     AWorld.prototype.setY = function (y) {
         return this.copyWith(this.direction, this.x, y, this.memories);
     };
+    AWorld.prototype.drawWorldBackground = function (ctx, cellwidth, cellheight) {
+    };
     AWorld.prototype.draw = function (mapcanvas) {
         var ctx = mapcanvas.getContext("2d");
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -130,6 +132,7 @@ var AWorld = /** @class */ (function () {
         var cellwidth = mapcanvas.width / map.getWidth();
         var cellheight = mapcanvas.height / map.getHeight();
         this.getMap().draw(ctx, cellwidth, cellheight);
+        this.drawWorldBackground(ctx, cellwidth, cellheight);
         var xt = (this.getX() * cellwidth) + cellwidth / 2;
         var yt = (this.getY() * cellheight) + cellheight / 2;
         ctx.translate(xt, yt);
@@ -170,5 +173,26 @@ var GoalWorld = /** @class */ (function (_super) {
     GoalWorld.prototype.getMap = function () { return this.getGoalMap(); };
     GoalWorld.prototype.isFinal = function () { return this.getGoalMap().isGoal(this.getX(), this.getY()); };
     return GoalWorld;
+}(AWorld));
+var VacuumWorld = /** @class */ (function (_super) {
+    __extends(VacuumWorld, _super);
+    function VacuumWorld(direction, x, y, memories, vacuumed) {
+        var _this = _super.call(this, direction, x, y, memories) || this;
+        _this.vacuumed = vacuumed;
+        return _this;
+    }
+    VacuumWorld.prototype.getMap = function () { return this.getVacuumMap(); };
+    VacuumWorld.prototype.isFinal = function () {
+        for (var x = 0; x < this.getMap().getWidth(); x++) {
+            for (var y = 0; y < this.getMap().getHeight(); y++) {
+                if ((!this.getMap().canMoveTo(x, y)) || this.vacuumed[x][y]) {
+                    continue;
+                }
+                return false;
+            }
+        }
+        return true;
+    };
+    return VacuumWorld;
 }(AWorld));
 //# sourceMappingURL=World.js.map

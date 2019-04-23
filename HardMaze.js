@@ -22,13 +22,20 @@ var HardMazeLevel = /** @class */ (function (_super) {
     HardMazeLevel.prototype.getName = function () { return "Tricky Maze"; };
     HardMazeLevel.prototype.resetWorld = function () {
         var map = this.generator.getStandardMap();
-        //var x: number = (Math.floor(Math.random() * ((map.getWidth() - 1) / 2)) * 2) + 1;
-        //var y: number = (Math.floor(Math.random() * ((map.getHeight() - 1) / 2)) * 2) + 1;
-        //return new HardMazeWorld(randomDirection(), x, y, new Array<MemoryLabel>(), map);
-        return new HardMazeWorld(Direction.North, 9, 8, [], map);
+        return this.makeWorld(map);
+        //return new HardMazeWorld(Direction.North, 9, 8, [], map);
+    };
+    HardMazeLevel.prototype.makeWorld = function (map) {
+        var x = (Math.floor(Math.random() * ((map.getWidth() - 1) / 2)) * 2) + 1;
+        var y = (Math.floor(Math.random() * ((map.getHeight() - 1) / 2)) * 2) + 1;
+        return new HardMazeWorld(randomDirection(), x, y, new Array(), map);
     };
     HardMazeLevel.prototype.getRobot = function () {
         return this.robot;
+    };
+    HardMazeLevel.prototype.getTestMaps = function () {
+        var _this = this;
+        return this.generator.getTestMaps().map(function (mm) { return _this.makeWorld(mm); });
     };
     return HardMazeLevel;
 }(ALevel));

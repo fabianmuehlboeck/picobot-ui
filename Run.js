@@ -26,9 +26,9 @@ var AStep = /** @class */ (function () {
         return this.world;
     };
     AStep.prototype.getSuccessor = function () {
-        if (this.successor == null) {
-            this.successor = this.computeSuccessor();
-        }
+        //if (this.successor == null) {
+        this.successor = this.computeSuccessor();
+        //}
         return this.successor;
     };
     AStep.prototype.getPredecessor = function () { return this.predecessor; };
@@ -67,7 +67,7 @@ var RuleMatchStep = /** @class */ (function (_super) {
         }
         return _this;
     }
-    RuleMatchStep.prototype.hasSuccessor = function () { return !this.world.isFinal(); };
+    RuleMatchStep.prototype.hasSuccessor = function () { return (!this.world.isFinal()); };
     RuleMatchStep.prototype.computeSuccessor = function () {
         if (!this.totalFailure) {
             if (this.failures.length == 0) {
@@ -118,7 +118,13 @@ var RuleActionStep = /** @class */ (function (_super) {
             if (this.actionIndex + 1 < actions.length) {
                 return new RuleActionStep(this.robot, action.run(this.world), this, this.rule, this.actionIndex + 1);
             }
-            return new RuleMatchStep(this.robot, action.run(this.world), this, 0);
+            var newworld = action.run(this.world);
+            if (newworld.isFinal()) {
+                return new FinalStep(this.robot, newworld, this);
+            }
+            else {
+                return new RuleMatchStep(this.robot, action.run(this.world), this, 0);
+            }
         }
         else {
             return new RuleMatchStep(this.robot, this.world, this, 0);
@@ -150,5 +156,19 @@ var ErrorStep = /** @class */ (function (_super) {
     ErrorStep.prototype.enter = function () { };
     ErrorStep.prototype.exit = function () { };
     return ErrorStep;
+}(AStep));
+var FinalStep = /** @class */ (function (_super) {
+    __extends(FinalStep, _super);
+    function FinalStep(robot, world, predecessor) {
+        return _super.call(this, robot, world, predecessor) || this;
+    }
+    FinalStep.prototype.computeSuccessor = function () {
+        return this;
+    };
+    FinalStep.prototype.hasSuccessor = function () { return false; };
+    FinalStep.prototype.isError = function () { return false; };
+    FinalStep.prototype.enter = function () { };
+    FinalStep.prototype.exit = function () { };
+    return FinalStep;
 }(AStep));
 //# sourceMappingURL=Run.js.map

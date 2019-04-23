@@ -240,4 +240,10 @@ class MemoryActionFactory<W extends IWorld<W>> extends AActionFactory<W> {
         $(li).draggable({ connectToSortable: ".memorydroppable", revert: "invalid" });
         return new Memory(this.memory, li);
     }
+    construct(): HTMLLIElement {
+        var actionli = super.construct();
+        var span = <HTMLSpanElement><any>($(actionli).find("span")[0]);
+        span.innerText = this.memory.getName();
+        return actionli;
+    }
 }

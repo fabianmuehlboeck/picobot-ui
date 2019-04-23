@@ -15,6 +15,7 @@ var BasicRobot = /** @class */ (function () {
     function BasicRobot(level, world) {
         var _this = this;
         this.factories = {};
+        this.isTesting = false;
         this.isRunning = false;
         this.level = level;
         this.currentStep = new InitStep(this, world);
@@ -47,6 +48,14 @@ var BasicRobot = /** @class */ (function () {
         runbutton.classList.add("runbutton");
         var fastforwardbutton = document.createElement("button");
         fastforwardbutton.classList.add("fastforwardbutton");
+        var resetbutton = document.createElement("button");
+        resetbutton.innerText = "Reset";
+        resetbutton.classList.add("resetbutton");
+        this.resetButton = resetbutton;
+        var testbutton = document.createElement("button");
+        testbutton.innerText = "Test";
+        testbutton.classList.add("testbutton");
+        this.testButton = testbutton;
         var robot = this;
         $(tostartbutton).on("click", function () { return _this.toStart(); });
         $(stepforwardbutton).on("click", function () { return _this.stepNext(); });
@@ -54,12 +63,16 @@ var BasicRobot = /** @class */ (function () {
         $(pausebutton).on("click", function () { return _this.pause(); });
         $(runbutton).on("click", function () { return _this.run(); });
         $(fastforwardbutton).on("click", function () { return _this.runfast(); });
+        $(resetbutton).on("click", function () { return _this.reset(); });
+        $(testbutton).on("click", function () { return _this.test(); });
         rundiv.appendChild(tostartbutton);
         rundiv.appendChild(stepbackbutton);
         rundiv.appendChild(pausebutton);
         rundiv.appendChild(stepforwardbutton);
         rundiv.appendChild(runbutton);
         rundiv.appendChild(fastforwardbutton);
+        rundiv.appendChild(resetbutton);
+        rundiv.appendChild(testbutton);
         this.toStartButton = tostartbutton;
         this.backButton = stepbackbutton;
         this.pauseButton = pausebutton;
@@ -95,6 +108,7 @@ var BasicRobot = /** @class */ (function () {
         }
     };
     BasicRobot.prototype.toBackground = function () {
+        this.pause();
         this.guiDiv.removeChild(this.rulesDiv);
         this.guiDiv.removeChild(this.rulesManager.getActionRepoDiv());
         this.controlDiv.removeChild(this.runDiv);
@@ -124,47 +138,141 @@ var BasicRobot = /** @class */ (function () {
         if (step != this.currentStep) {
             this.currentStep.exit();
             this.currentStep = step;
+            this.updateButtons();
             this.currentStep.enter();
         }
     };
     BasicRobot.prototype.getFactory = function (key) {
         return this.factories[key];
     };
+    BasicRobot.prototype.reset = function () {
+        this.isRunning = false;
+        this.isTesting = false;
+        this.setWorld(this.level.resetWorld());
+    };
+    BasicRobot.prototype.test = function () {
+        var _this = this;
+        if (this.isRunning) {
+            this.isRunning = false;
+            window.clearInterval(this.runInterval);
+        }
+        this.isTesting = true;
+        this.updateButtons();
+        var testbanner = document.createElement("div");
+        var testbannermsgdiv = document.createElement("div");
+        var testbannerspan = document.createElement("span");
+        testbannerspan.innerText = "Running tests ...";
+        testbanner.classList.add("testbanner");
+        testbannermsgdiv.appendChild(testbannerspan);
+        var testabortbutton = document.createElement("button");
+        testabortbutton.innerText = "Abort";
+        $(testabortbutton).on("click", function () {
+            window.clearInterval(_this.runInterval);
+            _this.isTesting = false;
+            testbanner.parentNode.removeChild(testbanner);
+            _this.updateButtons();
+        });
+        testbannermsgdiv.appendChild(testabortbutton);
+        testbanner.appendChild(testbannermsgdiv);
+        document.body.appendChild(testbanner);
+        var testmaps = this.level.getTestMaps();
+        var testmapindex = 0;
+        this.setWorld(testmaps[0]);
+        this.runInterval = window.setInterval(function () {
+            if (!_this.isTesting) {
+                window.clearInterval(_this.runInterval);
+            }
+            if (testmapindex < testmaps.length) {
+                if (_this.currentStep.hasSuccessor()) {
+                    _this.setCurrentStep(_this.currentStep.getSuccessor());
+                    _this.currentStep.getWorld().draw(_this.mapcanvas);
+                }
+                else {
+                    if (_this.currentStep.isError()) {
+                        window.clearInterval(_this.runInterval);
+                        _this.isTesting = false;
+                        testbanner.parentNode.removeChild(testbanner);
+                        var dialogdiv = document.createElement("div");
+                        dialogdiv.innerText = "Test failed!";
+                        document.body.appendChild(dialogdiv);
+                        $(dialogdiv).dialog({ modal: true, close: function () { dialogdiv.parentNode.removeChild(dialogdiv); } });
+                        _this.updateButtons();
+                    }
+                    else {
+                        testmapindex++;
+                        if (testmapindex < testmaps.length) {
+                            _this.setWorld(testmaps[testmapindex]);
+                        }
+                    }
+                }
+            }
+            else {
+                window.clearInterval(_this.runInterval);
+                _this.isTesting = false;
+                testbanner.parentNode.removeChild(testbanner);
+                var successdialog = document.createElement("div");
+                successdialog.innerText = "All tests succeeded!";
+                document.body.appendChild(successdialog);
+                $(successdialog).dialog({
+                    resizable: false, height: "auto", width: 400, modal: true, buttons: {
+                        "Go to Next Level": function () {
+                            $(successdialog).dialog("close");
+                            Pico.getInstance().nextLevel();
+                        },
+                        Cancel: function () {
+                            $(successdialog).dialog("close");
+                        }
+                    },
+                    close: function () { successdialog.parentNode.removeChild(successdialog); }
+                });
+                _this.updateButtons();
+            }
+        }, 1);
+    };
+    BasicRobot.prototype.updateButtons = function () {
+        this.toStartButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasPredecessor();
+        this.backButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasPredecessor();
+        this.pauseButton.disabled = !this.isRunning;
+        this.stepButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasSuccessor();
+        this.runButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasSuccessor();
+        this.ffwdButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasSuccessor();
+        this.testButton.disabled = this.isTesting;
+    };
     BasicRobot.prototype.toStart = function () {
         this.setCurrentStep(this.firstStep);
-        this.toStartButton.disabled = true;
-        this.backButton.disabled = true;
-        this.pauseButton.disabled = true;
-        this.stepButton.disabled = false;
-        this.runButton.disabled = false;
-        this.ffwdButton.disabled = false;
+        //this.toStartButton.disabled = true;
+        //this.backButton.disabled = true;
+        //this.pauseButton.disabled = true;
+        //this.stepButton.disabled = false;
+        //this.runButton.disabled = false;
+        //this.ffwdButton.disabled = false;
         this.currentStep.getWorld().draw(this.mapcanvas);
         return this.currentStep;
     };
     BasicRobot.prototype.stepBack = function () {
         var next = this.currentStep.getPredecessor();
-        if (!next.hasPredecessor()) {
-            this.backButton.disabled = true;
-            this.toStartButton.disabled = true;
-            this.pauseButton.disabled = true;
-        }
-        this.stepButton.disabled = false;
-        this.runButton.disabled = false;
-        this.ffwdButton.disabled = false;
+        //if (!next.hasPredecessor()) {
+        //    this.backButton.disabled = true;
+        //    this.toStartButton.disabled = true;
+        //    this.pauseButton.disabled = true;
+        //}
+        //this.stepButton.disabled = false;
+        //this.runButton.disabled = false;
+        //this.ffwdButton.disabled = false;
         this.setCurrentStep(next);
         this.currentStep.getWorld().draw(this.mapcanvas);
         return next;
     };
     BasicRobot.prototype.stepNext = function () {
         var next = this.currentStep.getSuccessor();
-        if (next.isError() || !next.hasSuccessor()) {
-            this.stepButton.disabled = true;
-            this.runButton.disabled = true;
-            this.pauseButton.disabled = true;
-            this.ffwdButton.disabled = true;
-        }
-        this.backButton.disabled = false;
-        this.toStartButton.disabled = false;
+        //if (next.isError() || !next.hasSuccessor()) {
+        //    this.stepButton.disabled = true;
+        //    this.runButton.disabled = true;
+        //    this.pauseButton.disabled = true;
+        //    this.ffwdButton.disabled = true;
+        //}
+        //this.backButton.disabled = false;
+        //this.toStartButton.disabled = false;
         this.setCurrentStep(next);
         this.currentStep.getWorld().draw(this.mapcanvas);
         return next;
@@ -174,23 +282,25 @@ var BasicRobot = /** @class */ (function () {
             this.isRunning = false;
             window.clearInterval(this.runInterval);
         }
-        this.pauseButton.disabled = true;
-        this.runButton.disabled = !this.currentStep.hasSuccessor();
-        this.ffwdButton.disabled = !this.currentStep.hasSuccessor();
-        this.stepButton.disabled = !this.currentStep.hasSuccessor();
-        this.backButton.disabled = !this.currentStep.hasPredecessor();
-        this.toStartButton.disabled = !this.currentStep.hasPredecessor();
+        this.updateButtons();
+        //this.pauseButton.disabled = true;
+        //this.runButton.disabled = !this.currentStep.hasSuccessor();
+        //this.ffwdButton.disabled = !this.currentStep.hasSuccessor();
+        //this.stepButton.disabled = !this.currentStep.hasSuccessor();
+        //this.backButton.disabled = !this.currentStep.hasPredecessor();
+        //this.toStartButton.disabled = !this.currentStep.hasPredecessor();
     };
     BasicRobot.prototype.runAtSpeed = function (speed) {
         var _this = this;
         this.isRunning = true;
-        this.runButton.disabled = true;
-        this.stepButton.disabled = true;
-        this.ffwdButton.disabled = true;
-        this.backButton.disabled = true;
-        this.toStartButton.disabled = true;
-        this.pauseButton.disabled = false;
-        window.setInterval(function () {
+        this.updateButtons();
+        //this.runButton.disabled = true;
+        //this.stepButton.disabled = true;
+        //this.ffwdButton.disabled = true;
+        //this.backButton.disabled = true;
+        //this.toStartButton.disabled = true;
+        //this.pauseButton.disabled = false;
+        this.runInterval = window.setInterval(function () {
             if (_this.isRunning) {
                 var next = _this.currentStep.getSuccessor();
                 if (next.isError() || !next.hasSuccessor()) {
@@ -198,6 +308,10 @@ var BasicRobot = /** @class */ (function () {
                 }
                 _this.setCurrentStep(next);
                 _this.currentStep.getWorld().draw(_this.mapcanvas);
+            }
+            else {
+                window.clearInterval(_this.runInterval);
+                _this.updateButtons();
             }
         }, speed);
     };

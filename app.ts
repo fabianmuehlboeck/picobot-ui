@@ -22,7 +22,7 @@ class Pico {
     header: HTMLDivElement;
     mapspan: HTMLSpanElement;
     currentLevel: ILevel;
-   
+
     static createCanvas(): HTMLCanvasElement {
         var canvas = document.createElement("canvas");
         canvas.width = 600;
@@ -32,10 +32,14 @@ class Pico {
 
     constructor() {
         this.levels = [];
+        this.levels.push(new SquareRoomLevel());
         this.levels.push(new MazeLevel());
         this.levels.push(new HardMazeLevel());
     }
-    
+
+    static instance: Pico = new Pico();
+    static getInstance(): Pico { return Pico.instance; }
+
     init(): void {
         this.mapcanvas = Pico.createCanvas();
         document.getElementById("mapcanvas").appendChild(this.mapcanvas);
@@ -57,7 +61,7 @@ class Pico {
         mapselectdiv.classList.add("mapselect");
         this.mapspan = document.createElement("span");
         mapselectdiv.appendChild(this.mapspan);
-        
+
 
         this.header.appendChild(mapselectdiv);
 

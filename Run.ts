@@ -23,9 +23,9 @@ abstract class AStep<W extends IWorld<W>> implements IStep<W> {
         return this.world;
     }
     getSuccessor(): IStep<W> {
-        if (this.successor == null) {
-            this.successor = this.computeSuccessor();
-        }
+        //if (this.successor == null) {
+        this.successor = this.computeSuccessor();
+        //}
         return this.successor;
     }
     getPredecessor(): IStep<W> { return this.predecessor; }
@@ -70,7 +70,7 @@ class RuleMatchStep<W extends IWorld<W>> extends AStep<W> {
             this.totalFailure = true;
         }
     }
-    hasSuccessor(): boolean { return !this.world.isFinal(); }
+    hasSuccessor(): boolean { return (!this.world.isFinal()); }
     computeSuccessor(): IStep<W> {
         if (!this.totalFailure) {
             if (this.failures.length == 0) {
@@ -121,7 +121,12 @@ class RuleActionStep<W extends IWorld<W>> extends AStep<W> {
             if (this.actionIndex + 1 < actions.length) {
                 return new RuleActionStep<W>(this.robot, action.run(this.world), this, this.rule, this.actionIndex + 1);
             }
-            return new RuleMatchStep<W>(this.robot, action.run(this.world), this, 0);
+            var newworld = action.run(this.world);
+            if (newworld.isFinal()) {
+                return new FinalStep<W>(this.robot, newworld, this);
+            } else {
+                return new RuleMatchStep<W>(this.robot, action.run(this.world), this, 0);
+            }
         } else {
             return new RuleMatchStep<W>(this.robot, this.world, this, 0);
         }
@@ -147,6 +152,18 @@ class ErrorStep<W extends IWorld<W>> extends AStep<W> {
     }
     hasSuccessor(): boolean { return false; }
     isError(): boolean { return true; }
+    enter(): void { }
+    exit(): void { }
+}
+class FinalStep<W extends IWorld<W>> extends AStep<W> {
+    constructor(robot: IRobot<W>, world: W, predecessor: IStep<W>) {
+        super(robot, world, predecessor);
+    }
+    computeSuccessor(): IStep<W> {
+        return this;
+    }
+    hasSuccessor(): boolean { return false; }
+    isError(): boolean { return false; }
     enter(): void { }
     exit(): void { }
 }

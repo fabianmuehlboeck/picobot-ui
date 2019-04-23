@@ -14,6 +14,7 @@ function isAncestor(descendant, ancestor) {
 var Pico = /** @class */ (function () {
     function Pico() {
         this.levels = [];
+        this.levels.push(new SquareRoomLevel());
         this.levels.push(new MazeLevel());
         this.levels.push(new HardMazeLevel());
     }
@@ -23,6 +24,7 @@ var Pico = /** @class */ (function () {
         canvas.height = 600;
         return canvas;
     };
+    Pico.getInstance = function () { return Pico.instance; };
     Pico.prototype.init = function () {
         var _this = this;
         this.mapcanvas = Pico.createCanvas();
@@ -74,6 +76,7 @@ var Pico = /** @class */ (function () {
         }
         this.changeLevel(this.levels[index]);
     };
+    Pico.instance = new Pico();
     return Pico;
 }());
 //# sourceMappingURL=app.js.map

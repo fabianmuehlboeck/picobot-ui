@@ -51,7 +51,7 @@ canvas {
     padding: 2px !important;
     padding-left: 642px !important;
     padding-bottom: 0px !important;
-    z-index:3000;
+    z-index: 3000;
 }
 
 .ui-tabs-panel {
@@ -479,15 +479,15 @@ button.expander {
     border-style: ridge;
     padding: 5px;
     display: inline-flex;
-    position:relative;
-    cursor:grab;
+    position: relative;
+    cursor: grab;
 }
 
     .rule .ruleconditions {
         display: inline-block;
         /*width: 160px;*/
         text-align: center;
-        vertical-align:middle;
+        vertical-align: middle;
     }
 
         .rule .ruleconditions ul {
@@ -519,10 +519,10 @@ button.expander {
     .rule .rulesplit {
         display: inline-block;
         width: 32px;
-        background-image:url("do.png");
-        background-repeat:no-repeat;
-        background-size:contain;
-        background-position:center;
+        background-image: url("do.png");
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-position: center;
     }
 
     .rule .ruleactionlist {
@@ -539,12 +539,13 @@ button.expander {
             background-position: left center;
             background-repeat: no-repeat;
         }
-        .rule .memorydroppable:empty {
-            background-image: url("actionslabel.png");
-            background-size: 270px;
-            background-position: left center;
-            background-repeat: no-repeat;
-        }
+
+    .rule .memorydroppable:empty {
+        background-image: url("actionslabel.png");
+        background-size: 270px;
+        background-position: left center;
+        background-repeat: no-repeat;
+    }
 
     .rule .ruleactions li {
         list-style: none;
@@ -663,7 +664,7 @@ button.expander {
     text-align: center;
     right: 0px;
     border: 4px #B31B1B solid;
-    border-right:0px;
+    border-right: 0px;
 }
 
     .actionrepo > span {
@@ -727,5 +728,50 @@ button.expander {
 
 .robotmenu {
     background: #B31B1B;
-    height:32px;
+    height: 32px;
+}
+
+.testbanner {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    padding-left: 650px;
+    background: rgba(60, 60, 60, .7);
+    color: #000000;
+    text-align: left;
+    z-index: 10000;
+    padding-top: 48vh;
+}
+
+    .testbanner > div {
+        height: 96px;
+        background: #444444;
+        border: 3px #000000 solid;
+        text-align:middle;
+        display:inline-block;
+        padding:12px;
+    }
+
+    .testbanner button {
+        height: 48px;
+        background: #444444;
+        font-weight: bold;
+        font-size: 28px;
+    }
+
+    .testbanner span {
+        display: block;
+        font-weight: bold;
+        padding: 5px;
+        padding-right: 24px;
+    }
+
+.testbutton {
+    height: 48px;
+    font-weight: bold;
+}
+
+.resetbutton {
+    height: 48px;
+    font-weight: bold;
 }

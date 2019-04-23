@@ -136,6 +136,9 @@ abstract class AWorld<W extends IWorld<W>> implements IWorld<W> {
         return this.copyWith(this.direction, this.x, y, this.memories);
     }
     abstract isFinal(): boolean;
+    drawWorldBackground(ctx: CanvasRenderingContext2D, cellwidth: number, cellheight: number) {
+
+    }
     draw(mapcanvas: HTMLCanvasElement) {
         var ctx = mapcanvas.getContext("2d");
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -143,6 +146,7 @@ abstract class AWorld<W extends IWorld<W>> implements IWorld<W> {
         var cellwidth = mapcanvas.width / map.getWidth();
         var cellheight = mapcanvas.height / map.getHeight();
         this.getMap().draw(ctx, cellwidth, cellheight);
+        this.drawWorldBackground(ctx, cellwidth, cellheight);
         var xt: number = (this.getX() * cellwidth) + cellwidth / 2;
         var yt: number = (this.getY() * cellheight) + cellheight / 2;
         ctx.translate(xt, yt);
@@ -179,4 +183,27 @@ abstract class GoalWorld<W extends IWorld<W>> extends AWorld<W> {
     abstract getGoalMap(): GoalMap;
     getMap(): IMap { return this.getGoalMap(); }
     isFinal(): boolean { return this.getGoalMap().isGoal(this.getX(), this.getY()); }
+}
+
+abstract class VacuumWorld<W extends IWorld<W>> extends AWorld<W> {
+    vacuumed: boolean[][];
+
+    constructor(direction : Direction, x : number, y : number, memories : MemoryLabel[], vacuumed : boolean[][]) {
+        super(direction, x, y, memories);
+        this.vacuumed = vacuumed;
+    }
+    abstract getVacuumMap(): AVacuumMap;
+    getMap(): IMap { return this.getVacuumMap(); }
+
+    isFinal(): boolean {
+        for (var x = 0; x < this.getMap().getWidth(); x++) {
+            for (var y = 0; y < this.getMap().getHeight(); y++) {
+                if ((!this.getMap().canMoveTo(x, y)) || this.vacuumed[x][y]) {
+                    continue;
+                }
+                return false;
+            }
+        }
+        return true;
+    }
 }

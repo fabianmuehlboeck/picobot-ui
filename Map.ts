@@ -77,5 +77,8 @@ abstract class AGoalMap extends AMap implements GoalMap {
             drawFinish(ctx, gz.sx * cellwidth, gz.sy * cellheight, (gz.ex+1) * cellwidth, (gz.ey+1) * cellheight);
         }
     }
+}
+
+abstract class AVacuumMap extends AMap {
 
 }

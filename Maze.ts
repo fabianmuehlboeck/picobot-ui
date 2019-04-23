@@ -10,12 +10,18 @@ class MazeLevel extends ALevel<MazeWorld> {
     getName(): string { return "Maze"; }
     resetWorld(): MazeWorld {
         var map: MazeMap = this.generator.getStandardMap();
+        return this.makeWorld(map);
+    }
+    makeWorld(map: MazeMap) {
         var x: number = (Math.floor(Math.random() * ((map.getWidth() - 1) / 2)) * 2) + 1;
         var y: number = (Math.floor(Math.random() * ((map.getHeight() - 1) / 2)) * 2) + 1;
         return new MazeWorld(randomDirection(), x, y, new Array<MemoryLabel>(), map);
     }
     getRobot(): IRobot<MazeWorld> {
         return this.robot;
+    }
+    getTestMaps(): MazeWorld[] {
+        return this.generator.getTestMaps().map((mm) => this.makeWorld(mm));
     }
 }
 
@@ -26,7 +32,9 @@ class MazeMapGenerator extends AMapGenerator<MazeMap> {
     getStandardMap(): MazeMap {
         return new MazeMap(25, 25);
     }
-
+    getTestMaps(): MazeMap[] {
+        return [this.getStandardMap(), this.getStandardMap(), this.getStandardMap(), this.getStandardMap(), this.getStandardMap()];
+    }
 }
 
 class MazeCell {

@@ -22,12 +22,19 @@ var MazeLevel = /** @class */ (function (_super) {
     MazeLevel.prototype.getName = function () { return "Maze"; };
     MazeLevel.prototype.resetWorld = function () {
         var map = this.generator.getStandardMap();
+        return this.makeWorld(map);
+    };
+    MazeLevel.prototype.makeWorld = function (map) {
         var x = (Math.floor(Math.random() * ((map.getWidth() - 1) / 2)) * 2) + 1;
         var y = (Math.floor(Math.random() * ((map.getHeight() - 1) / 2)) * 2) + 1;
         return new MazeWorld(randomDirection(), x, y, new Array(), map);
     };
     MazeLevel.prototype.getRobot = function () {
         return this.robot;
+    };
+    MazeLevel.prototype.getTestMaps = function () {
+        var _this = this;
+        return this.generator.getTestMaps().map(function (mm) { return _this.makeWorld(mm); });
     };
     return MazeLevel;
 }(ALevel));
@@ -38,6 +45,9 @@ var MazeMapGenerator = /** @class */ (function (_super) {
     }
     MazeMapGenerator.prototype.getStandardMap = function () {
         return new MazeMap(25, 25);
+    };
+    MazeMapGenerator.prototype.getTestMaps = function () {
+        return [this.getStandardMap(), this.getStandardMap(), this.getStandardMap(), this.getStandardMap(), this.getStandardMap()];
     };
     return MazeMapGenerator;
 }(AMapGenerator));

@@ -29,10 +29,13 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
     runButton: HTMLButtonElement;
     ffwdButton: HTMLButtonElement;
 
-    factories: StringMap<IActionFactory<W>> = {};
-    level: ILevel;
+    resetButton: HTMLButtonElement;
+    testButton: HTMLButtonElement;
 
-    constructor(level: ILevel, world: W) {
+    factories: StringMap<IActionFactory<W>> = {};
+    level: ALevel<W>;
+
+    constructor(level: ALevel<W>, world: W) {
         this.level = level;
         this.currentStep = new InitStep(this, world);
         this.firstStep = this.currentStep;
@@ -52,6 +55,7 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
 
         var rundiv = document.createElement("div");
         rundiv.classList.add("runcontrols");
+
         var stepforwardbutton = document.createElement("button");
         stepforwardbutton.classList.add("stepforwardbutton");
         var stepbackbutton = document.createElement("button");
@@ -67,6 +71,14 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
         runbutton.classList.add("runbutton");
         var fastforwardbutton = document.createElement("button");
         fastforwardbutton.classList.add("fastforwardbutton");
+        var resetbutton = document.createElement("button");
+        resetbutton.innerText = "Reset";
+        resetbutton.classList.add("resetbutton");
+        this.resetButton = resetbutton;
+        var testbutton = document.createElement("button");
+        testbutton.innerText = "Test";
+        testbutton.classList.add("testbutton");
+        this.testButton = testbutton;
 
         var robot = this;
         $(tostartbutton).on("click", () => this.toStart());
@@ -75,6 +87,8 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
         $(pausebutton).on("click", () => this.pause());
         $(runbutton).on("click", () => this.run());
         $(fastforwardbutton).on("click", () => this.runfast());
+        $(resetbutton).on("click", () => this.reset());
+        $(testbutton).on("click", () => this.test());
 
         rundiv.appendChild(tostartbutton);
         rundiv.appendChild(stepbackbutton);
@@ -82,6 +96,8 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
         rundiv.appendChild(stepforwardbutton);
         rundiv.appendChild(runbutton);
         rundiv.appendChild(fastforwardbutton);
+        rundiv.appendChild(resetbutton);
+        rundiv.appendChild(testbutton);
 
         this.toStartButton = tostartbutton;
         this.backButton = stepbackbutton;
@@ -123,6 +139,7 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
     }
 
     toBackground(): void {
+        this.pause();
         this.guiDiv.removeChild(this.rulesDiv);
         this.guiDiv.removeChild(this.rulesManager.getActionRepoDiv());
         this.controlDiv.removeChild(this.runDiv);
@@ -154,6 +171,7 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
         if (step != this.currentStep) {
             this.currentStep.exit();
             this.currentStep = step;
+            this.updateButtons();
             this.currentStep.enter();
         }
     }
@@ -162,28 +180,121 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
         return this.factories[key];
     }
 
+    reset(): void {
+        this.isRunning = false;
+        this.isTesting = false;
+        this.setWorld(this.level.resetWorld());
+    }
+
+    isTesting: boolean = false;
+    test(): void {
+        if (this.isRunning) {
+            this.isRunning = false;
+            window.clearInterval(this.runInterval);
+        }
+        this.isTesting = true;
+        this.updateButtons();
+        var testbanner = document.createElement("div");
+        var testbannermsgdiv = document.createElement("div");
+        var testbannerspan = document.createElement("span");
+        testbannerspan.innerText = "Running tests ...";
+        testbanner.classList.add("testbanner");
+        testbannermsgdiv.appendChild(testbannerspan);
+        var testabortbutton = document.createElement("button");
+        testabortbutton.innerText = "Abort";
+        $(testabortbutton).on("click", () => {
+            window.clearInterval(this.runInterval);
+            this.isTesting = false;
+            testbanner.parentNode.removeChild(testbanner);
+            this.updateButtons();
+        });
+        testbannermsgdiv.appendChild(testabortbutton);
+        testbanner.appendChild(testbannermsgdiv);
+        document.body.appendChild(testbanner);
+        var testmaps = this.level.getTestMaps();
+        var testmapindex = 0;
+        this.setWorld(testmaps[0]);
+        this.runInterval = window.setInterval(() => {
+            if (!this.isTesting) {
+                window.clearInterval(this.runInterval);
+            }
+            if (testmapindex < testmaps.length) {
+                if (this.currentStep.hasSuccessor()) {
+                    this.setCurrentStep(this.currentStep.getSuccessor());
+                    this.currentStep.getWorld().draw(this.mapcanvas);
+                } else {
+                    if (this.currentStep.isError()) {
+                        window.clearInterval(this.runInterval);
+                        this.isTesting = false;
+                        testbanner.parentNode.removeChild(testbanner);
+                        var dialogdiv = document.createElement("div");
+                        dialogdiv.innerText = "Test failed!";
+                        document.body.appendChild(dialogdiv);
+                        $(dialogdiv).dialog({ modal: true, close: function () { dialogdiv.parentNode.removeChild(dialogdiv); } });
+                        this.updateButtons();
+                    } else {
+                        testmapindex++;
+                        if (testmapindex < testmaps.length) {
+                            this.setWorld(testmaps[testmapindex]);
+                        }
+                    }
+                }
+            } else {
+                window.clearInterval(this.runInterval);
+                this.isTesting = false;
+                testbanner.parentNode.removeChild(testbanner);
+                var successdialog = document.createElement("div");
+                successdialog.innerText = "All tests succeeded!";
+                document.body.appendChild(successdialog);
+                $(successdialog).dialog({
+                    resizable: false, height: "auto", width: 400, modal: true, buttons: {
+                        "Go to Next Level": function () {
+                            $(successdialog).dialog("close");
+                            Pico.getInstance().nextLevel();
+                        },
+                        Cancel: function () {
+                            $(successdialog).dialog("close");
+                        }
+                    },
+                    close: function () { successdialog.parentNode.removeChild(successdialog); }
+                });
+                this.updateButtons();
+            }
+        }, 1);
+    }
+
+    updateButtons(): void {
+        this.toStartButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasPredecessor();
+        this.backButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasPredecessor();
+        this.pauseButton.disabled = !this.isRunning;
+        this.stepButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasSuccessor();
+        this.runButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasSuccessor();
+        this.ffwdButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasSuccessor();
+        this.testButton.disabled = this.isTesting;
+    }
+
     toStart(): IStep<W> {
         this.setCurrentStep(this.firstStep);
-        this.toStartButton.disabled = true;
-        this.backButton.disabled = true;
-        this.pauseButton.disabled = true;
-        this.stepButton.disabled = false;
-        this.runButton.disabled = false;
-        this.ffwdButton.disabled = false;
+        //this.toStartButton.disabled = true;
+        //this.backButton.disabled = true;
+        //this.pauseButton.disabled = true;
+        //this.stepButton.disabled = false;
+        //this.runButton.disabled = false;
+        //this.ffwdButton.disabled = false;
         this.currentStep.getWorld().draw(this.mapcanvas);
         return this.currentStep;
     }
 
     stepBack(): IStep<W> {
         var next = this.currentStep.getPredecessor();
-        if (!next.hasPredecessor()) {
-            this.backButton.disabled = true;
-            this.toStartButton.disabled = true;
-            this.pauseButton.disabled = true;
-        }
-        this.stepButton.disabled = false;
-        this.runButton.disabled = false;
-        this.ffwdButton.disabled = false;
+        //if (!next.hasPredecessor()) {
+        //    this.backButton.disabled = true;
+        //    this.toStartButton.disabled = true;
+        //    this.pauseButton.disabled = true;
+        //}
+        //this.stepButton.disabled = false;
+        //this.runButton.disabled = false;
+        //this.ffwdButton.disabled = false;
         this.setCurrentStep(next);
         this.currentStep.getWorld().draw(this.mapcanvas);
         return next;
@@ -191,14 +302,14 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
 
     stepNext(): IStep<W> {
         var next = this.currentStep.getSuccessor();
-        if (next.isError() || !next.hasSuccessor()) {
-            this.stepButton.disabled = true;
-            this.runButton.disabled = true;
-            this.pauseButton.disabled = true;
-            this.ffwdButton.disabled = true;
-        }
-        this.backButton.disabled = false;
-        this.toStartButton.disabled = false;
+        //if (next.isError() || !next.hasSuccessor()) {
+        //    this.stepButton.disabled = true;
+        //    this.runButton.disabled = true;
+        //    this.pauseButton.disabled = true;
+        //    this.ffwdButton.disabled = true;
+        //}
+        //this.backButton.disabled = false;
+        //this.toStartButton.disabled = false;
         this.setCurrentStep(next);
         this.currentStep.getWorld().draw(this.mapcanvas);
         return next;
@@ -212,23 +323,25 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
             this.isRunning = false;
             window.clearInterval(this.runInterval);
         }
-        this.pauseButton.disabled = true;
-        this.runButton.disabled = !this.currentStep.hasSuccessor();
-        this.ffwdButton.disabled = !this.currentStep.hasSuccessor();
-        this.stepButton.disabled = !this.currentStep.hasSuccessor();
-        this.backButton.disabled = !this.currentStep.hasPredecessor();
-        this.toStartButton.disabled = !this.currentStep.hasPredecessor();
+        this.updateButtons();
+        //this.pauseButton.disabled = true;
+        //this.runButton.disabled = !this.currentStep.hasSuccessor();
+        //this.ffwdButton.disabled = !this.currentStep.hasSuccessor();
+        //this.stepButton.disabled = !this.currentStep.hasSuccessor();
+        //this.backButton.disabled = !this.currentStep.hasPredecessor();
+        //this.toStartButton.disabled = !this.currentStep.hasPredecessor();
     }
 
     runAtSpeed(speed: number) {
         this.isRunning = true;
-        this.runButton.disabled = true;
-        this.stepButton.disabled = true;
-        this.ffwdButton.disabled = true;
-        this.backButton.disabled = true;
-        this.toStartButton.disabled = true;
-        this.pauseButton.disabled = false;
-        window.setInterval(() => {
+        this.updateButtons();
+        //this.runButton.disabled = true;
+        //this.stepButton.disabled = true;
+        //this.ffwdButton.disabled = true;
+        //this.backButton.disabled = true;
+        //this.toStartButton.disabled = true;
+        //this.pauseButton.disabled = false;
+        this.runInterval = window.setInterval(() => {
             if (this.isRunning) {
                 var next = this.currentStep.getSuccessor();
                 if (next.isError() || !next.hasSuccessor()) {
@@ -236,6 +349,9 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
                 }
                 this.setCurrentStep(next);
                 this.currentStep.getWorld().draw(this.mapcanvas);
+            } else {
+                window.clearInterval(this.runInterval);
+                this.updateButtons();
             }
         }, speed);
     }
@@ -253,7 +369,7 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
 
 class MemoryRobot<W extends IWorld<W>> extends BasicRobot<W> {
     memories: MemoryLabel[];
-    constructor(level : ILevel, world: W) {
+    constructor(level : ALevel<W>, world: W) {
         super(level, world);
         this.memories = [new MemoryLabel("m1", "Memory 1"),
             new MemoryLabel("m2", "Memory 2"),

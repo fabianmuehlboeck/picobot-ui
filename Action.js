@@ -216,6 +216,12 @@ var MemoryActionFactory = /** @class */ (function (_super) {
         $(li).draggable({ connectToSortable: ".memorydroppable", revert: "invalid" });
         return new Memory(this.memory, li);
     };
+    MemoryActionFactory.prototype.construct = function () {
+        var actionli = _super.prototype.construct.call(this);
+        var span = ($(actionli).find("span")[0]);
+        span.innerText = this.memory.getName();
+        return actionli;
+    };
     return MemoryActionFactory;
 }(AActionFactory));
 //# sourceMappingURL=Action.js.map

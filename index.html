@@ -24,6 +24,7 @@
     <script src="Action.js"></script>
     <script src="MemoryLabel.js"></script>
     <script src="Run.js"></script>
+    <script src="SquareRoom.js"></script>
     <script src="Maze.js"></script>
     <script src="HardMaze.js"></script>
     <script src="app.js"></script>
@@ -52,8 +53,9 @@
             <div style="padding-left:20px">
                 <p>Made by Fabian Muehlboeck (<a href="https://www.cs.cornell.edu/~fabianm" target="_blank">www.cs.cornell.edu/~fabianm</a>) based on <a href="https://www.cs.hmc.edu/picobot" target="_blank">Picobot</a>.</p>
                 <p>
-                    If you like these kinds of things, there are several professionally produced video games that use similar styles of thinking:
+                    If you like these kinds of things, there are many professionally produced video games that use similar styles of thinking, among them:
                     <ul>
+                        <li><a href="https://tomorrowcorporation.com/humanresourcemachine" target="_blank">Human Resource Machine</a> and <a href="https://tomorrowcorporation.com/7billionhumans" target="_blank">7 Billion Humans</a></li>
                         <li><a href="http://www.zachtronics.com/spacechem/" target="_blank">SpaceChem</a></li>
                         <li><a href="http://pleasingfungus.com/Manufactoria/" target="_blank">Manufactoria</a></li>
                         <li><a href="https://www.factorio.com" target="_blank">Factorio</a></li>
@@ -69,8 +71,7 @@
         $("#maintabs").tabs();
         $(document).tooltip();
         $(document).ready(function () {
-            var p = new Pico();
-            p.init();
+            Pico.getInstance().init();
         })
     </script>
 </body>

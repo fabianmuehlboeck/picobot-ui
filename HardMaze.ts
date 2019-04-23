@@ -10,13 +10,19 @@ class HardMazeLevel extends ALevel<HardMazeWorld> {
     getName(): string { return "Tricky Maze"; }
     resetWorld(): HardMazeWorld {
         var map: HardMazeMap = this.generator.getStandardMap();
-        //var x: number = (Math.floor(Math.random() * ((map.getWidth() - 1) / 2)) * 2) + 1;
-        //var y: number = (Math.floor(Math.random() * ((map.getHeight() - 1) / 2)) * 2) + 1;
-        //return new HardMazeWorld(randomDirection(), x, y, new Array<MemoryLabel>(), map);
-        return new HardMazeWorld(Direction.North, 9, 8, [], map);
+        return this.makeWorld(map);
+        //return new HardMazeWorld(Direction.North, 9, 8, [], map);
+    }
+    makeWorld(map: HardMazeMap): HardMazeWorld {
+        var x: number = (Math.floor(Math.random() * ((map.getWidth() - 1) / 2)) * 2) + 1;
+        var y: number = (Math.floor(Math.random() * ((map.getHeight() - 1) / 2)) * 2) + 1;
+        return new HardMazeWorld(randomDirection(), x, y, new Array<MemoryLabel>(), map);
     }
     getRobot(): IRobot<HardMazeWorld> {
         return this.robot;
+    }
+    getTestMaps(): HardMazeWorld[] {
+        return this.generator.getTestMaps().map((mm) => this.makeWorld(mm));
     }
 }
 
