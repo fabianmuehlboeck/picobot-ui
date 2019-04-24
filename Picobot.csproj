@@ -47,6 +47,7 @@
     <TypeScriptCompile Include="Run.ts" />
     <TypeScriptCompile Include="Spiral.ts" />
     <TypeScriptCompile Include="SquareRoom.ts" />
+    <TypeScriptCompile Include="StartRoom.ts" />
     <TypeScriptCompile Include="StringStream.ts" />
     <TypeScriptCompile Include="util.ts" />
     <TypeScriptCompile Include="WallState.ts" />

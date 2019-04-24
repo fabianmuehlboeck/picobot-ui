@@ -11,6 +11,31 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var FalseCondition = /** @class */ (function () {
+    function FalseCondition() {
+        this.elem = document.createElement("div");
+    }
+    FalseCondition.prototype.check = function (world) { return [new EmptyConditionFailure()]; };
+    FalseCondition.prototype.enter = function (failures) { };
+    FalseCondition.prototype.exit = function (failures) { };
+    FalseCondition.prototype.getElement = function () { return this.elem; };
+    FalseCondition.prototype.toText = function () { return ""; };
+    FalseCondition.prototype.loadFromText = function (stream, robot) { };
+    FalseCondition.getInstance = function () {
+        if (FalseCondition.instance == null) {
+            FalseCondition.instance = new FalseCondition();
+        }
+        return FalseCondition.instance;
+    };
+    FalseCondition.instance = null;
+    return FalseCondition;
+}());
+var EmptyConditionFailure = /** @class */ (function () {
+    function EmptyConditionFailure() {
+    }
+    EmptyConditionFailure.prototype.getAnimateables = function () { return []; };
+    return EmptyConditionFailure;
+}());
 var ElementConditionFailure = /** @class */ (function () {
     function ElementConditionFailure(element) {
         this.element = element;

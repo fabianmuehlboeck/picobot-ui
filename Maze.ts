@@ -5,7 +5,7 @@ class MazeLevel extends ALevel<MazeWorld> {
     constructor() {
         super();
         this.generator = new MazeMapGenerator();
-        this.robot = new BasicRobot<MazeWorld>(this, this.resetWorld());
+        this.robot = new SensorRobot<MazeWorld>(this, this.resetWorld());
     }
     getName(): string { return "Maze"; }
     resetWorld(): MazeWorld {

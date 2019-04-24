@@ -106,4 +106,18 @@ function stringToWallState(s) {
         default: throw new Error("Invalid Wall State");
     }
 }
+function drawWall(ctx) {
+    ctx.fillStyle = "#B31B1B";
+    ctx.fillRect(0, 0, 48, 48);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.strokeStyle = "#ffffff";
+    ctx.strokeText("W", 24, 24);
+}
+function drawFree(ctx) {
+    ctx.strokeStyle = "#000000";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.strokeText("F", 24, 24);
+}
 //# sourceMappingURL=util.js.map

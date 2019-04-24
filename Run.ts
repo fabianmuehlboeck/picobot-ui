@@ -52,6 +52,18 @@ class InitStep<W extends IWorld<W>> extends AStep<W> {
     enter(): void { }
     exit(): void { }
 }
+class SimpleInitStep<W extends IWorld<W>> extends AStep<W> {
+    constructor(robot: IRobot<W>, world: W) {
+        super(robot, world, null);
+    }
+    computeSuccessor(): IStep<W> {
+        return new RuleActionStep<W>(this.robot, this.world, this, this.robot.getRules()[0], 0);
+    }
+    hasSuccessor(): boolean { return !this.world.isFinal(); }
+    isError(): boolean { return false; }
+    enter(): void { }
+    exit(): void { }
+}
 class RuleMatchStep<W extends IWorld<W>> extends AStep<W> {
     ruleIndex: number = 0;
     failures: Array<IConditionFailure>;
@@ -152,8 +164,8 @@ class ErrorStep<W extends IWorld<W>> extends AStep<W> {
     }
     hasSuccessor(): boolean { return false; }
     isError(): boolean { return true; }
-    enter(): void { }
-    exit(): void { }
+    enter(): void { this.predecessor.enter(); }
+    exit(): void { this.predecessor.exit(); }
 }
 class FinalStep<W extends IWorld<W>> extends AStep<W> {
     constructor(robot: IRobot<W>, world: W, predecessor: IStep<W>) {

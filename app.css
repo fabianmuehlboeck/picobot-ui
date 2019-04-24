@@ -469,7 +469,7 @@ button.expander {
     }
 
 .rule {
-    height: 112px;
+    min-height: 112px;
     list-style: none;
     width: 100%;
     box-sizing: border-box;
@@ -484,7 +484,7 @@ button.expander {
 }
 
     .rule .ruleconditions {
-        display: inline-block;
+        display: inline-flex;
         /*width: 160px;*/
         text-align: center;
         vertical-align: middle;
@@ -496,9 +496,10 @@ button.expander {
 
         .rule .ruleconditions li {
             list-style: none;
-            width: 280px;
+            min-width: 280px;
             position: relative;
             cursor: grab;
+            flex:auto;
         }
 
             .rule .ruleconditions li .actiondeletebutton {
@@ -525,12 +526,18 @@ button.expander {
         background-position: center;
     }
 
+    .rule .ruleactions {
+        display:inline-flex;
+        flex:auto;
+    }
+
     .rule .ruleactionlist {
-        display: inline-block;
-        width: 300px;
-        height: 100%;
+        min-width:300px;
+        display: inline-flex;
+        min-height: 96px;
         background-color: #ffffff;
-        overflow-y: scroll;
+        flex:auto;
+        flex-direction:column;
     }
 
         .rule .ruleactionlist:empty {
@@ -548,10 +555,12 @@ button.expander {
     }
 
     .rule .ruleactions li {
+        display:block;
         list-style: none;
-        width: 280px;
         position: relative;
         cursor: grab;
+        flex:auto;
+        min-width:280px;
     }
 
     .rule .ruleactions span {
@@ -572,13 +581,11 @@ button.expander {
     .rule .ruledeletebutton {
         display: inline-block;
         width: 48px;
-        height: 96px;
         background-image: url(delete.png);
         background-size: 48px 48px;
         background-position: center;
         background-repeat: no-repeat;
         vertical-align: middle;
-        position: absolute;
         right: 5px;
     }
 
@@ -706,17 +713,17 @@ button.expander {
 
     .memoryconditiondiv .memoryconddiv {
         width: 300px;
-        height: 96px;
-        display: inline-block;
+        min-height: 96px;
+        display: inline-flex;
         margin-left: 16px;
     }
 
     .memoryconditiondiv .memorycondlist {
         width: 100%;
-        height: 100%;
-        display: inline-block;
+        display: inline-flex;
         background: #ffffff;
-        overflow-y: scroll;
+        flex-direction:column;
+        flex:auto;
     }
 
         .memoryconditiondiv .memorycondlist:empty {
@@ -747,7 +754,7 @@ button.expander {
         height: 96px;
         background: #444444;
         border: 3px #000000 solid;
-        text-align:middle;
+        text-align:center;
         display:inline-block;
         padding:12px;
     }

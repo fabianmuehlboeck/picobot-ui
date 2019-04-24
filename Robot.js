@@ -11,20 +11,20 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var BasicRobot = /** @class */ (function () {
-    function BasicRobot(level, world) {
+var ActionRobot = /** @class */ (function () {
+    function ActionRobot(level, world) {
         var _this = this;
         this.factories = {};
         this.isTesting = false;
         this.isRunning = false;
         this.level = level;
-        this.currentStep = new InitStep(this, world);
-        this.firstStep = this.currentStep;
-        var rm = new RulesManager(this);
+        var rm = new RulesManager(this, this.isMultiRule());
         var moveForwardFactory = new MoveForwardActionFactory();
         var turnLeftFactory = new TurnLeftActionFactory();
         var turnRightFactory = new TurnRightActionFactory();
         this.rulesManager = rm;
+        this.currentStep = this.getInitStep(world);
+        this.firstStep = this.currentStep;
         this.addFactory(moveForwardFactory);
         this.addFactory(turnLeftFactory);
         this.addFactory(turnRightFactory);
@@ -101,19 +101,20 @@ var BasicRobot = /** @class */ (function () {
         });
         menuDiv.appendChild(loadbutton);
     }
-    BasicRobot.prototype.addFactory = function (factory) {
+    ActionRobot.prototype.isMultiRule = function () { return false; };
+    ActionRobot.prototype.addFactory = function (factory) {
         if (!this.factories[factory.getId()]) {
             this.rulesManager.actionrepoul.appendChild(factory.getElement());
             this.factories[factory.getId()] = factory;
         }
     };
-    BasicRobot.prototype.toBackground = function () {
+    ActionRobot.prototype.toBackground = function () {
         this.pause();
         this.guiDiv.removeChild(this.rulesDiv);
         this.guiDiv.removeChild(this.rulesManager.getActionRepoDiv());
         this.controlDiv.removeChild(this.runDiv);
     };
-    BasicRobot.prototype.toForeground = function (guiDiv, controlDiv, mapcanvas) {
+    ActionRobot.prototype.toForeground = function (guiDiv, controlDiv, mapcanvas) {
         this.guiDiv = guiDiv;
         this.controlDiv = controlDiv;
         this.currentStep.getWorld().draw(mapcanvas);
@@ -121,20 +122,26 @@ var BasicRobot = /** @class */ (function () {
         guiDiv.appendChild(this.rulesDiv);
         guiDiv.appendChild(this.rulesManager.getActionRepoDiv());
         controlDiv.appendChild(this.runDiv);
+        if (this.getRules().length == 0) {
+            this.rulesManager.addRule(this.addRule());
+        }
     };
-    BasicRobot.prototype.getRules = function () { return this.rulesManager.getRules(); };
-    BasicRobot.prototype.addRule = function () {
-        var rule = new BasicRule();
+    ActionRobot.prototype.getRules = function () { return this.rulesManager.getRules(); };
+    ActionRobot.prototype.addRule = function () {
+        var rule = new ActionRule();
         return rule;
     };
-    BasicRobot.prototype.getWorld = function () {
+    ActionRobot.prototype.getInitStep = function (world) {
+        return new SimpleInitStep(this, world);
+    };
+    ActionRobot.prototype.getWorld = function () {
         return this.currentStep.getWorld();
     };
-    BasicRobot.prototype.setWorld = function (world) {
-        this.firstStep = new InitStep(this, world);
+    ActionRobot.prototype.setWorld = function (world) {
+        this.firstStep = this.getInitStep(world);
         this.toStart();
     };
-    BasicRobot.prototype.setCurrentStep = function (step) {
+    ActionRobot.prototype.setCurrentStep = function (step) {
         if (step != this.currentStep) {
             this.currentStep.exit();
             this.currentStep = step;
@@ -142,15 +149,15 @@ var BasicRobot = /** @class */ (function () {
             this.currentStep.enter();
         }
     };
-    BasicRobot.prototype.getFactory = function (key) {
+    ActionRobot.prototype.getFactory = function (key) {
         return this.factories[key];
     };
-    BasicRobot.prototype.reset = function () {
+    ActionRobot.prototype.reset = function () {
         this.isRunning = false;
         this.isTesting = false;
         this.setWorld(this.level.resetWorld());
     };
-    BasicRobot.prototype.test = function () {
+    ActionRobot.prototype.test = function () {
         var _this = this;
         if (this.isRunning) {
             this.isRunning = false;
@@ -246,7 +253,7 @@ var BasicRobot = /** @class */ (function () {
             }
         }, 1);
     };
-    BasicRobot.prototype.updateButtons = function () {
+    ActionRobot.prototype.updateButtons = function () {
         this.toStartButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasPredecessor();
         this.backButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasPredecessor();
         this.pauseButton.disabled = !this.isRunning;
@@ -255,68 +262,34 @@ var BasicRobot = /** @class */ (function () {
         this.ffwdButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasSuccessor();
         this.testButton.disabled = this.isTesting;
     };
-    BasicRobot.prototype.toStart = function () {
+    ActionRobot.prototype.toStart = function () {
         this.setCurrentStep(this.firstStep);
-        //this.toStartButton.disabled = true;
-        //this.backButton.disabled = true;
-        //this.pauseButton.disabled = true;
-        //this.stepButton.disabled = false;
-        //this.runButton.disabled = false;
-        //this.ffwdButton.disabled = false;
         this.currentStep.getWorld().draw(this.mapcanvas);
         return this.currentStep;
     };
-    BasicRobot.prototype.stepBack = function () {
+    ActionRobot.prototype.stepBack = function () {
         var next = this.currentStep.getPredecessor();
-        //if (!next.hasPredecessor()) {
-        //    this.backButton.disabled = true;
-        //    this.toStartButton.disabled = true;
-        //    this.pauseButton.disabled = true;
-        //}
-        //this.stepButton.disabled = false;
-        //this.runButton.disabled = false;
-        //this.ffwdButton.disabled = false;
         this.setCurrentStep(next);
         this.currentStep.getWorld().draw(this.mapcanvas);
         return next;
     };
-    BasicRobot.prototype.stepNext = function () {
+    ActionRobot.prototype.stepNext = function () {
         var next = this.currentStep.getSuccessor();
-        //if (next.isError() || !next.hasSuccessor()) {
-        //    this.stepButton.disabled = true;
-        //    this.runButton.disabled = true;
-        //    this.pauseButton.disabled = true;
-        //    this.ffwdButton.disabled = true;
-        //}
-        //this.backButton.disabled = false;
-        //this.toStartButton.disabled = false;
         this.setCurrentStep(next);
         this.currentStep.getWorld().draw(this.mapcanvas);
         return next;
     };
-    BasicRobot.prototype.pause = function () {
+    ActionRobot.prototype.pause = function () {
         if (this.isRunning) {
             this.isRunning = false;
             window.clearInterval(this.runInterval);
         }
         this.updateButtons();
-        //this.pauseButton.disabled = true;
-        //this.runButton.disabled = !this.currentStep.hasSuccessor();
-        //this.ffwdButton.disabled = !this.currentStep.hasSuccessor();
-        //this.stepButton.disabled = !this.currentStep.hasSuccessor();
-        //this.backButton.disabled = !this.currentStep.hasPredecessor();
-        //this.toStartButton.disabled = !this.currentStep.hasPredecessor();
     };
-    BasicRobot.prototype.runAtSpeed = function (speed) {
+    ActionRobot.prototype.runAtSpeed = function (speed) {
         var _this = this;
         this.isRunning = true;
         this.updateButtons();
-        //this.runButton.disabled = true;
-        //this.stepButton.disabled = true;
-        //this.ffwdButton.disabled = true;
-        //this.backButton.disabled = true;
-        //this.toStartButton.disabled = true;
-        //this.pauseButton.disabled = false;
         this.runInterval = window.setInterval(function () {
             if (_this.isRunning) {
                 var next = _this.currentStep.getSuccessor();
@@ -332,17 +305,55 @@ var BasicRobot = /** @class */ (function () {
             }
         }, speed);
     };
-    BasicRobot.prototype.run = function () {
+    ActionRobot.prototype.run = function () {
         this.runAtSpeed(200);
     };
-    BasicRobot.prototype.runfast = function () {
+    ActionRobot.prototype.runfast = function () {
         this.runAtSpeed(20);
     };
-    BasicRobot.prototype.toText = function () { return this.rulesManager.toText(); };
-    BasicRobot.prototype.loadFromText = function (stream) { this.rulesManager.loadFromText(stream, this); };
+    ActionRobot.prototype.toText = function () { return this.rulesManager.toText(); };
+    ActionRobot.prototype.loadFromText = function (stream) { this.rulesManager.loadFromText(stream, this); };
     ;
-    return BasicRobot;
+    return ActionRobot;
 }());
+var SensorRobot = /** @class */ (function (_super) {
+    __extends(SensorRobot, _super);
+    function SensorRobot(level, world) {
+        var _this = _super.call(this, level, world) || this;
+        _this.sensorDiv = document.createElement("div");
+        _this.sensorDiv.classList.add("robotcontrolsensor");
+        var sensordivheading = document.createElement("span");
+        sensordivheading.innerText = "Robot sees:";
+        _this.sensorDiv.appendChild(sensordivheading);
+        _this.sensorCanvas = document.createElement("canvas");
+        _this.sensorCanvas.width = 144;
+        _this.sensorCanvas.height = 96;
+        _this.sensorDiv.appendChild(_this.sensorCanvas);
+        return _this;
+    }
+    SensorRobot.prototype.getInitStep = function (world) {
+        return new InitStep(this, world);
+    };
+    SensorRobot.prototype.isMultiRule = function () { return true; };
+    SensorRobot.prototype.addRule = function () {
+        var rule = new SensorRule();
+        return rule;
+    };
+    SensorRobot.prototype.toBackground = function () {
+        _super.prototype.toBackground.call(this);
+        this.controlDiv.removeChild(this.sensorDiv);
+    };
+    SensorRobot.prototype.toForeground = function (guiDiv, controlDiv, mapcanvas) {
+        _super.prototype.toForeground.call(this, guiDiv, controlDiv, mapcanvas);
+        this.controlDiv.appendChild(this.sensorDiv);
+        this.currentStep.getWorld().drawSensorStatus(this.sensorCanvas);
+    };
+    SensorRobot.prototype.setCurrentStep = function (step) {
+        _super.prototype.setCurrentStep.call(this, step);
+        step.getWorld().drawSensorStatus(this.sensorCanvas);
+    };
+    return SensorRobot;
+}(ActionRobot));
 var MemoryRobot = /** @class */ (function (_super) {
     __extends(MemoryRobot, _super);
     function MemoryRobot(level, world) {
@@ -356,6 +367,13 @@ var MemoryRobot = /** @class */ (function (_super) {
             new MemoryLabel("m7", "Memory 7"),
             new MemoryLabel("m8", "Memory 8")];
         _this.memories.forEach(function (mem) { return _this.addFactory(new MemoryActionFactory(mem)); });
+        _this.memoryDiv = document.createElement("div");
+        _this.memoryDiv.classList.add("robotcontrolmemorylist");
+        var memoryheader = document.createElement("span");
+        memoryheader.innerText = "Robot remembers:";
+        _this.memoryUl = document.createElement("ul");
+        _this.memoryDiv.appendChild(memoryheader);
+        _this.memoryDiv.appendChild(_this.memoryUl);
         return _this;
     }
     MemoryRobot.prototype.addRule = function () {
@@ -379,6 +397,19 @@ var MemoryRobot = /** @class */ (function (_super) {
         _super.prototype.loadFromText.call(this, stream);
     };
     ;
+    MemoryRobot.prototype.toBackground = function () {
+        _super.prototype.toBackground.call(this);
+        this.controlDiv.removeChild(this.memoryDiv);
+    };
+    MemoryRobot.prototype.toForeground = function (guiDiv, controlDiv, mapcanvas) {
+        _super.prototype.toForeground.call(this, guiDiv, controlDiv, mapcanvas);
+        this.controlDiv.appendChild(this.memoryDiv);
+        this.currentStep.getWorld().updateMemoryUL(this.memoryUl);
+    };
+    MemoryRobot.prototype.setCurrentStep = function (step) {
+        _super.prototype.setCurrentStep.call(this, step);
+        step.getWorld().updateMemoryUL(this.memoryUl);
+    };
     return MemoryRobot;
-}(BasicRobot));
+}(SensorRobot));
 //# sourceMappingURL=Robot.js.map

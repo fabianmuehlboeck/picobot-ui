@@ -16,7 +16,7 @@ var SpiralLevel = /** @class */ (function (_super) {
     function SpiralLevel() {
         var _this = _super.call(this) || this;
         _this.generator = new SpiralMapGenerator();
-        _this.robot = new BasicRobot(_this, _this.resetWorld());
+        _this.robot = new SensorRobot(_this, _this.resetWorld());
         return _this;
     }
     SpiralLevel.prototype.getName = function () { return "Spiral"; };

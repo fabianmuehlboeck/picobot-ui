@@ -5,7 +5,7 @@ class SpiralLevel extends ALevel<SpiralWorld> {
     constructor() {
         super();
         this.generator = new SpiralMapGenerator();
-        this.robot = new BasicRobot<SpiralWorld>(this, this.resetWorld());
+        this.robot = new SensorRobot<SpiralWorld>(this, this.resetWorld());
     }
     getName(): string { return "Spiral"; }
     resetWorld(): SpiralWorld {

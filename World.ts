@@ -20,6 +20,9 @@ interface IWorld<W extends IWorld<W>> {
 
     isFinal(): boolean;
     draw(mapcanvas: HTMLCanvasElement);
+
+    updateMemoryUL(ul: HTMLUListElement): void;
+    drawSensorStatus(canvas: HTMLCanvasElement): void;
 }
 
 abstract class AWorld<W extends IWorld<W>> implements IWorld<W> {
@@ -176,6 +179,58 @@ abstract class AWorld<W extends IWorld<W>> implements IWorld<W> {
         //ctx.fillRect(-cellwidth / 2, -cellheight / 2, cellwidth, cellheight);
         ctx.rotate(-rotation);
         ctx.translate(-xt, -yt);
+    }
+
+
+    updateMemoryUL(ul: HTMLUListElement): void {
+        $(ul).empty();
+        for (let memory of this.memories) {
+            ul.appendChild(memory.getElement());
+        }
+    }
+    drawSensorStatus(canvas: HTMLCanvasElement): void {
+
+        var x = this.getX();
+        var y = this.getY();
+        var dir = this.getDirection();
+
+        var map = this.getMap();
+
+        var ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.translate(48, 48);
+        ctx.beginPath();
+        ctx.moveTo(0, 48);
+        ctx.lineTo(24, 0);
+        ctx.lineTo(48, 48);
+        ctx.closePath();
+        ctx.strokeStyle = "#000000";
+        ctx.stroke();
+        ctx.fillStyle = ROBOTCOLOR;
+        ctx.fill();
+        ctx.translate(-48, 0);
+
+        if (map.isWall(x + dirXadjust(dirTurnLeft(dir)), y + dirYadjust(dirTurnLeft(dir)))) {
+            drawWall(ctx);
+        } else {
+            drawFree(ctx);
+        }
+
+        ctx.translate(48, -48);
+
+        if (map.isWall(x + dirXadjust(dir), y + dirYadjust(dir))) {
+            drawWall(ctx);
+        } else {
+            drawFree(ctx);
+        }
+
+        ctx.translate(48, 48);
+        if (map.isWall(x + dirXadjust(dirTurnRight(dir)), y + dirYadjust(dirTurnRight(dir)))) {
+            drawWall(ctx);
+        } else {
+            drawFree(ctx);
+        }
+        ctx.translate(-96, -48);
     }
 }
 

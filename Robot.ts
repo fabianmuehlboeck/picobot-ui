@@ -10,9 +10,7 @@ interface IRobot<W extends IWorld<W>> extends IRobotProgram {
     toText(): string;
 }
 
-
-
-class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
+class ActionRobot<W extends IWorld<W>> implements IRobot<W> {
     currentStep: IStep<W>;
     firstStep: IStep<W>;
     rulesManager: RulesManager<W>;
@@ -35,20 +33,21 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
     factories: StringMap<IActionFactory<W>> = {};
     level: ALevel<W>;
 
+
     constructor(level: ALevel<W>, world: W) {
         this.level = level;
-        this.currentStep = new InitStep(this, world);
-        this.firstStep = this.currentStep;
-        var rm: RulesManager<W> = new RulesManager<W>(this);
+        var rm: RulesManager<W> = new RulesManager<W>(this, this.isMultiRule());
         var moveForwardFactory = new MoveForwardActionFactory<W>();
         var turnLeftFactory = new TurnLeftActionFactory<W>();
         var turnRightFactory = new TurnRightActionFactory<W>();
         this.rulesManager = rm;
+        this.currentStep = this.getInitStep(world);
+        this.firstStep = this.currentStep;
 
         this.addFactory(moveForwardFactory);
         this.addFactory(turnLeftFactory);
         this.addFactory(turnRightFactory);
-        
+
         //rm.actionrepoul.appendChild(moveForwardFactory.actionli);
         //rm.actionrepoul.appendChild(turnLeftFactory.actionli);
         //rm.actionrepoul.appendChild(turnRightFactory.actionli);
@@ -131,6 +130,8 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
         menuDiv.appendChild(loadbutton);
     }
 
+    isMultiRule(): boolean { return false; }
+
     addFactory(factory: IActionFactory<W>): void {
         if (!this.factories[factory.getId()]) {
             this.rulesManager.actionrepoul.appendChild(factory.getElement());
@@ -152,18 +153,24 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
         guiDiv.appendChild(this.rulesDiv);
         guiDiv.appendChild(this.rulesManager.getActionRepoDiv());
         controlDiv.appendChild(this.runDiv);
+        if (this.getRules().length == 0) {
+            this.rulesManager.addRule(this.addRule());
+        }
     }
     getRules(): Array<IRule<W>> { return this.rulesManager.getRules(); }
     addRule(): IRule<W> {
-        var rule = new BasicRule<W>();
+        var rule = new ActionRule<W>();
         return rule;
+    }
+    getInitStep(world: W): IStep<W> {
+        return new SimpleInitStep(this, world);
     }
 
     getWorld(): W {
         return this.currentStep.getWorld();
     }
     setWorld(world: W) {
-        this.firstStep = new InitStep<W>(this, world);
+        this.firstStep = this.getInitStep(world);
         this.toStart();
     }
 
@@ -292,26 +299,12 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
 
     toStart(): IStep<W> {
         this.setCurrentStep(this.firstStep);
-        //this.toStartButton.disabled = true;
-        //this.backButton.disabled = true;
-        //this.pauseButton.disabled = true;
-        //this.stepButton.disabled = false;
-        //this.runButton.disabled = false;
-        //this.ffwdButton.disabled = false;
         this.currentStep.getWorld().draw(this.mapcanvas);
         return this.currentStep;
     }
 
     stepBack(): IStep<W> {
         var next = this.currentStep.getPredecessor();
-        //if (!next.hasPredecessor()) {
-        //    this.backButton.disabled = true;
-        //    this.toStartButton.disabled = true;
-        //    this.pauseButton.disabled = true;
-        //}
-        //this.stepButton.disabled = false;
-        //this.runButton.disabled = false;
-        //this.ffwdButton.disabled = false;
         this.setCurrentStep(next);
         this.currentStep.getWorld().draw(this.mapcanvas);
         return next;
@@ -319,14 +312,6 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
 
     stepNext(): IStep<W> {
         var next = this.currentStep.getSuccessor();
-        //if (next.isError() || !next.hasSuccessor()) {
-        //    this.stepButton.disabled = true;
-        //    this.runButton.disabled = true;
-        //    this.pauseButton.disabled = true;
-        //    this.ffwdButton.disabled = true;
-        //}
-        //this.backButton.disabled = false;
-        //this.toStartButton.disabled = false;
         this.setCurrentStep(next);
         this.currentStep.getWorld().draw(this.mapcanvas);
         return next;
@@ -341,23 +326,11 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
             window.clearInterval(this.runInterval);
         }
         this.updateButtons();
-        //this.pauseButton.disabled = true;
-        //this.runButton.disabled = !this.currentStep.hasSuccessor();
-        //this.ffwdButton.disabled = !this.currentStep.hasSuccessor();
-        //this.stepButton.disabled = !this.currentStep.hasSuccessor();
-        //this.backButton.disabled = !this.currentStep.hasPredecessor();
-        //this.toStartButton.disabled = !this.currentStep.hasPredecessor();
     }
 
     runAtSpeed(speed: number) {
         this.isRunning = true;
         this.updateButtons();
-        //this.runButton.disabled = true;
-        //this.stepButton.disabled = true;
-        //this.ffwdButton.disabled = true;
-        //this.backButton.disabled = true;
-        //this.toStartButton.disabled = true;
-        //this.pauseButton.disabled = false;
         this.runInterval = window.setInterval(() => {
             if (this.isRunning) {
                 var next = this.currentStep.getSuccessor();
@@ -384,8 +357,51 @@ class BasicRobot<W extends IWorld<W>> implements IRobot<W> {
     loadFromText(stream: StringStream): void { this.rulesManager.loadFromText(stream, this); };
 }
 
-class MemoryRobot<W extends IWorld<W>> extends BasicRobot<W> {
+
+class SensorRobot<W extends IWorld<W>> extends ActionRobot<W> {
+
+    sensorDiv: HTMLDivElement;
+    sensorCanvas: HTMLCanvasElement;
+
+    constructor(level: ALevel<W>, world: W) {
+        super(level, world);
+        this.sensorDiv = document.createElement("div");
+        this.sensorDiv.classList.add("robotcontrolsensor");
+        var sensordivheading = document.createElement("span");
+        sensordivheading.innerText = "Robot sees:";
+        this.sensorDiv.appendChild(sensordivheading);
+        this.sensorCanvas = document.createElement("canvas");
+        this.sensorCanvas.width = 144;
+        this.sensorCanvas.height = 96;
+        this.sensorDiv.appendChild(this.sensorCanvas);
+    }
+    getInitStep(world: W) {
+        return new InitStep(this, world);
+    }
+    isMultiRule(): boolean { return true; }
+    addRule(): IRule<W> {
+        var rule = new SensorRule<W>();
+        return rule;
+    }
+    toBackground(): void {
+        super.toBackground();
+        this.controlDiv.removeChild(this.sensorDiv);
+    }
+    toForeground(guiDiv: HTMLDivElement, controlDiv: HTMLDivElement, mapcanvas: HTMLCanvasElement): void {
+        super.toForeground(guiDiv, controlDiv, mapcanvas);
+        this.controlDiv.appendChild(this.sensorDiv);
+        this.currentStep.getWorld().drawSensorStatus(this.sensorCanvas);
+    }
+    setCurrentStep(step: IStep<W>): void {
+        super.setCurrentStep(step);
+        step.getWorld().drawSensorStatus(this.sensorCanvas);
+    }
+}
+
+class MemoryRobot<W extends IWorld<W>> extends SensorRobot<W> {
     memories: MemoryLabel[];
+    memoryDiv: HTMLDivElement;
+    memoryUl: HTMLUListElement;
     constructor(level : ALevel<W>, world: W) {
         super(level, world);
         this.memories = [new MemoryLabel("m1", "Memory 1"),
@@ -397,6 +413,13 @@ class MemoryRobot<W extends IWorld<W>> extends BasicRobot<W> {
             new MemoryLabel("m7", "Memory 7"),
             new MemoryLabel("m8", "Memory 8")]
         this.memories.forEach((mem) => this.addFactory(new MemoryActionFactory<W>(mem)));
+        this.memoryDiv = document.createElement("div");
+        this.memoryDiv.classList.add("robotcontrolmemorylist");
+        var memoryheader = document.createElement("span");
+        memoryheader.innerText = "Robot remembers:";
+        this.memoryUl = document.createElement("ul");
+        this.memoryDiv.appendChild(memoryheader);
+        this.memoryDiv.appendChild(this.memoryUl);
     }
 
     addRule(): IRule<W> {
@@ -420,4 +443,17 @@ class MemoryRobot<W extends IWorld<W>> extends BasicRobot<W> {
         }
         super.loadFromText(stream);
     };
+    toBackground(): void {
+        super.toBackground();
+        this.controlDiv.removeChild(this.memoryDiv);
+    }
+    toForeground(guiDiv: HTMLDivElement, controlDiv: HTMLDivElement, mapcanvas: HTMLCanvasElement): void {
+        super.toForeground(guiDiv, controlDiv, mapcanvas);
+        this.controlDiv.appendChild(this.memoryDiv);
+        this.currentStep.getWorld().updateMemoryUL(this.memoryUl);
+    }
+    setCurrentStep(step: IStep<W>): void {
+        super.setCurrentStep(step);
+        step.getWorld().updateMemoryUL(this.memoryUl);
+    }
 }

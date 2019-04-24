@@ -49,6 +49,20 @@ var InitStep = /** @class */ (function (_super) {
     InitStep.prototype.exit = function () { };
     return InitStep;
 }(AStep));
+var SimpleInitStep = /** @class */ (function (_super) {
+    __extends(SimpleInitStep, _super);
+    function SimpleInitStep(robot, world) {
+        return _super.call(this, robot, world, null) || this;
+    }
+    SimpleInitStep.prototype.computeSuccessor = function () {
+        return new RuleActionStep(this.robot, this.world, this, this.robot.getRules()[0], 0);
+    };
+    SimpleInitStep.prototype.hasSuccessor = function () { return !this.world.isFinal(); };
+    SimpleInitStep.prototype.isError = function () { return false; };
+    SimpleInitStep.prototype.enter = function () { };
+    SimpleInitStep.prototype.exit = function () { };
+    return SimpleInitStep;
+}(AStep));
 var RuleMatchStep = /** @class */ (function (_super) {
     __extends(RuleMatchStep, _super);
     function RuleMatchStep(robot, world, predecessor, ruleIndex) {
@@ -153,8 +167,8 @@ var ErrorStep = /** @class */ (function (_super) {
     };
     ErrorStep.prototype.hasSuccessor = function () { return false; };
     ErrorStep.prototype.isError = function () { return true; };
-    ErrorStep.prototype.enter = function () { };
-    ErrorStep.prototype.exit = function () { };
+    ErrorStep.prototype.enter = function () { this.predecessor.enter(); };
+    ErrorStep.prototype.exit = function () { this.predecessor.exit(); };
     return ErrorStep;
 }(AStep));
 var FinalStep = /** @class */ (function (_super) {

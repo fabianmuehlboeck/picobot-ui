@@ -12,7 +12,29 @@ interface ICondition<W extends IWorld<W>> {
     loadFromText(stream: StringStream, robot: IRobot<W>): void;
 }
 
+class FalseCondition<W extends IWorld<W>> implements ICondition<W> {
+    elem: HTMLDivElement = document.createElement("div");
+    check(world: W): Array<IConditionFailure> { return [new EmptyConditionFailure()]; }
+    enter(failures: Array<IConditionFailure>): void { }
+    exit(failures: Array<IConditionFailure>): void { }
+    getElement(): HTMLDivElement { return this.elem; }
+    toText(): string { return ""; }
+    loadFromText(stream: StringStream, robot: IRobot<W>): void { }
+    static instance: any = null;
+    static getInstance<W extends IWorld<W>>(): FalseCondition<W> {
+        if (FalseCondition.instance == null) {
+            FalseCondition.instance = new FalseCondition<W>();
+        }
+        return FalseCondition.instance;
+    }
+}
 
+class EmptyConditionFailure implements IConditionFailure {
+    constructor() {
+    }
+
+    getAnimateables(): HTMLElement[] { return []; }
+}
 class ElementConditionFailure implements IConditionFailure {
     element: HTMLElement;
 

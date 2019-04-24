@@ -163,6 +163,53 @@ var AWorld = /** @class */ (function () {
         ctx.rotate(-rotation);
         ctx.translate(-xt, -yt);
     };
+    AWorld.prototype.updateMemoryUL = function (ul) {
+        $(ul).empty();
+        for (var _i = 0, _a = this.memories; _i < _a.length; _i++) {
+            var memory = _a[_i];
+            ul.appendChild(memory.getElement());
+        }
+    };
+    AWorld.prototype.drawSensorStatus = function (canvas) {
+        var x = this.getX();
+        var y = this.getY();
+        var dir = this.getDirection();
+        var map = this.getMap();
+        var ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.translate(48, 48);
+        ctx.beginPath();
+        ctx.moveTo(0, 48);
+        ctx.lineTo(24, 0);
+        ctx.lineTo(48, 48);
+        ctx.closePath();
+        ctx.strokeStyle = "#000000";
+        ctx.stroke();
+        ctx.fillStyle = ROBOTCOLOR;
+        ctx.fill();
+        ctx.translate(-48, 0);
+        if (map.isWall(x + dirXadjust(dirTurnLeft(dir)), y + dirYadjust(dirTurnLeft(dir)))) {
+            drawWall(ctx);
+        }
+        else {
+            drawFree(ctx);
+        }
+        ctx.translate(48, -48);
+        if (map.isWall(x + dirXadjust(dir), y + dirYadjust(dir))) {
+            drawWall(ctx);
+        }
+        else {
+            drawFree(ctx);
+        }
+        ctx.translate(48, 48);
+        if (map.isWall(x + dirXadjust(dirTurnRight(dir)), y + dirYadjust(dirTurnRight(dir)))) {
+            drawWall(ctx);
+        }
+        else {
+            drawFree(ctx);
+        }
+        ctx.translate(-96, -48);
+    };
     return AWorld;
 }());
 var GoalWorld = /** @class */ (function (_super) {
