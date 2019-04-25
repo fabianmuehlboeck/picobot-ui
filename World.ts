@@ -197,6 +197,7 @@ abstract class AWorld<W extends IWorld<W>> implements IWorld<W> {
         var map = this.getMap();
 
         var ctx = canvas.getContext("2d");
+        ctx.font = "30px bold sans-serif";
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.translate(48, 48);
         ctx.beginPath();

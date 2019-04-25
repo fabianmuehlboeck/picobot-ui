@@ -121,7 +121,7 @@ class SensorCondition<W extends IWorld<W>> implements ICondition<W> {
             }
             $(elems).stop(true).animate({ backgroundColor: "" }, 100);
         } else {
-            $([this.sensor.frontSensor.button, this.sensor.leftSensor.button, this.sensor.rightSensor.button]).stop(true).animate({ backgroundColor: "" }, 100);
+            $([this.sensor.frontSensor.button, this.sensor.leftSensor.button, this.sensor.rightSensor.button]).stop(true).animate({ backgroundColor: "", complete: function () { $(this).css("backgroundColor", ''); } }, 100);
         }
     }
     getElement(): HTMLDivElement {

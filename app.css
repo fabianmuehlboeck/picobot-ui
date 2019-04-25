@@ -417,12 +417,14 @@ button.expander {
         background-image: url(wsfree.png);
         background-size: 48px 48px;
         background-position: center;
+        background-color:white;
     }
 
     .wallstateselector .wallstatewall {
         background-image: url(wswall.png);
         background-size: 48px 48px;
         background-position: center;
+        background-color: #B31B1B;
     }
 
     .wallstateselector .active {
@@ -499,7 +501,7 @@ button.expander {
             min-width: 280px;
             position: relative;
             cursor: grab;
-            flex:auto;
+            flex: auto;
         }
 
             .rule .ruleconditions li .actiondeletebutton {
@@ -527,17 +529,17 @@ button.expander {
     }
 
     .rule .ruleactions {
-        display:inline-flex;
-        flex:auto;
+        display: inline-flex;
+        flex: auto;
     }
 
     .rule .ruleactionlist {
-        min-width:300px;
+        min-width: 300px;
         display: inline-flex;
         min-height: 96px;
         background-color: #ffffff;
-        flex:auto;
-        flex-direction:column;
+        flex: auto;
+        flex-direction: column;
     }
 
         .rule .ruleactionlist:empty {
@@ -555,12 +557,12 @@ button.expander {
     }
 
     .rule .ruleactions li {
-        display:block;
+        display: block;
         list-style: none;
         position: relative;
         cursor: grab;
-        flex:auto;
-        min-width:280px;
+        flex: auto;
+        min-width: 280px;
     }
 
     .rule .ruleactions span {
@@ -590,8 +592,17 @@ button.expander {
     }
 
 .runcontrols {
-    background: #ffffff;
+    background: #888888;
+    text-align: center;
 }
+
+    .runcontrols button {
+        vertical-align: middle;
+    }
+
+        .runcontrols button:hover:not(:disabled) {
+            background-color: #c0f7ff;
+        }
 
     .runcontrols .tostartbutton {
         background-image: url(tostart.png);
@@ -599,6 +610,11 @@ button.expander {
         display: inline-block;
         width: 48px;
         height: 48px;
+    }
+
+    .runcontrols button:disabled {
+        border: 1px #444444 solid;
+        opacity: .5;
     }
 
     .runcontrols .stepbackbutton {
@@ -722,8 +738,8 @@ button.expander {
         width: 100%;
         display: inline-flex;
         background: #ffffff;
-        flex-direction:column;
-        flex:auto;
+        flex-direction: column;
+        flex: auto;
     }
 
         .memoryconditiondiv .memorycondlist:empty {
@@ -754,9 +770,9 @@ button.expander {
         height: 96px;
         background: #444444;
         border: 3px #000000 solid;
-        text-align:center;
-        display:inline-block;
-        padding:12px;
+        text-align: center;
+        display: inline-block;
+        padding: 12px;
     }
 
     .testbanner button {
@@ -782,3 +798,45 @@ button.expander {
     height: 48px;
     font-weight: bold;
 }
+
+.robotcontrolsensor {
+    padding-left: 20px;
+    font-size: 2em;
+    display: flex;
+    align-items: center;
+}
+
+    .robotcontrolsensor span {
+        vertical-align: middle;
+        font-style: normal;
+        flex:auto;
+    }
+
+    .robotcontrolsensor canvas {
+        vertical-align: middle;
+    }
+
+.robotcontrolmemorylist {
+    padding-left:20px;
+    display: flex;
+    font-size: 2em;
+    align-items:center;
+}
+
+    .robotcontrolmemorylist span {
+        font-style: normal;
+        vertical-align:middle;
+        margin-left:5px; margin-right:5px;
+    }
+
+    .robotcontrolmemorylist ul {
+        flex: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        vertical-align:middle;
+    }
+
+        .robotcontrolmemorylist ul li {
+            list-style: none;
+            font-weight: bold;
+        }

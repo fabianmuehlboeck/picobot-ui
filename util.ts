@@ -123,12 +123,12 @@ function drawWall(ctx: CanvasRenderingContext2D): void {
     ctx.fillRect(0, 0, 48, 48);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.strokeStyle = "#ffffff";
-    ctx.strokeText("W", 24, 24);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("W", 24, 24);
 }
 function drawFree(ctx: CanvasRenderingContext2D): void {
-    ctx.strokeStyle = "#000000";
+    ctx.fillStyle = "#000000";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.strokeText("F", 24, 24);
+    ctx.fillText("F", 24, 24);
 }
