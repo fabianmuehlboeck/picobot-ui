@@ -49,6 +49,7 @@
     <TypeScriptCompile Include="SquareRoom.ts" />
     <TypeScriptCompile Include="StartRoom.ts" />
     <TypeScriptCompile Include="StringStream.ts" />
+    <TypeScriptCompile Include="StupidRoom.ts" />
     <TypeScriptCompile Include="util.ts" />
     <TypeScriptCompile Include="WallState.ts" />
     <TypeScriptCompile Include="World.ts" />

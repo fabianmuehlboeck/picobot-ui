@@ -50,33 +50,9 @@ var StartMap = /** @class */ (function (_super) {
     __extends(StartMap, _super);
     function StartMap(width, height) {
         var _this = _super.call(this, width, height) || this;
-        _this.walls[10][12] = true;
         _this.walls[11][12] = true;
         _this.walls[12][12] = true;
         _this.walls[13][12] = true;
-        _this.walls[14][12] = true;
-        _this.walls[10][13] = true;
-        _this.walls[14][13] = true;
-        _this.walls[10][14] = true;
-        _this.walls[14][14] = true;
-        _this.walls[9][14] = true;
-        _this.walls[8][14] = true;
-        _this.walls[15][14] = true;
-        _this.walls[16][14] = true;
-        _this.walls[7][11] = true;
-        _this.walls[6][11] = true;
-        _this.walls[5][11] = true;
-        _this.walls[5][12] = true;
-        _this.walls[5][13] = true;
-        _this.walls[5][14] = true;
-        _this.walls[5][15] = true;
-        _this.walls[17][11] = true;
-        _this.walls[18][11] = true;
-        _this.walls[19][11] = true;
-        _this.walls[19][12] = true;
-        _this.walls[19][13] = true;
-        _this.walls[19][14] = true;
-        _this.walls[19][15] = true;
         return _this;
     }
     StartMap.prototype.getGoalZones = function () {
