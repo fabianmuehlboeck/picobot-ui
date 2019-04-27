@@ -2,6 +2,7 @@
     toBackground(): void;
     toForeground(mapcanvas: HTMLCanvasElement, controlDiv: HTMLDivElement, guiDiv: HTMLDivElement) : boolean;
     getName(): string;
+    clear(): void;
 }
 
 abstract class ALevel<W extends IWorld<W>> implements ILevel {
@@ -27,4 +28,8 @@ abstract class ALevel<W extends IWorld<W>> implements ILevel {
     abstract resetWorld(): W;
     abstract getRobot(): IRobot<W>;
     abstract getTestMaps(): W[];
+    clear(): void {
+        localStorage.removeItem("automap:" + this.getName());
+        localStorage.removeItem("mapcode:" + this.getName());
+    }
 }

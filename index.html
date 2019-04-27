@@ -77,7 +77,11 @@
         $(document).tooltip();
         $(document).ready(function () {
             Pico.getInstance().init();
-        })
+        });
+        var clearbutton = document.createElement("button");
+        clearbutton.innerText = "clear";
+        clearbutton.onclick = function () { Pico.getInstance().clear(); }
+        $("#about")[0].appendChild(clearbutton);
     </script>
 </body>
 </html>

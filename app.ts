@@ -42,6 +42,13 @@ class Pico {
         this.levels.push(new HardMazeLevel());
     }
 
+    clear(): void {
+        for (var level of this.levels) {
+            level.clear();
+        }
+        location.reload();
+    }
+
     static instance: Pico = new Pico();
     static getInstance(): Pico { return Pico.instance; }
 

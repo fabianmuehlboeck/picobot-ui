@@ -11,6 +11,10 @@ var ALevel = /** @class */ (function () {
         this.getRobot().toForeground(guiDiv, controlDiv, this.mapcanvas);
         return false;
     };
+    ALevel.prototype.clear = function () {
+        localStorage.removeItem("automap:" + this.getName());
+        localStorage.removeItem("mapcode:" + this.getName());
+    };
     return ALevel;
 }());
 //# sourceMappingURL=Level.js.map

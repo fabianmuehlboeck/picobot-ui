@@ -29,6 +29,13 @@ var Pico = /** @class */ (function () {
         canvas.height = 600;
         return canvas;
     };
+    Pico.prototype.clear = function () {
+        for (var _i = 0, _a = this.levels; _i < _a.length; _i++) {
+            var level = _a[_i];
+            level.clear();
+        }
+        location.reload();
+    };
     Pico.getInstance = function () { return Pico.instance; };
     Pico.prototype.init = function () {
         var _this = this;
