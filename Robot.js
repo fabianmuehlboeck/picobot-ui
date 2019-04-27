@@ -279,12 +279,24 @@ var ActionRobot = /** @class */ (function () {
             $(".guicontainer button").each(function (i, elem) {
                 elem.disabled = true;
             });
+            $(".guicontainer .ui-sortable").each(function (i, elem) {
+                elem.classList.add("disabledwhilerunning");
+            });
+            $(".guicontainer .ui-draggable").each(function (i, elem) {
+                elem.classList.add("disabledwhilerunning");
+            });
         }
         else {
             $(".guicontainer .ui-sortable").sortable("enable");
             $(".guicontainer .ui-draggable").draggable("enable");
             $(".guicontainer button").each(function (i, elem) {
                 elem.disabled = false;
+            });
+            $(".guicontainer .ui-sortable").each(function (i, elem) {
+                elem.classList.remove("disabledwhilerunning");
+            });
+            $(".guicontainer .ui-draggable").each(function (i, elem) {
+                elem.classList.remove("disabledwhilerunning");
             });
         }
     };

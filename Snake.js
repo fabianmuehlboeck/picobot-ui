@@ -26,7 +26,7 @@ var SnakeLevel = /** @class */ (function (_super) {
     };
     SnakeLevel.prototype.makeWorld = function (map) {
         var x = 1;
-        var y = map.getHeight() - 2;
+        var y = 1;
         return new SnakeWorld(Direction.East, x, y, new Array(), map);
     };
     SnakeLevel.prototype.getRobot = function () {
@@ -52,27 +52,32 @@ var SnakeMap = /** @class */ (function (_super) {
     __extends(SnakeMap, _super);
     function SnakeMap(width, height) {
         var _this = _super.call(this, width, height) || this;
-        var swidth = 3;
-        var curx = 1;
-        var cury = height - 2 - swidth;
+        var swidth = 1;
+        var cury = 1 + swidth;
         var dir = 1;
-        while (Math.abs(curx - width / 2) > 2 && Math.abs(cury - height / 2) > 2) {
-            while (!_this.walls[curx + swidth * dir][cury]) {
-                _this.walls[curx][cury] = true;
-                curx += dir;
+        var row = 0;
+        while (cury <= height - swidth - 2) {
+            if (row % 2 == 0) {
+                var curx = 1;
+                while (curx < width - swidth - 1) {
+                    _this.walls[curx][cury] = true;
+                    curx++;
+                }
             }
-            curx -= dir;
-            dir = dir * -1;
-            while (!_this.walls[curx][cury + swidth * dir]) {
-                _this.walls[curx][cury] = true;
-                cury += dir;
+            else {
+                var curx = width - 2;
+                while (curx > swidth) {
+                    _this.walls[curx][cury] = true;
+                    curx--;
+                }
             }
-            cury -= dir;
+            row++;
+            cury += swidth + 1;
         }
         return _this;
     }
     SnakeMap.prototype.getGoalZones = function () {
-        return [{ sx: 9, sy: 9, ex: 12, ey: 12 }];
+        return [{ sx: 1, sy: this.height - 2, ex: 1, ey: this.height - 2 }];
     };
     return SnakeMap;
 }(AGoalMap));

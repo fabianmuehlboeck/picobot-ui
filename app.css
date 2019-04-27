@@ -840,3 +840,11 @@ button.expander {
             list-style: none;
             font-weight: bold;
         }
+
+.disabledwhilerunning {
+    cursor: initial !important;
+}
+
+    .disabledwhilerunning li {
+        cursor: initial !important;
+    }

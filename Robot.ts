@@ -313,11 +313,23 @@ class ActionRobot<W extends IWorld<W>> implements IRobot<W> {
             $(".guicontainer button").each((i, elem) => {
                 (<HTMLButtonElement>elem).disabled = true;
             });
+            $(".guicontainer .ui-sortable").each((i, elem) => {
+                elem.classList.add("disabledwhilerunning");
+            });
+            $(".guicontainer .ui-draggable").each((i, elem) => {
+                elem.classList.add("disabledwhilerunning");
+            });
         } else {
             $(".guicontainer .ui-sortable").sortable("enable");
             $(".guicontainer .ui-draggable").draggable("enable");
             $(".guicontainer button").each((i, elem) => {
                 (<HTMLButtonElement>elem).disabled = false;
+            });
+            $(".guicontainer .ui-sortable").each((i, elem) => {
+                elem.classList.remove("disabledwhilerunning");
+            });
+            $(".guicontainer .ui-draggable").each((i, elem) => {
+                elem.classList.remove("disabledwhilerunning");
             });
         }
     }
