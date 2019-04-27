@@ -27,6 +27,9 @@ var SquareRoomLevel = /** @class */ (function (_super) {
     SquareRoomLevel.prototype.makeWorld = function (map) {
         var x = (Math.floor(Math.random() * ((map.getWidth() - 2)))) + 1;
         var y = (Math.floor(Math.random() * ((map.getHeight() - 2)))) + 1;
+        return new SquareRoomWorld(randomDirection(), x, y, new Array(), map, this.getNewvac(map, x, y));
+    };
+    SquareRoomLevel.prototype.getNewvac = function (map, x, y) {
         var newvac = [];
         for (var vx = 0; vx < map.getWidth(); vx++) {
             newvac.push([]);
@@ -35,14 +38,25 @@ var SquareRoomLevel = /** @class */ (function (_super) {
             }
         }
         newvac[x][y] = true;
-        return new SquareRoomWorld(randomDirection(), x, y, new Array(), map, newvac);
+        return newvac;
     };
     SquareRoomLevel.prototype.getRobot = function () {
         return this.robot;
     };
     SquareRoomLevel.prototype.getTestMaps = function () {
-        var _this = this;
-        return this.generator.getTestMaps().map(function (mm) { return _this.makeWorld(mm); });
+        var map = this.generator.getTestMaps()[0];
+        return [new SquareRoomWorld(Direction.East, 1, 1, [], map, this.getNewvac(map, 1, 1)),
+            new SquareRoomWorld(Direction.West, 1, 1, [], map, this.getNewvac(map, 1, 1)),
+            new SquareRoomWorld(Direction.North, 1, 1, [], map, this.getNewvac(map, 1, 1)),
+            new SquareRoomWorld(Direction.South, 1, 1, [], map, this.getNewvac(map, 1, 1)),
+            new SquareRoomWorld(Direction.East, 5, 5, [], map, this.getNewvac(map, 5, 5)),
+            new SquareRoomWorld(Direction.West, 5, 5, [], map, this.getNewvac(map, 5, 5)),
+            new SquareRoomWorld(Direction.North, 5, 5, [], map, this.getNewvac(map, 5, 5)),
+            new SquareRoomWorld(Direction.South, 5, 5, [], map, this.getNewvac(map, 5, 5)),
+            new SquareRoomWorld(Direction.East, 1, 5, [], map, this.getNewvac(map, 1, 5)),
+            new SquareRoomWorld(Direction.West, 1, 5, [], map, this.getNewvac(map, 1, 5)),
+            new SquareRoomWorld(Direction.North, 1, 5, [], map, this.getNewvac(map, 1, 5)),
+            new SquareRoomWorld(Direction.South, 1, 5, [], map, this.getNewvac(map, 1, 5))];
     };
     return SquareRoomLevel;
 }(ALevel));
@@ -55,7 +69,7 @@ var SquareRoomMapGenerator = /** @class */ (function (_super) {
         return new SquareRoomMap(25, 25);
     };
     SquareRoomMapGenerator.prototype.getTestMaps = function () {
-        return [this.getStandardMap(), this.getStandardMap(), this.getStandardMap(), this.getStandardMap(), this.getStandardMap()];
+        return [new SquareRoomMap(11, 11)];
     };
     return SquareRoomMapGenerator;
 }(AMapGenerator));

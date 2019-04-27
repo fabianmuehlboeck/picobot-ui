@@ -34,8 +34,15 @@ var HardMazeLevel = /** @class */ (function (_super) {
         return this.robot;
     };
     HardMazeLevel.prototype.getTestMaps = function () {
-        var _this = this;
-        return this.generator.getTestMaps().map(function (mm) { return _this.makeWorld(mm); });
+        var map = this.generator.getStandardMap();
+        var firsttrick = map.trickWalls[0];
+        return [new HardMazeWorld(Direction.North, firsttrick.x + 1, firsttrick.y, [], map),
+            new HardMazeWorld(Direction.North, firsttrick.x - 1, firsttrick.y, [], map),
+            new HardMazeWorld(Direction.North, firsttrick.x, firsttrick.y + 1, [], map),
+            new HardMazeWorld(Direction.North, firsttrick.x, firsttrick.y - 1, [], map),
+            new HardMazeWorld(Direction.North, firsttrick.x + 3, firsttrick.y, [], map),
+            new HardMazeWorld(Direction.North, firsttrick.x - 3, firsttrick.y, [], map)
+        ];
     };
     return HardMazeLevel;
 }(ALevel));

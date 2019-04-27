@@ -31,6 +31,12 @@ var DiamondRoomLevel = /** @class */ (function (_super) {
             x = (Math.floor(Math.random() * ((map.getWidth() - 2)))) + 1;
             y = (Math.floor(Math.random() * ((map.getHeight() - 2)))) + 1;
         }
+        return new DiamondRoomWorld(randomDirection(), x, y, new Array(), map, this.getNewvac(map, x, y));
+    };
+    DiamondRoomLevel.prototype.getRobot = function () {
+        return this.robot;
+    };
+    DiamondRoomLevel.prototype.getNewvac = function (map, x, y) {
         var newvac = [];
         for (var vx = 0; vx < map.getWidth(); vx++) {
             newvac.push([]);
@@ -39,14 +45,27 @@ var DiamondRoomLevel = /** @class */ (function (_super) {
             }
         }
         newvac[x][y] = true;
-        return new DiamondRoomWorld(randomDirection(), x, y, new Array(), map, newvac);
-    };
-    DiamondRoomLevel.prototype.getRobot = function () {
-        return this.robot;
+        return newvac;
     };
     DiamondRoomLevel.prototype.getTestMaps = function () {
-        var _this = this;
-        return this.generator.getTestMaps().map(function (mm) { return _this.makeWorld(mm); });
+        var map = this.generator.getStandardMap();
+        var upx = Math.floor(map.getWidth() / 2);
+        var upy = 1;
+        while (map.isWall(upx, upy)) {
+            upy++;
+        }
+        return [new DiamondRoomWorld(Direction.North, upx, upy, [], map, this.getNewvac(map, upx, upy)),
+            new DiamondRoomWorld(Direction.East, upx, upy, [], map, this.getNewvac(map, upx, upy)),
+            new DiamondRoomWorld(Direction.West, upx, upy, [], map, this.getNewvac(map, upx, upy)),
+            new DiamondRoomWorld(Direction.South, upx, upy, [], map, this.getNewvac(map, upx, upy)),
+            new DiamondRoomWorld(Direction.North, upx + 5, upy + 5, [], map, this.getNewvac(map, upx + 5, upy + 5)),
+            new DiamondRoomWorld(Direction.East, upx + 5, upy + 5, [], map, this.getNewvac(map, upx + 5, upy + 5)),
+            new DiamondRoomWorld(Direction.West, upx + 5, upy + 5, [], map, this.getNewvac(map, upx + 5, upy + 5)),
+            new DiamondRoomWorld(Direction.South, upx + 5, upy + 5, [], map, this.getNewvac(map, upx + 5, upy + 5)),
+            new DiamondRoomWorld(Direction.North, upx, upy + Math.floor(map.getHeight() / 2), [], map, this.getNewvac(map, upx, upy + Math.floor(map.getHeight() / 2))),
+            new DiamondRoomWorld(Direction.East, upx, upy + Math.floor(map.getHeight() / 2), [], map, this.getNewvac(map, upx, upy + Math.floor(map.getHeight() / 2))),
+            new DiamondRoomWorld(Direction.West, upx, upy + Math.floor(map.getHeight() / 2), [], map, this.getNewvac(map, upx, upy + Math.floor(map.getHeight() / 2))),
+            new DiamondRoomWorld(Direction.South, upx, upy + Math.floor(map.getHeight() / 2), [], map, this.getNewvac(map, upx, upy + Math.floor(map.getHeight() / 2)))];
     };
     return DiamondRoomLevel;
 }(ALevel));
@@ -59,7 +78,7 @@ var DiamondRoomMapGenerator = /** @class */ (function (_super) {
         return new DiamondRoomMap(25, 25);
     };
     DiamondRoomMapGenerator.prototype.getTestMaps = function () {
-        return [this.getStandardMap(), this.getStandardMap(), this.getStandardMap(), this.getStandardMap(), this.getStandardMap()];
+        return [this.getStandardMap()];
     };
     return DiamondRoomMapGenerator;
 }(AMapGenerator));

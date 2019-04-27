@@ -22,7 +22,15 @@ class HardMazeLevel extends ALevel<HardMazeWorld> {
         return this.robot;
     }
     getTestMaps(): HardMazeWorld[] {
-        return this.generator.getTestMaps().map((mm) => this.makeWorld(mm));
+        var map = this.generator.getStandardMap();
+        var firsttrick = map.trickWalls[0];
+        return [new HardMazeWorld(Direction.North, firsttrick.x + 1, firsttrick.y, [], map),
+            new HardMazeWorld(Direction.North, firsttrick.x - 1, firsttrick.y, [], map),
+            new HardMazeWorld(Direction.North, firsttrick.x, firsttrick.y+1, [], map),
+            new HardMazeWorld(Direction.North, firsttrick.x, firsttrick.y - 1, [], map),
+            new HardMazeWorld(Direction.North, firsttrick.x+3, firsttrick.y, [], map),
+            new HardMazeWorld(Direction.North, firsttrick.x-3, firsttrick.y, [], map)
+        ]
     }
 }
 
