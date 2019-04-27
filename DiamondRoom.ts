@@ -36,7 +36,7 @@ class DiamondRoomLevel extends ALevel<DiamondRoomWorld> {
         return newvac;
     }
     getTestMaps(): DiamondRoomWorld[] {
-        var map = this.generator.getStandardMap();
+        var map = this.generator.getTestMaps()[0];
         var upx = Math.floor(map.getWidth() / 2);
         var upy = 1;
         while (map.isWall(upx, upy)) {
@@ -46,10 +46,10 @@ class DiamondRoomLevel extends ALevel<DiamondRoomWorld> {
             new DiamondRoomWorld(Direction.East, upx, upy, [], map, this.getNewvac(map, upx, upy)),
             new DiamondRoomWorld(Direction.West, upx, upy, [], map, this.getNewvac(map, upx, upy)),
             new DiamondRoomWorld(Direction.South, upx, upy, [], map, this.getNewvac(map, upx, upy)),
-            new DiamondRoomWorld(Direction.North, upx+5, upy+5, [], map, this.getNewvac(map, upx+5, upy+5)),
-            new DiamondRoomWorld(Direction.East, upx+5, upy+5, [], map, this.getNewvac(map, upx+5, upy+5)),
-            new DiamondRoomWorld(Direction.West, upx+5, upy+5, [], map, this.getNewvac(map, upx+5, upy+5)),
-            new DiamondRoomWorld(Direction.South, upx+5, upy+5, [], map, this.getNewvac(map, upx+5, upy+5)),
+            new DiamondRoomWorld(Direction.North, upx+3, upy+3, [], map, this.getNewvac(map, upx+3, upy+3)),
+            new DiamondRoomWorld(Direction.East, upx+3, upy+3, [], map, this.getNewvac(map, upx+3, upy+3)),
+            new DiamondRoomWorld(Direction.West, upx+3, upy+3, [], map, this.getNewvac(map, upx+3, upy+3)),
+            new DiamondRoomWorld(Direction.South, upx+3, upy+3, [], map, this.getNewvac(map, upx+3, upy+3)),
             new DiamondRoomWorld(Direction.North, upx, upy + Math.floor(map.getHeight() / 2), [], map, this.getNewvac(map, upx, upy + Math.floor(map.getHeight()/2))),
             new DiamondRoomWorld(Direction.East, upx, upy + Math.floor(map.getHeight() / 2), [], map, this.getNewvac(map, upx, upy + Math.floor(map.getHeight() / 2))),
             new DiamondRoomWorld(Direction.West, upx, upy + Math.floor(map.getHeight() / 2), [], map, this.getNewvac(map, upx, upy + Math.floor(map.getHeight() / 2))),
@@ -65,7 +65,7 @@ class DiamondRoomMapGenerator extends AMapGenerator<DiamondRoomMap> {
         return new DiamondRoomMap(25, 25);
     }
     getTestMaps(): DiamondRoomMap[] {
-        return [this.getStandardMap()];
+        return [new DiamondRoomMap(11,11)];
     }
 }
 

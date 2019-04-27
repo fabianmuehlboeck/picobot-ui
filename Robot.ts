@@ -6,7 +6,7 @@ interface IRobot<W extends IWorld<W>> extends IRobotProgram {
     getRules(): Array<IRule<W>>;
     addRule(): IRule<W>;
     getFactory(key: string): IActionFactory<W>;
-    loadFromText(stream: StringStream) : void;
+    loadFromText(stream: StringStream): void;
     toText(): string;
 }
 
@@ -139,13 +139,22 @@ class ActionRobot<W extends IWorld<W>> implements IRobot<W> {
         }
     }
 
+    autosaveinterval: number;
     toBackground(): void {
+        window.clearInterval(this.autosaveinterval);
         this.pause();
         this.guiDiv.removeChild(this.rulesDiv);
         this.guiDiv.removeChild(this.rulesManager.getActionRepoDiv());
         this.controlDiv.removeChild(this.runDiv);
     }
+    firstload: boolean = true;
     toForeground(guiDiv: HTMLDivElement, controlDiv: HTMLDivElement, mapcanvas: HTMLCanvasElement): void {
+        if (this.firstload) {
+            this.firstload = false;
+            if (localStorage.getItem("automap:" + this.level.getName()) != null) {
+                this.loadFromText(new StringStream(localStorage.getItem("automap:" + this.level.getName())));
+            }
+        }
         this.guiDiv = guiDiv;
         this.controlDiv = controlDiv;
         this.currentStep.getWorld().draw(mapcanvas);
@@ -156,6 +165,9 @@ class ActionRobot<W extends IWorld<W>> implements IRobot<W> {
         if (this.getRules().length == 0) {
             this.rulesManager.addRule(this.addRule());
         }
+        this.autosaveinterval = window.setInterval(() => {
+            localStorage.setItem("automap:" + this.level.getName(), this.toText());
+        }, 10000);
     }
     getRules(): Array<IRule<W>> { return this.rulesManager.getRules(); }
     addRule(): IRule<W> {
@@ -295,6 +307,19 @@ class ActionRobot<W extends IWorld<W>> implements IRobot<W> {
         this.runButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasSuccessor();
         this.ffwdButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasSuccessor();
         this.testButton.disabled = this.isTesting;
+        if (this.isRunning || this.isTesting) {
+            $(".guicontainer .ui-sortable").sortable("disable");
+            $(".guicontainer .ui-draggable").draggable("disable");
+            $(".guicontainer button").each((i, elem) => {
+                (<HTMLButtonElement>elem).disabled = true;
+            });
+        } else {
+            $(".guicontainer .ui-sortable").sortable("enable");
+            $(".guicontainer .ui-draggable").draggable("enable");
+            $(".guicontainer button").each((i, elem) => {
+                (<HTMLButtonElement>elem).disabled = false;
+            });
+        }
     }
 
     toStart(): IStep<W> {
@@ -402,16 +427,16 @@ class MemoryRobot<W extends IWorld<W>> extends SensorRobot<W> {
     memories: MemoryLabel[];
     memoryDiv: HTMLDivElement;
     memoryUl: HTMLUListElement;
-    constructor(level : ALevel<W>, world: W) {
+    constructor(level: ALevel<W>, world: W) {
         super(level, world);
         this.memories = [new MemoryLabel("m1", "Memory 1"),
-            new MemoryLabel("m2", "Memory 2"),
-            new MemoryLabel("m3", "Memory 3"),
-            new MemoryLabel("m4", "Memory 4"),
-            new MemoryLabel("m5", "Memory 5"),
-            new MemoryLabel("m6", "Memory 6"),
-            new MemoryLabel("m7", "Memory 7"),
-            new MemoryLabel("m8", "Memory 8")]
+        new MemoryLabel("m2", "Memory 2"),
+        new MemoryLabel("m3", "Memory 3"),
+        new MemoryLabel("m4", "Memory 4"),
+        new MemoryLabel("m5", "Memory 5"),
+        new MemoryLabel("m6", "Memory 6"),
+        new MemoryLabel("m7", "Memory 7"),
+        new MemoryLabel("m8", "Memory 8")]
         this.memories.forEach((mem) => this.addFactory(new MemoryActionFactory<W>(mem)));
         this.memoryDiv = document.createElement("div");
         this.memoryDiv.classList.add("robotcontrolmemorylist");
@@ -439,7 +464,7 @@ class MemoryRobot<W extends IWorld<W>> extends SensorRobot<W> {
         for (var i = 0; i < this.memories.length; i++) {
             var name = stream.readUntil("#|#");
             this.memories[i].setName(name.replace("||", "|"));
-            $(this.getFactory("M"+this.memories[i].getId()).getElement()).find("input").val(this.memories[i].getName());
+            $(this.getFactory("M" + this.memories[i].getId()).getElement()).find("input").val(this.memories[i].getName());
         }
         super.loadFromText(stream);
     };

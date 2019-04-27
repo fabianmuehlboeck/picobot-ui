@@ -15,6 +15,7 @@ var ActionRobot = /** @class */ (function () {
     function ActionRobot(level, world) {
         var _this = this;
         this.factories = {};
+        this.firstload = true;
         this.isTesting = false;
         this.isRunning = false;
         this.level = level;
@@ -109,12 +110,20 @@ var ActionRobot = /** @class */ (function () {
         }
     };
     ActionRobot.prototype.toBackground = function () {
+        window.clearInterval(this.autosaveinterval);
         this.pause();
         this.guiDiv.removeChild(this.rulesDiv);
         this.guiDiv.removeChild(this.rulesManager.getActionRepoDiv());
         this.controlDiv.removeChild(this.runDiv);
     };
     ActionRobot.prototype.toForeground = function (guiDiv, controlDiv, mapcanvas) {
+        var _this = this;
+        if (this.firstload) {
+            this.firstload = false;
+            if (localStorage.getItem("automap:" + this.level.getName()) != null) {
+                this.loadFromText(new StringStream(localStorage.getItem("automap:" + this.level.getName())));
+            }
+        }
         this.guiDiv = guiDiv;
         this.controlDiv = controlDiv;
         this.currentStep.getWorld().draw(mapcanvas);
@@ -125,6 +134,9 @@ var ActionRobot = /** @class */ (function () {
         if (this.getRules().length == 0) {
             this.rulesManager.addRule(this.addRule());
         }
+        this.autosaveinterval = window.setInterval(function () {
+            localStorage.setItem("automap:" + _this.level.getName(), _this.toText());
+        }, 10000);
     };
     ActionRobot.prototype.getRules = function () { return this.rulesManager.getRules(); };
     ActionRobot.prototype.addRule = function () {
@@ -261,6 +273,20 @@ var ActionRobot = /** @class */ (function () {
         this.runButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasSuccessor();
         this.ffwdButton.disabled = this.isRunning || this.isTesting || !this.currentStep.hasSuccessor();
         this.testButton.disabled = this.isTesting;
+        if (this.isRunning || this.isTesting) {
+            $(".guicontainer .ui-sortable").sortable("disable");
+            $(".guicontainer .ui-draggable").draggable("disable");
+            $(".guicontainer button").each(function (i, elem) {
+                elem.disabled = true;
+            });
+        }
+        else {
+            $(".guicontainer .ui-sortable").sortable("enable");
+            $(".guicontainer .ui-draggable").draggable("enable");
+            $(".guicontainer button").each(function (i, elem) {
+                elem.disabled = false;
+            });
+        }
     };
     ActionRobot.prototype.toStart = function () {
         this.setCurrentStep(this.firstStep);
