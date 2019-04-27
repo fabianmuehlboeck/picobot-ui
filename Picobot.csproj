@@ -45,6 +45,7 @@
     <TypeScriptCompile Include="Robot.ts" />
     <TypeScriptCompile Include="Rule.ts" />
     <TypeScriptCompile Include="Run.ts" />
+    <TypeScriptCompile Include="Snake.ts" />
     <TypeScriptCompile Include="Spiral.ts" />
     <TypeScriptCompile Include="SquareRoom.ts" />
     <TypeScriptCompile Include="StartRoom.ts" />
