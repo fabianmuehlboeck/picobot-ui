@@ -17,6 +17,7 @@ var Pico = /** @class */ (function () {
         this.levels.push(new StartLevel());
         this.levels.push(new StupidLevel());
         this.levels.push(new SpiralLevel());
+        this.levels.push(new SnakeLevel());
         this.levels.push(new MazeLevel());
         this.levels.push(new SquareRoomLevel());
         this.levels.push(new DiamondRoomLevel());
